@@ -1,0 +1,26 @@
+empresa: "Ótica Santo Grau"
+cargo: "Estagiário em Análise de Dados / Growth Marketing"
+periodo: "Fev/2025 – Set/2025"
+local: "São Paulo – SP"
+
+feitos:
+  - o_que_fiz: "Consultas SQL e relatórios semanais de vendas"
+    resultado: "Equipe comercial usava para decisão estratégica"
+    metricas:
+      frequencia: "relatórios semanais"
+
+  - o_que_fiz: "Tratamento de CSV com Python"
+    resultado: "Dados brutos estruturados para performance e segmentação"
+
+  - o_que_fiz: "Dashboards Power BI — KPIs comerciais"
+    resultado: "Identificação de segmentos mais rentáveis"
+
+  - o_que_fiz: "Análise de público em lançamento"
+    resultado: "Crescimento de 20% na receita do período"
+    metricas:
+      receita_antes: "R$ 50k"
+      receita_depois: "R$ 60k"
+      variacao: "~20%"
+
+  - o_que_fiz: "Modelagem de tabelas relacionais — base de clientes"
+    resultado: "Análises recorrentes facilitadas para equipe comercial"

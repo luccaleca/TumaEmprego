@@ -1,0 +1,29 @@
+import { NextResponse } from "next/server";
+import { getFormacao, saveFormacao } from "@/lib/dados";
+
+export async function GET() {
+  try {
+    return NextResponse.json({ formacao: getFormacao() });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Não foi possível ler dados/config/formacao.yml", detail: err.message },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const { formacao } = await request.json();
+    if (!formacao) {
+      return NextResponse.json({ error: "Campo formacao obrigatório" }, { status: 400 });
+    }
+    saveFormacao(formacao);
+    return NextResponse.json({ ok: true, formacao: getFormacao() });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Não foi possível salvar", detail: err.message },
+      { status: 500 },
+    );
+  }
+}

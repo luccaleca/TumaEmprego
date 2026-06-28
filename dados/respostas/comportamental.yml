@@ -1,0 +1,328 @@
+# Histórias comportamentais (STAR)
+# tags = palavras que o Agent usa para escolher a história na pergunta do formulário
+# reflexao = opcional (STAR+R) — o que você aprendeu
+
+historias:
+
+  - id: lancamento_receita
+    tags:
+      - resultado
+      - impacto
+      - iniciativa
+      - dados
+      - meta
+      - desafio
+    pergunta_exemplo: "Conte uma situação em que seus dados geraram impacto no negócio"
+    situacao: >
+      Na Ótica Santo Grau, a equipe comercial preparava um lançamento e precisava
+      entender qual público priorizar com base em dados de vendas e comportamento.
+    tarefa: >
+      Analisar a base disponível e indicar segmentos mais relevantes para apoiar
+      a decisão do time comercial.
+    acao: >
+      Extraí e cruzei dados com SQL, tratei bases em Python quando necessário e
+      consolidei visões no Power BI para comparar segmentos e KPIs do período.
+    resultado: >
+      A análise direcionou o foco do lançamento para o público mais relevante.
+      No período, a receita cresceu cerca de 20% (de R$ 50k para R$ 60k).
+    reflexao: >
+      Aprendi que insight só vale quando é claro para quem decide — por isso
+      priorizei relatórios e dashboards que o comercial conseguia usar na prática.
+
+  - id: dashboards_kpi
+    tags:
+      - trabalho em equipe
+      - power bi
+      - entrega
+      - organizacao
+      - kpis
+    pergunta_exemplo: "Como você ajudou seu time com dados ou relatórios?"
+    situacao: >
+      O time comercial precisava acompanhar performance de forma recorrente,
+      mas as informações estavam espalhadas em planilhas e extrações manuais.
+    tarefa: >
+      Criar uma forma visual e atualizada de monitorar KPIs comerciais.
+    acao: >
+      Modelei as métricas principais, construí dashboards em Power BI e alinhei
+      com o time quais indicadores fariam sentido na rotina semanal.
+    resultado: >
+      Os dashboards passaram a apoiar a identificação de segmentos mais rentáveis
+      e o direcionamento estratégico das ações comerciais.
+    reflexao: >
+      Antes de criar gráficos, preciso entender qual decisão o gestor quer tomar.
+
+  - id: relatorios_sql_semanais
+    tags:
+      - responsabilidade
+      - sql
+      - prazo
+      - rotina
+      - confiabilidade
+    pergunta_exemplo: "Como você lida com entregas recorrentes ou prazos?"
+    situacao: >
+      A área comercial dependia de relatórios semanais de vendas para planejar ações.
+    tarefa: >
+      Garantir extração e análise confiável dos dados toda semana, no prazo.
+    acao: >
+      Desenvolvi consultas SQL padronizadas, documentei os critérios dos relatórios
+      e mantive uma rotina de validação antes de enviar para o time.
+    resultado: >
+      Relatórios semanais estáveis, usados pela equipe comercial na tomada de decisão.
+    reflexao: >
+      Automatizar e padronizar SQL reduz erro e libera tempo para análise, não só extração.
+
+  - id: qualidade_dados_python
+    tags:
+      - problema
+      - python
+      - erro
+      - aprendizado
+      - qualidade
+      - dados sujos
+    pergunta_exemplo: "Conte um problema técnico ou de dados que você resolveu"
+    situacao: >
+      Bases exportadas em CSV chegavam com inconsistências (formatos, duplicatas,
+      campos vazios), o que atrapalhava análises de performance e segmentação.
+    tarefa: >
+      Estruturar os dados brutos de forma confiável para análise.
+    acao: >
+      Usei Python para limpar, padronizar e transformar os arquivos antes de
+      alimentar relatórios e análises; validei amostras com o time quando havia dúvida.
+    resultado: >
+      Base mais consistente para segmentação de público e análises de performance.
+    reflexao: >
+      Boa análise começa com dado confiável — agora sempre valido amostra antes de concluir.
+
+  - id: modelagem_base_clientes
+    tags:
+      - organizacao
+      - sql
+      - melhoria
+      - processo
+      - iniciativa
+    pergunta_exemplo: "Uma melhoria que você implementou no trabalho"
+    situacao: >
+      Consultas sobre a base de clientes eram repetitivas e demoradas porque
+      os dados não estavam organizados para análises recorrentes.
+    tarefa: >
+      Facilitar consultas e segmentação da base para o time comercial.
+    acao: >
+      Modelei estruturas relacionais e criei tabelas pensadas para os recortes
+      que o time mais pedia (segmentação, histórico, consultas frequentes).
+    resultado: >
+      Análises recorrentes ficaram mais rápidas e previsíveis para a equipe.
+    reflexao: >
+      Investir tempo em modelagem no início economiza horas de retrabalho depois.
+
+  - id: aprendizado_rapido_ferramenta
+    tags:
+      - aprendizado
+      - adaptacao
+      - curso
+      - power bi
+      - python
+    pergunta_exemplo: "Como você aprende algo novo rapidamente?"
+    situacao: >
+      No estágio, precisei aplicar Power BI e Python em projetos reais enquanto
+      ainda cursava Sistemas de Informação no IMT.
+    tarefa: >
+      Entregar análises úteis para o negócio com ferramentas que estava consolidando.
+    acao: >
+      Combinei cursos (Power BI, SQL, Python/Pandas) com aplicação imediata nos
+      casos da Ótica Santo Grau, pedindo feedback do time sobre clareza dos entregáveis.
+    resultado: >
+      Consegui entregar dashboards e tratamentos de dados usados pelo time comercial.
+    reflexao: >
+      Aprendo melhor aplicando em problema real do que só em exercício teórico.
+
+  - id: alinhamento_area_negocio
+    tags:
+      - comunicacao
+      - stakeholder
+      - equipe
+      - comercial
+      - conflito leve
+    pergunta_exemplo: "Como você lidou com divergência ou alinhamento com outra área?"
+    situacao: >
+      Em algumas análises, o comercial pedia recortes diferentes ou métricas
+      que não batiam com a definição inicial do relatório.
+    tarefa: >
+      Entregar análise correta sem gerar ruído entre áreas.
+    acao: >
+      Marquei uma conversa rápida para alinhar definição de KPI, período e público
+      antes de refazer consultas; documentei o combinado para as próximas semanas.
+    resultado: >
+      Menos retrabalho e relatórios mais alinhados com o que o time precisava decidir.
+    reflexao: >
+      Cinco minutos de alinhamento no início evitam horas refazendo dashboard.
+
+  - id: tumaia_produto_real
+    tags:
+      - projeto pessoal
+      - iniciativa
+      - empreendedorismo
+      - full stack
+      - ia
+      - javascript
+      - tumaia
+    pergunta_exemplo: "Conte um projeto seu ou algo que você construiu do zero"
+    situacao: >
+      Queria aplicar dados, automação e IA em um problema real de PME: criar
+      conteúdo para redes sem depender de processo manual pesado.
+    tarefa: >
+      Desenvolver o TumaIA — SaaS em que o cliente pede post pelo WhatsApp e o
+      sistema usa contexto da marca para gerar proposta (imagem + legenda) com aprovação.
+    acao: >
+      Trabalhei no ecossistema do produto: painel Next.js, API Node/Express,
+      integração com Supabase (contexto multi-empresa), fluxos com n8n e camada de IA.
+      Foquei em fazer o fluxo funcionar ponta a ponta, não só um protótipo isolado.
+    resultado: >
+      Produto com fluxo real (WhatsApp → contexto → IA → aprovação → Instagram),
+      demonstrando capacidade de integrar front, back, banco e automação.
+    reflexao: >
+      Projeto me ensinou a pensar em produto completo: isolamento por empresa,
+      UX do painel e confiabilidade do fluxo importam tanto quanto o modelo de IA.
+
+  - id: tumaia_dados_multitenant
+    tags:
+      - dados
+      - sql
+      - responsabilidade
+      - seguranca
+      - supabase
+      - organizacao
+      - tumaia
+    pergunta_exemplo: "Como você garante qualidade ou consistência em dados?"
+    situacao: >
+      No TumaIA, cada empresa tem contexto, mídias e configurações próprias —
+      erro de isolamento ou consulta sem filtro quebra a confiança no SaaS.
+    tarefa: >
+      Garantir que leituras e gravações respeitem o tenant correto (id_empresa).
+    acao: >
+      Segui o padrão do projeto: validar vínculo do usuário com a empresa,
+      filtrar queries no Supabase por empresa e tratar rotas de IA/automação
+      com o mesmo critério antes de expor dado.
+    resultado: >
+      Base mais previsível para operação multi-cliente e menos risco de misturar
+      contexto de marcas diferentes.
+    reflexao: >
+      Vindo da análise de dados, levei para o produto o hábito de sempre perguntar:
+      "esses dados são da empresa certa?"
+
+  - id: tumacore_centro_dados
+    tags:
+      - projeto pessoal
+      - tumacore
+      - dados
+      - bi
+      - dashboard
+      - produto
+    pergunta_exemplo: "Fale sobre um projeto seu relacionado a dados"
+    situacao: >
+      O TumaIA (SaaS de geração de posts) gerava muita operação em banco — gerações,
+      planos, empresas, faturas — mas faltava um lugar único para o time enxergar
+      e consultar esses dados sem depender só de SQL manual.
+    tarefa: >
+      Construir o TumaCore como centro de dados B2B: visualização operacional +
+      consulta assistida ligada ao Postgres/Supabase do produto.
+    acao: >
+      Desenvolvi a plataforma em FastAPI + Next.js: dashboards com KPIs, evolução
+      de pedidos, distribuição por segmento/região, mapa e analytics; painel de
+      clientes; e chat em português que lê o schema ao vivo e monta SQL para
+      tabelas como tb_geracao, tb_empresa, tb_plano e tb_fatura.
+    resultado: >
+      Hub único para acompanhar operação do TumaIA e tirar dúvidas de negócio
+      com dados, sem abrir o banco a cada pergunta.
+    reflexao: >
+      Unir dashboard + chat SQL no mesmo produto reflete o que aprendi no estágio:
+      dado só vale quando alguém consegue ver e perguntar sem fricção.
+
+  - id: tumacore_dashboards
+    tags:
+      - dashboard
+      - power bi
+      - visualizacao
+      - kpis
+      - tumacore
+      - dados
+    pergunta_exemplo: "Experiência com dashboards ou visualização de dados"
+    situacao: >
+      Gestores e operação do TumaIA precisavam ver tendência de gerações, recorte
+      por empresa e visão geográfica — não só exportar planilha.
+    tarefa: >
+      Tornar os dados operacionais legíveis em um dashboard com filtros de período.
+    acao: >
+      Implementei no TumaCore: faixa de KPIs, gráfico de evolução, distribuição
+      por segmento e região (incl. mapa do Brasil), fluxo operacional e tabela
+      de empresas; página de analytics com saúde, uso e performance. Dados via
+      Supabase (tb_geracao e tabelas relacionadas).
+    resultado: >
+      Visão operacional centralizada — similar ao que fiz com Power BI no estágio,
+      mas integrada ao produto web e ao banco em tempo real.
+    reflexao: >
+      Dashboard bom responde "como estamos?" antes de alguém pedir um relatório.
+
+  - id: tumacore_chat_sql
+    tags:
+      - sql
+      - banco de dados
+      - ia
+      - tumacore
+      - python
+      - analise
+    pergunta_exemplo: "Como você usa SQL ou IA com banco de dados?"
+    situacao: >
+      Nem todo usuário do TumaIA quer escrever SQL para saber, por exemplo,
+      quantas fotos foram usadas no mês ou quais empresas estão perto do limite.
+    tarefa: >
+      Permitir perguntas em português e devolver consulta SQL útil sobre o banco.
+    acao: >
+      No backend (FastAPI), o chat detecta perguntas sobre banco/schema, carrega
+      resumo do information_schema com cache, combina com contexto RAG quando
+      necessário e usa LLM para montar SELECT focado nas tabelas do domínio
+      (geração, plano, empresa, fatura). Front em Next.js com histórico de conversa.
+    resultado: >
+      Usuário pergunta em linguagem natural e recebe SQL PostgreSQL alinhado ao
+      schema real — menos barreira para consulta ad hoc.
+    reflexao: >
+      Schema vivo + IA reduz erro de "adivinhar" nome de coluna; eu já vivi isso
+      manualmente no estágio com SQL repetitivo.
+
+  - id: projetos_paralelos_imt
+    tags:
+      - gestao de tempo
+      - disciplina
+      - faculdade
+      - projeto pessoal
+      - motivacao
+      - tumaia
+      - tumacore
+    pergunta_exemplo: "Como concilia faculdade com outras responsabilidades?"
+    situacao: >
+      Cursando Sistemas de Informação no IMT (7º sem.) enquanto desenvolvo
+      TumaIA, TumaCore e projetos como o Tuma Emprego.
+    tarefa: >
+      Manter entregas da faculdade sem abandonar evolução técnica real em projetos.
+    acao: >
+      Priorizo blocos de tempo para o que está em produção (feature pequena por vez),
+      alinho com estágio/cursos e evito muitas frentes abertas ao mesmo tempo.
+    resultado: >
+      Experiência prática (estágio + projetos) alinhada à grade, não só teoria.
+    reflexao: >
+      Faculdade dá base; projeto pessoal dá prova — uso os dois no CV conforme a vaga.
+
+# Respostas curtas (campos muito limitados)
+respostas_curtas:
+  por_que_dados: >
+    Gosto de transformar dados em decisão — estágio (Power BI/SQL), TumaCore
+    (dashboards + chat SQL no centro de dados do TumaIA) e TumaIA (contexto por empresa).
+  por_que_estagio: >
+    Busco aplicar SQL, Python e Power BI em problemas reais e crescer com um time
+    que use dados no dia a dia.
+  maior_qualidade: >
+    Organização, prazo e vontade de aprender — inclusive em TumaIA e TumaCore.
+  maior_desenvolvimento: >
+    Em formação; busco estágio para ganhar ritmo em projetos maiores.
+  projetos_destaque: >
+    TumaCore: centro de dados B2B — dashboards, analytics e chat que monta SQL
+    lendo o Postgres. TumaIA: SaaS WhatsApp + IA para Instagram.

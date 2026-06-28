@@ -1,0 +1,51 @@
+# Copiar para profile.yml e preencher
+
+# Identificação
+nome: ""
+nome_social: ""
+data_nascimento: "" # DD/MM/AAAA
+cpf: ""
+rg: ""
+rg_orgao: ""
+nacionalidade: "Brasileira"
+sexo: ""
+estado_civil: ""
+naturalidade_cidade: ""
+naturalidade_estado: ""
+
+# Documentos
+cnh: ""
+cnh_categoria: ""
+
+# Comunicação
+email: ""
+telefone: ""
+whatsapp: ""
+
+# Endereço
+cep: ""
+logradouro: ""
+numero: ""
+complemento: ""
+bairro: ""
+cidade: ""
+estado: ""
+pais: "Brasil"
+
+# Links
+linkedin: ""
+github: ""
+portfolio: ""
+
+# Diversidade
+pcd: "Não"
+cor_ou_raca: ""
+
+# Busca
+nivel: estagio
+areas_foco:
+  - analise_dados
+modo_busca: focado
+remoto: sim
+modo_cv: enfase_por_vaga
+nota_minima_candidatar: 4.0

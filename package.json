@@ -1,0 +1,12 @@
+{
+  "name": "tuma-emprego",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix site",
+    "build": "npm run build --prefix site",
+    "start": "npm run start --prefix site",
+    "lint": "npm run lint --prefix site",
+    "install:site": "npm install --prefix site"
+  }
+}

@@ -1,0 +1,14 @@
+instituicao: ""
+curso: ""
+grau: ""
+semestre: ""
+periodo_inicio: "" # MM/AAAA
+previsao_formatura: "" # MM/AAAA
+cidade_campus: ""
+estado_campus: ""
+status: "Cursando"
+turno: ""
+
+horario_disponivel: ""
+carga_horaria_semanal: ""
+disponibilidade_inicio: ""
