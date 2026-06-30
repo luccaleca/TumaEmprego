@@ -7,6 +7,11 @@
     "build": "npm run build --prefix site",
     "start": "npm run start --prefix site",
     "lint": "npm run lint --prefix site",
-    "install:site": "npm install --prefix site"
+    "install:site": "npm install --prefix site",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-db.ps1",
+    "db:push": "npm run db:push --prefix site",
+    "db:studio": "npm run db:studio --prefix site"
   }
 }

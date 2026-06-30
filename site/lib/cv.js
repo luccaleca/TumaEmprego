@@ -3,10 +3,7 @@ import path from "path";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 
-export function parseCvBase() {
-  const filePath = path.join(DADOS_ROOT, "cv-base.md");
-  const raw = fs.readFileSync(filePath, "utf8");
-
+export function parseCvBase(raw) {
   const sections = [];
   const parts = raw.split(/^## /m);
 

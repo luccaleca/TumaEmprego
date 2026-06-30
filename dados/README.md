@@ -3,6 +3,7 @@
 | O quê | Onde |
 |-------|------|
 | CV completo | `cv-base.md` |
+| Currículo PDF | `curriculo/principal.pdf` *(local)* |
 | Perfil / contato | `config/profile.yml` *(local — copie de `profile.example.yml`)* |
 | Formação | `config/formacao.yml` |
 | Tecnologias | `config/tecnologias.yml` |

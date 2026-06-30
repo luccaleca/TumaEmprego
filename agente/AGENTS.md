@@ -16,7 +16,7 @@
 10. **Perguntar quando faltar info** — CV, métrica, JD incompleta: pedir em vez de chutar.
 11. **UI limpa, sem justificativa** — não colocar na aplicação (títulos, labels, hints, descrições, tooltips) o raciocínio ou contexto do pedido. Explicações ficam **no chat**, não no produto. Na tela: texto curto e direto — ex.: **"Contato"**, não "Dados de contato pedidos em Gupy, Catho, InfoJobs e LinkedIn". O mesmo para comentários no código que só repetem o pedido.
 12. **Linguagem simples** — comentários no código, commits e mensagens em português claro, como programador iniciante; sem jargão nem texto robótico.
-13. **Commits como o usuário** — só commitar quando ele pedir. Mensagem curta em 1ª pessoa. **Nunca** `Co-authored-by`, `Made-with: Cursor`, nem frase que pareça gerada por IA.
+13. **Commits** — só commitar quando o usuário pedir. Título **curto no imperativo** (como o GitHub usa): `adiciona secao tecnologias`, `remove profile.yml do git` — **não** 1ª pessoa (`eu adicionei…`). Corpo opcional, 1–3 linhas, só se precisar. **Nunca** `Co-authored-by`, `Made-with: Cursor`, nem texto que pareça gerado por IA.
 
 **Comentários no código:** português, só onde não for óbvio — nunca como justificativa de tarefa.
 
