@@ -4,12 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3737",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start -p 3737",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.1",
+    "@prisma/client": "^6.19.0",
     "next": "16.2.9",
+    "pdfjs-dist": "^6.1.200",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "yaml": "^2.9.0"
@@ -18,6 +25,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "prisma": "^6.19.0",
     "tailwindcss": "^4"
   }
 }

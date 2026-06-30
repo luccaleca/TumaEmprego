@@ -49,6 +49,40 @@ export function getCvResumo() {
     .trim();
 }
 
+export function getCvBase() {
+  return readText("cv-base.md");
+}
+
+export function saveCvBase(content) {
+  const filePath = path.join(DADOS_ROOT, "cv-base.md");
+  fs.writeFileSync(filePath, String(content), "utf8");
+}
+
+const CURRICULO_PDF = "curriculo/principal.pdf";
+
+export function getCurriculoPdfPath() {
+  const filePath = path.join(DADOS_ROOT, CURRICULO_PDF);
+  return fs.existsSync(filePath) ? filePath : null;
+}
+
+export function getCurriculoArquivo() {
+  const filePath = getCurriculoPdfPath();
+  if (!filePath) return null;
+
+  const stat = fs.statSync(filePath);
+  return {
+    name: path.basename(filePath),
+    size: stat.size,
+    updatedAt: stat.mtime.toISOString(),
+  };
+}
+
+export function saveCurriculoPdf(buffer) {
+  const dir = path.join(DADOS_ROOT, "curriculo");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "principal.pdf"), buffer);
+}
+
 export function getProfilePhotoPath() {
   const dir = path.join(DADOS_ROOT, "fotos");
   if (!fs.existsSync(dir)) return null;

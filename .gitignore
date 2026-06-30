@@ -13,11 +13,20 @@ site/out/
 # Postgres / Prisma
 *.db
 *.db-journal
+site/.env
+
+# SQL: scripts/sql/001-*.sql etc. vão no Git (estrutura do banco).
+# Ignorar só dumps/backups com dados reais:
+scripts/sql/dumps/
+!scripts/sql/dumps/.gitkeep
+*.dump
+*.backup.sql
 
 # Dados pessoais — não versionar
 dados/config/profile.yml
 dados/pdfs/*
 dados/fotos/*
+dados/curriculo/principal.pdf
 !dados/pdfs/.gitkeep
 !dados/fotos/.gitkeep
 

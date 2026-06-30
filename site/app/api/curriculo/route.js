@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getCurriculoAtivo } from "@/lib/dados";
+import { getCurriculoAtivo, getCvBase } from "@/lib/dados";
 import { parseCvBase } from "@/lib/cv";
 
 export async function GET() {
   try {
     return NextResponse.json({
-      base: parseCvBase(),
+      base: parseCvBase(getCvBase()),
       ativo: getCurriculoAtivo(),
     });
   } catch (err) {
