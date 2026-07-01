@@ -7,4 +7,70 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Schema vazio — vamos montar as tabelas juntos.
+/// Área principal do mapa de tecnologia (ex.: Dados, Desenvolvimento).
+model VagaArea {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique
+  nome        String
+  titulosRaiz String[] @default([]) @map("titulos_raiz")
+  ordem       Int      @default(0)
+  criadoEm    DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  nichos        VagaNicho[]
+  palavrasChave VagaPalavraChave[]
+
+  @@map("vaga_area")
+}
+
+/// Subgrupo dentro da área (ex.: Front-end, BI, Análise).
+model VagaNicho {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  areaId String @map("area_id") @db.Uuid
+  slug   String
+  nome   String
+  ordem  Int    @default(0)
+
+  area    VagaArea     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  titulos VagaTitulo[]
+
+  @@unique([areaId, slug])
+  @@map("vaga_nicho")
+}
+
+/// Título de vaga/cargo cadastrado no mercado (sem senioridade).
+model VagaTitulo {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nichoId   String   @map("nicho_id") @db.Uuid
+  titulo    String
+  sinonimos String[] @default([])
+  criadoEm  DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  nicho VagaNicho @relation(fields: [nichoId], references: [id], onDelete: Cascade)
+
+  @@unique([nichoId, titulo])
+  @@map("vaga_titulo")
+}
+
+/// Termos técnicos frequentes associados a uma área (SQL, Power BI, etc.).
+model VagaPalavraChave {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  areaId String @map("area_id") @db.Uuid
+  termo  String
+
+  area VagaArea @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@unique([areaId, termo])
+  @@map("vaga_palavra_chave")
+}
+
+/// Nível de senioridade (combinado com o título na busca — não faz parte do nome do cargo).
+model VagaSenioridade {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug      String   @unique
+  nome      String
+  sinonimos String[] @default([])
+  ordem     Int      @default(0)
+  criadoEm  DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  @@map("vaga_senioridade")
+}

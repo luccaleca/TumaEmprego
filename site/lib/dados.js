@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { parse, stringify } from "yaml";
+import { normalizarModalidades, normalizarSenioridades } from "./preferenciasBusca";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 
@@ -25,6 +26,58 @@ export function getFormacao() {
 
 export function getTecnologias() {
   return readYaml("config/tecnologias.yml");
+}
+
+export function getBusca() {
+  const raw = readYaml("config/busca.yml");
+  let profile = null;
+  try {
+    profile = readYaml("config/profile.yml");
+  } catch {
+    profile = null;
+  }
+  return normalizarBusca(raw, profile);
+}
+
+function inferirSegmentos(raw) {
+  if (Array.isArray(raw?.segmentos_ativos) && raw.segmentos_ativos.length) {
+    return raw.segmentos_ativos.filter(Boolean);
+  }
+  const slugs = new Set();
+  for (const chave of raw?.titulos_ativos ?? []) {
+    const slug = String(chave).split("/")[0];
+    if (slug) slugs.add(slug);
+  }
+  return [...slugs];
+}
+
+function normalizarBusca(raw, profileFallback = null) {
+  const fonte = { ...profileFallback, ...raw };
+  const titulos = Array.isArray(raw?.titulos_ativos)
+    ? raw.titulos_ativos.filter(Boolean)
+    : [];
+
+  return {
+    segmentos_ativos: inferirSegmentos(raw),
+    titulos_ativos: titulos,
+    senioridades: normalizarSenioridades(fonte),
+    modalidades_trabalho: normalizarModalidades(fonte),
+    modo_busca: fonte?.modo_busca ?? "focado",
+    nota_minima: Number(fonte?.nota_minima ?? fonte?.nota_minima_candidatar ?? 4) || 4,
+  };
+}
+
+export function saveBusca(busca) {
+  const filePath = path.join(DADOS_ROOT, "config/busca.yml");
+  const payload = {
+    segmentos_ativos: (busca?.segmentos_ativos ?? []).filter(Boolean),
+    titulos_ativos: (busca?.titulos_ativos ?? []).filter(Boolean),
+    senioridades: busca?.senioridades ?? ["estagio"],
+    modalidades_trabalho: busca?.modalidades_trabalho ?? ["remoto", "presencial", "hibrido"],
+    modo_busca: busca?.modo_busca ?? "focado",
+    nota_minima: Number(busca?.nota_minima ?? 4) || 4,
+  };
+  fs.writeFileSync(filePath, `${stringify(payload)}\n`, "utf8");
 }
 
 export function getCurriculoAtivo() {
