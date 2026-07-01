@@ -1,23 +1,31 @@
 import CurriculoWorkspace from "@/components/curriculo/CurriculoWorkspace";
 import { parseCvBase } from "@/lib/cv";
-import { getCvBase, getCurriculoArquivo } from "@/lib/dados";
+import { getCurriculoArquivo } from "@/lib/dados";
+import {
+  getSegmentacaoConteudo,
+  listSegmentacoes,
+  migrarAdaptadoBuscaLegado,
+} from "@/lib/segmentacoes";
 
 export const metadata = {
   title: "Tuma Emprego — Currículo",
 };
 
 export default function CurriculoPage() {
-  const content = getCvBase();
-  const sections = parseCvBase(content);
+  migrarAdaptadoBuscaLegado();
   const arquivo = getCurriculoArquivo();
+
+  const segmentacoes = listSegmentacoes().map((seg) => {
+    if (!seg.hasMd) return seg;
+    const conteudo = getSegmentacaoConteudo(seg.id);
+    const sections =
+      conteudo?.formato === "markdown" ? parseCvBase(conteudo.content) : [];
+    return { ...seg, _sections: sections };
+  });
 
   return (
     <main className="w-full">
-      <CurriculoWorkspace
-        initialContent={content}
-        initialSections={sections}
-        initialArquivo={arquivo}
-      />
+      <CurriculoWorkspace initialArquivo={arquivo} initialSegmentacoes={segmentacoes} />
     </main>
   );
 }

@@ -1,0 +1,16 @@
+# Preferências e cargos — página Segmentos
+
+senioridades:
+  - estagio
+
+modalidades_trabalho:
+  - remoto
+  - presencial
+  - hibrido
+
+modo_busca: focado
+nota_minima: 4
+
+segmentos_ativos: []
+
+titulos_ativos: []

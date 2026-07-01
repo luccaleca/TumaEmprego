@@ -25,8 +25,16 @@ export default function CvPdfThumbnail({ src }) {
 
       try {
         if (typeof src === "string") {
+          const res = await fetch(src);
+          if (!res.ok || !res.headers.get("content-type")?.includes("image/")) {
+            throw new Error("preview failed");
+          }
+
+          const blob = await res.blob();
+          objectUrl = URL.createObjectURL(blob);
+
           if (!cancelled) {
-            setThumbUrl(src);
+            setThumbUrl(objectUrl);
             setStatus("ready");
           }
           return;

@@ -24,15 +24,18 @@ scripts/sql/dumps/
 
 # Dados pessoais — não versionar
 dados/config/profile.yml
+dados/config/busca.yml
 dados/pdfs/*
 dados/fotos/*
 dados/curriculo/principal.pdf
+dados/curriculo/segmentacoes/
 !dados/pdfs/.gitkeep
 !dados/fotos/.gitkeep
 
 # Playwright
 playwright-report/
 test-results/
+site/test-thumb.png
 
 # OS
 .DS_Store

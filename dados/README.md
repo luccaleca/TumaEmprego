@@ -7,6 +7,7 @@
 | Perfil / contato | `config/profile.yml` *(local — copie de `profile.example.yml`)* |
 | Formação | `config/formacao.yml` |
 | Tecnologias | `config/tecnologias.yml` |
+| Segmentos / alvos de vaga | `config/busca.yml` |
 | Candidatura | `respostas/padrao.yml` |
 | CV base | `cv-base.md` |
 | Vaga atual | `curriculo/ativo.yml` |
