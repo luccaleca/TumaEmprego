@@ -22,6 +22,36 @@ export function tituloVagaFromAlvos(alvos) {
   return `${lista[0].senioridade} · ${lista[0].titulo} (+${lista.length - 1} alvos)`;
 }
 
+export function tituloVagaFromSegmento(segmentoNome, alvosPrimarios) {
+  const lista = alvosPrimarios ?? [];
+  if (!lista.length) return `Currículo · ${segmentoNome}`;
+  if (lista.length === 1) {
+    return `${lista[0].senioridade} · ${lista[0].titulo}`;
+  }
+  return `${segmentoNome} · ${lista[0].titulo} (+${lista.length - 1})`;
+}
+
+export function descricaoVagaFromPedido(pedido) {
+  const linhas = [];
+  const foco = pedido.alvos_primarios ?? pedido.alvos ?? [];
+  const comp = pedido.alvos_complementares ?? [];
+
+  if (foco.length) {
+    linhas.push("Foco:");
+    linhas.push(...foco.map((a) => `${a.senioridade} · ${a.titulo} — ${a.nicho ?? a.area}`));
+  } else if (pedido.segmento?.nome) {
+    linhas.push(`Foco: ${pedido.segmento.nome} (geral)`);
+  }
+
+  if (comp.length) {
+    linhas.push("Complemento:");
+    linhas.push(...comp.map((a) => `${a.senioridade} · ${a.titulo} — ${a.area} → ${a.nicho}`));
+  }
+
+  return linhas.join("\n");
+}
+
+/** @deprecated use descricaoVagaFromPedido */
 export function descricaoVagaFromAlvos(alvos) {
   return (alvos ?? [])
     .map((a) => `${a.senioridade} · ${a.titulo} — ${a.area} → ${a.nicho}`)
@@ -96,7 +126,9 @@ export function criarSegmentacao({
   vaga_titulo,
   vaga_descricao = "",
   origem = "manual",
+  segmento_slug = null,
   alvos = [],
+  alvos_complementares = [],
   conteudoMd,
   pdfBuffer,
 }) {
@@ -116,7 +148,9 @@ export function criarSegmentacao({
     vaga_titulo: vaga_titulo.trim(),
     vaga_descricao: String(vaga_descricao ?? "").trim(),
     origem,
+    segmento_slug,
     alvos,
+    alvos_complementares,
     criado_em: new Date().toISOString(),
     formato: pdfBuffer?.length ? "pdf" : "markdown",
   };
@@ -132,12 +166,17 @@ export function criarSegmentacao({
 }
 
 export function criarSegmentacaoFromPedido(pedido, conteudoMd) {
-  const alvos = pedido.alvos ?? [];
+  const primarios = pedido.alvos_primarios ?? pedido.alvos ?? [];
+  const complementares = pedido.alvos_complementares ?? [];
+  const segmentoNome = pedido.segmento?.nome ?? "Segmento";
+
   return criarSegmentacao({
-    vaga_titulo: tituloVagaFromAlvos(alvos),
-    vaga_descricao: descricaoVagaFromAlvos(alvos),
+    vaga_titulo: tituloVagaFromSegmento(segmentoNome, primarios),
+    vaga_descricao: descricaoVagaFromPedido(pedido),
     origem: "busca",
-    alvos,
+    segmento_slug: pedido.segmento?.slug ?? null,
+    alvos: primarios,
+    alvos_complementares: complementares,
     conteudoMd,
   });
 }

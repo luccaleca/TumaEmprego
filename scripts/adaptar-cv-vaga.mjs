@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CLI: adapta cv-base para segmento de busca (delega ao motor em site/lib).
+ * CLI: adapta cv-base para vaga (delega ao motor em site/lib).
  */
 import fs from "fs";
 import path from "path";
@@ -25,26 +25,25 @@ async function main() {
   loadEnv();
   process.chdir(path.join(REPO_ROOT, "site"));
 
-  const { adaptarCvParaBusca } = await import(pathToFileURL(path.join(SITE_LIB, "adaptarCvLocal.js")));
+  const { adaptarCvParaVaga } = await import(pathToFileURL(path.join(SITE_LIB, "adaptarCvLocal.js")));
   const { tentarAdaptarComCursor } = await import(pathToFileURL(path.join(SITE_LIB, "adaptarCvCursor.js")));
 
-  const pedidoPath = path.join(REPO_ROOT, "dados", "curriculo", "pedido-adaptacao.json");
+  const pedidoPath = path.join(REPO_ROOT, "dados", "curriculo", "pedido-vaga.json");
   const cvPath = path.join(REPO_ROOT, "dados", "cv-base.md");
-  const promptPath = path.join(REPO_ROOT, "dados", "curriculo", "adaptacao-prompt.md");
-  const outPath = path.join(REPO_ROOT, "dados", "curriculo", "adaptado-busca.md");
+  const promptPath = path.join(REPO_ROOT, "dados", "curriculo", "adaptacao-vaga-prompt.md");
+  const outPath = path.join(REPO_ROOT, "dados", "curriculo", "adaptado-vaga.md");
 
-  const raw = JSON.parse(fs.readFileSync(pedidoPath, "utf8"));
-  const pedido = raw.pedidos?.[0] ?? raw;
+  const pedido = JSON.parse(fs.readFileSync(pedidoPath, "utf8"));
   const cvBase = fs.readFileSync(cvPath, "utf8");
   const prompt = fs.existsSync(promptPath)
     ? fs.readFileSync(promptPath, "utf8")
-    : "Adapte o CV para os alvos do pedido.";
+    : "Adapte o CV para a vaga.";
 
   let conteudo = await tentarAdaptarComCursor(prompt, cvBase);
-  if (!conteudo) conteudo = adaptarCvParaBusca(cvBase, pedido);
+  if (!conteudo) conteudo = adaptarCvParaVaga(cvBase, pedido);
 
   fs.writeFileSync(outPath, conteudo, "utf8");
-  console.log("adaptado-busca.md gerado");
+  console.log("adaptado-vaga.md gerado");
 }
 
 main().catch((err) => {

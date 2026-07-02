@@ -13,6 +13,7 @@
     "db:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-db.ps1",
     "db:push": "npm run db:push --prefix site",
     "db:studio": "npm run db:studio --prefix site",
-    "adaptar-cv": "node scripts/adaptar-cv-busca.mjs"
+    "adaptar-cv": "node scripts/adaptar-cv-busca.mjs",
+    "adaptar-cv-vaga": "node scripts/adaptar-cv-vaga.mjs"
   }
 }

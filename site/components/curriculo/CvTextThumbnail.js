@@ -1,6 +1,6 @@
 "use client";
 
-import { THUMB_WIDTH } from "@/components/curriculo/CvPdfThumbnail";
+import { getThumbSize } from "@/components/curriculo/CvPdfThumbnail";
 
 function snippet(text, max = 400) {
   const clean = String(text ?? "").trim();
@@ -9,14 +9,14 @@ function snippet(text, max = 400) {
   return `${clean.slice(0, max).trimEnd()}…`;
 }
 
-export default function CvTextThumbnail({ text }) {
+export default function CvTextThumbnail({ text, compact = false }) {
   const preview = snippet(text);
-  const height = Math.round(THUMB_WIDTH * 1.414);
+  const { width, height } = getThumbSize(compact);
 
   return (
     <div
       className="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm"
-      style={{ width: THUMB_WIDTH, height }}
+      style={{ width, height }}
     >
       <div className="max-h-full overflow-hidden px-2 py-2">
         <pre className="whitespace-pre-wrap font-sans text-[9px] leading-relaxed text-zinc-600">
