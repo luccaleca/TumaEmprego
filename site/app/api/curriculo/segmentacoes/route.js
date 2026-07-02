@@ -10,6 +10,11 @@ function extension(name) {
   return dot >= 0 ? name.slice(dot).toLowerCase() : "";
 }
 
+function tituloFromFile(name) {
+  const base = name.replace(/\.[^.]+$/, "").trim();
+  return base || "Currículo";
+}
+
 export async function GET() {
   try {
     migrarAdaptadoBuscaLegado();
@@ -26,17 +31,14 @@ export async function GET() {
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    const vagaTitulo = String(formData.get("vaga_titulo") ?? "").trim();
-    const vagaDescricao = String(formData.get("vaga_descricao") ?? "").trim();
+    const vagaTituloInput = String(formData.get("vaga_titulo") ?? "").trim();
     const file = formData.get("file");
-
-    if (!vagaTitulo) {
-      return NextResponse.json({ error: "Informe para qual vaga é este currículo" }, { status: 400 });
-    }
 
     if (!file || typeof file === "string") {
       return NextResponse.json({ error: "Arquivo obrigatório" }, { status: 400 });
     }
+
+    const vagaTitulo = vagaTituloInput || tituloFromFile(file.name);
 
     const ext = extension(file.name);
     if (!ALLOWED.includes(ext)) {
@@ -56,7 +58,6 @@ export async function POST(request) {
     if (ext === ".pdf") {
       segmentacao = criarSegmentacao({
         vaga_titulo: vagaTitulo,
-        vaga_descricao: vagaDescricao,
         origem: "manual",
         pdfBuffer: buffer,
       });
@@ -67,7 +68,6 @@ export async function POST(request) {
       }
       segmentacao = criarSegmentacao({
         vaga_titulo: vagaTitulo,
-        vaga_descricao: vagaDescricao,
         origem: "manual",
         conteudoMd: content,
       });

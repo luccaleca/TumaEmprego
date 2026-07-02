@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { spawn } from "child_process";
 import { getBusca, getCvBase, getProfile } from "@/lib/dados";
 import { listarTitulosAtivos } from "@/lib/vagaCatalogo";
 import { labelModalidades } from "@/lib/buscaOpcoes";
@@ -9,29 +8,28 @@ import {
   labelsSenioridades,
   preferenciasFromBusca,
 } from "@/lib/preferenciasBusca";
-import {
-  criarSegmentacaoFromPedido,
-} from "@/lib/segmentacoes";
+import { areaSlugFromChave } from "@/lib/alvosSegmento";
+import { criarSegmentacaoFromPedido } from "@/lib/segmentacoes";
+import { adaptarCvParaBusca } from "@/lib/adaptarCvLocal";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
-const REPO_ROOT = path.join(process.cwd(), "..");
 const PEDIDO_PATH = path.join(DADOS_ROOT, "curriculo", "pedido-adaptacao.json");
-const ADAPTADO_PATH = path.join(DADOS_ROOT, "curriculo", "adaptado-busca.md");
 const PROMPT_PATH = path.join(DADOS_ROOT, "curriculo", "adaptacao-prompt.md");
+const ADAPTADO_PATH = path.join(DADOS_ROOT, "curriculo", "adaptado-busca.md");
 
-export function getAdaptacaoBuscaPath() {
-  return fs.existsSync(ADAPTADO_PATH) ? ADAPTADO_PATH : null;
+function mapAlvosExpandidos(alvos, senioridades) {
+  return expandirAlvosCandidatura(alvos, senioridades).map((a) => ({
+    senioridade: a.senioridadeLabel,
+    titulo: a.titulo,
+    area: a.area,
+    nicho: a.nicho,
+    chave: a.chave,
+  }));
 }
 
-export function getAdaptacaoBuscaConteudo() {
-  if (!fs.existsSync(ADAPTADO_PATH)) return null;
-  return fs.readFileSync(ADAPTADO_PATH, "utf8");
-}
-
-export function montarPedidoAdaptacao(busca, catalogo) {
+export function montarPedidosAdaptacao(busca, catalogo) {
   const preferencias = preferenciasFromBusca(busca);
-  const alvos = listarTitulosAtivos(catalogo, busca.titulos_ativos ?? []);
-  const alvosExpandidos = expandirAlvosCandidatura(alvos, preferencias.senioridades);
+  const todos = listarTitulosAtivos(catalogo, busca.titulos_ativos ?? []);
 
   let profile = {};
   try {
@@ -40,37 +38,56 @@ export function montarPedidoAdaptacao(busca, catalogo) {
     profile = {};
   }
 
+  return (busca.segmentos_ativos ?? []).map((slug) => {
+    const area = (catalogo ?? []).find((a) => a.slug === slug);
+    const primarios = todos.filter((t) => areaSlugFromChave(t.chave) === slug);
+    const complementares = todos.filter((t) => areaSlugFromChave(t.chave) !== slug);
+
+    return {
+      criado_em: new Date().toISOString(),
+      segmento: {
+        slug,
+        nome: area?.nome ?? slug,
+      },
+      preferencias,
+      alvos_primarios: mapAlvosExpandidos(primarios, preferencias.senioridades),
+      alvos_complementares: mapAlvosExpandidos(complementares, preferencias.senioridades),
+      candidato: {
+        nome: profile.nome ?? "",
+      },
+    };
+  });
+}
+
+/** @deprecated use montarPedidosAdaptacao */
+export function montarPedidoAdaptacao(busca, catalogo) {
+  const pedidos = montarPedidosAdaptacao(busca, catalogo);
+  if (!pedidos.length) return null;
+  const p = pedidos[0];
   return {
-    criado_em: new Date().toISOString(),
+    ...p,
     segmentos: busca.segmentos_ativos ?? [],
-    preferencias,
-    alvos: alvosExpandidos.map((a) => ({
-      senioridade: a.senioridadeLabel,
-      titulo: a.titulo,
-      area: a.area,
-      nicho: a.nicho,
-    })),
-    candidato: {
-      nome: profile.nome ?? "",
-      formacao: profile.nome ? undefined : "",
-    },
+    alvos: [...p.alvos_primarios, ...p.alvos_complementares],
   };
 }
 
-export function montarPromptAdaptacao(pedido) {
-  const alvosLista = pedido.alvos
+function formatarListaAlvos(alvos) {
+  return (alvos ?? [])
     .map((a) => `- ${a.senioridade} · ${a.titulo} (${a.area} → ${a.nicho})`)
     .join("\n");
+}
 
-  return `# Adaptação de CV — busca salva
+export function montarPromptAdaptacao(pedido) {
+  return `# Adaptação de CV — ${pedido.segmento.nome}
 
 Leia \`agente/AGENTS.md\` e \`dados/cv-base.md\`.
 
 ## Regras
 - Não inventar experiência, ferramentas ou números.
-- Adaptar ênfase do resumo, experiência e projetos para os alvos abaixo.
+- **Foco principal:** segmento "${pedido.segmento.nome}" e alvos principais abaixo.
+- **Complemento:** mencionar alvos de outros segmentos como habilidade extra, sem roubar o foco.
 - Manter markdown compatível com cv-base (mesmas seções).
-- Escrever o resultado completo no caminho indicado pela variável de ambiente SEG_OUTPUT_MD ou em \`dados/curriculo/adaptado-busca.md\`.
+- Escrever o resultado completo em markdown na resposta (não em arquivo).
 
 ## Preferências
 - Senioridades: ${labelsSenioridades(pedido.preferencias.senioridades)}
@@ -78,68 +95,30 @@ Leia \`agente/AGENTS.md\` e \`dados/cv-base.md\`.
 - Modo: ${pedido.preferencias.modo_busca}
 - Nota mínima: ${pedido.preferencias.nota_minima}
 
-## Segmentos
-${(pedido.segmentos ?? []).map((s) => `- ${s}`).join("\n")}
+## Alvos principais (ênfase no CV)
+${formatarListaAlvos(pedido.alvos_primarios) || "- CV geral do segmento, sem cargo específico marcado"}
 
-## Alvos de candidatura
-${alvosLista || "- (nenhum cargo marcado)"}
-
-## Entrega
-Arquivo \`dados/curriculo/adaptado-busca.md\` com o CV adaptado (markdown), pronto para revisão e export PDF.
+## Complemento (mencionar com leveza)
+${formatarListaAlvos(pedido.alvos_complementares) || "- (nenhum)"}
 `;
 }
 
-function spawnAdaptacaoScript() {
-  return new Promise((resolve) => {
-    const scriptPath = path.join(REPO_ROOT, "scripts", "adaptar-cv-busca.mjs");
-    if (!fs.existsSync(scriptPath)) {
-      resolve({ ok: false, motivo: "script_ausente" });
-      return;
-    }
-
-    const child = spawn(process.execPath, [scriptPath], {
-      cwd: REPO_ROOT,
-      env: { ...process.env },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    let stdout = "";
-    let stderr = "";
-    child.stdout?.on("data", (d) => {
-      stdout += d.toString();
-    });
-    child.stderr?.on("data", (d) => {
-      stderr += d.toString();
-    });
-
-    child.on("close", (code) => {
-      resolve({
-        ok: code === 0,
-        code,
-        stdout: stdout.trim(),
-        stderr: stderr.trim(),
-      });
-    });
-  });
-}
-
 export async function executarAdaptacaoCv(busca, catalogo) {
-  const pedido = montarPedidoAdaptacao(busca, catalogo);
+  const pedidos = montarPedidosAdaptacao(busca, catalogo);
   fs.mkdirSync(path.dirname(PEDIDO_PATH), { recursive: true });
-  fs.writeFileSync(PEDIDO_PATH, `${JSON.stringify(pedido, null, 2)}\n`, "utf8");
+  fs.writeFileSync(PEDIDO_PATH, `${JSON.stringify({ pedidos }, null, 2)}\n`, "utf8");
 
-  const prompt = montarPromptAdaptacao(pedido);
-  fs.writeFileSync(PROMPT_PATH, prompt, "utf8");
-
-  if (!(busca.titulos_ativos ?? []).length) {
+  if (!pedidos.length) {
     return {
       status: "ignorado",
-      motivo: "sem_cargos",
+      motivo: "sem_segmentos_cv",
       pedidoPath: "dados/curriculo/pedido-adaptacao.json",
     };
   }
 
-  if (!getCvBase()?.trim()) {
+  const cvBase = getCvBase()?.trim();
+  if (!cvBase) {
+    fs.writeFileSync(PROMPT_PATH, montarPromptAdaptacao(pedidos[0]), "utf8");
     return {
       status: "pendente",
       motivo: "sem_cv_base",
@@ -148,38 +127,35 @@ export async function executarAdaptacaoCv(busca, catalogo) {
     };
   }
 
-  const resultado = await spawnAdaptacaoScript();
+  const segmentacoes = [];
 
-  if (resultado.ok && fs.existsSync(ADAPTADO_PATH)) {
-    const conteudo = fs.readFileSync(ADAPTADO_PATH, "utf8");
-    const segmentacao = criarSegmentacaoFromPedido(pedido, conteudo);
-    fs.unlinkSync(ADAPTADO_PATH);
+  for (const pedido of pedidos) {
+    fs.writeFileSync(PEDIDO_PATH, `${JSON.stringify(pedido, null, 2)}\n`, "utf8");
+    const prompt = montarPromptAdaptacao(pedido);
+    fs.writeFileSync(PROMPT_PATH, prompt, "utf8");
 
-    return {
-      status: "concluido",
-      segmentacao,
-      pedidoPath: "dados/curriculo/pedido-adaptacao.json",
-    };
-  }
+    const conteudo = adaptarCvParaBusca(cvBase, pedido);
 
-  if (process.env.CURSOR_API_KEY) {
-    return {
-      status: "erro",
-      motivo: resultado.stderr || "adaptacao_falhou",
-      pedidoPath: "dados/curriculo/pedido-adaptacao.json",
-    };
+    segmentacoes.push(criarSegmentacaoFromPedido(pedido, conteudo));
   }
 
   return {
-    status: "pendente",
-    motivo: "sem_cursor_api_key",
+    status: "concluido",
+    segmentacoes,
+    segmentacao: segmentacoes[0],
     pedidoPath: "dados/curriculo/pedido-adaptacao.json",
-    promptPath: "dados/curriculo/adaptacao-prompt.md",
-    instrucao:
-      "Defina CURSOR_API_KEY em site/.env ou rode no chat: adapte o CV usando dados/curriculo/adaptacao-prompt.md",
   };
 }
 
 export async function adaptarAposSalvarBusca(buscaSalva, catalogo) {
   return executarAdaptacaoCv(buscaSalva ?? getBusca(), catalogo);
+}
+
+export function getAdaptacaoBuscaPath() {
+  return fs.existsSync(ADAPTADO_PATH) ? ADAPTADO_PATH : null;
+}
+
+export function getAdaptacaoBuscaConteudo() {
+  if (!fs.existsSync(ADAPTADO_PATH)) return null;
+  return fs.readFileSync(ADAPTADO_PATH, "utf8");
 }

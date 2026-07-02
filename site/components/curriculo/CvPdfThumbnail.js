@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 
 export const THUMB_WIDTH = 120;
-const THUMB_HEIGHT = Math.round(THUMB_WIDTH * 1.414);
+export const THUMB_COMPACT_WIDTH = 72;
+
+export function getThumbSize(compact = false) {
+  const width = compact ? THUMB_COMPACT_WIDTH : THUMB_WIDTH;
+  return { width, height: Math.round(width * 1.414) };
+}
 
 function isFile(value) {
   return typeof File !== "undefined" && value instanceof File;
 }
 
-export default function CvPdfThumbnail({ src }) {
+export default function CvPdfThumbnail({ src, compact = false }) {
+  const { width, height } = getThumbSize(compact);
   const [thumbUrl, setThumbUrl] = useState(null);
   const [status, setStatus] = useState("loading");
 
@@ -71,7 +77,7 @@ export default function CvPdfThumbnail({ src }) {
   return (
     <div
       className="relative shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm"
-      style={{ width: THUMB_WIDTH, height: THUMB_HEIGHT }}
+      style={{ width, height }}
     >
       {status === "loading" ? (
         <div className="absolute inset-0 animate-pulse bg-zinc-100" />

@@ -16,7 +16,26 @@ function isText(file) {
   return name.endsWith(".md") || name.endsWith(".txt") || name.endsWith(".markdown");
 }
 
-export default function CvDropZone({ initialArquivo, initialPreviewText, onUploaded }) {
+function IconDocumento({ className = "" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
+
+export default function CvDropZone({ initialArquivo, initialPreviewText, onUploaded, compact = false }) {
   const inputRef = useRef(null);
   const [arquivo, setArquivo] = useState(initialArquivo);
   const [previewFile, setPreviewFile] = useState(null);
@@ -115,7 +134,7 @@ export default function CvDropZone({ initialArquivo, initialPreviewText, onUploa
   const isError = message && !message.includes("salvo") && !message.includes("importado");
 
   return (
-    <div className="w-full">
+    <div className={compact ? "w-full p-2" : "w-full p-3 sm:p-4"}>
       <input
         ref={inputRef}
         type="file"
@@ -138,23 +157,30 @@ export default function CvDropZone({ initialArquivo, initialPreviewText, onUploa
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={[
-          "flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-4 text-center transition outline-none",
+          "flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed text-center transition outline-none",
           "focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+          hasPreview ? "border-zinc-200/80 bg-zinc-50/50 px-3 py-2" : compact ? "px-3 py-3" : "px-4 py-8",
           dragging
-            ? "border-emerald-500 bg-emerald-50/80"
-            : "border-zinc-300 bg-white hover:border-emerald-400 hover:bg-emerald-50/30",
+            ? "border-emerald-400 bg-emerald-50/90"
+            : hasPreview
+              ? ""
+              : "border-zinc-200 bg-gradient-to-b from-zinc-50/50 to-white hover:border-emerald-300 hover:from-emerald-50/30",
           uploading ? "cursor-wait opacity-80" : "cursor-pointer",
         ].join(" ")}
       >
         {hasPreview ? (
-          <div className="flex items-center gap-4">
-            {pdfSrc ? <CvPdfThumbnail src={pdfSrc} /> : <CvTextThumbnail text={previewText} />}
+          <div className="flex w-full items-center gap-3">
+            {pdfSrc ? (
+              <CvPdfThumbnail src={pdfSrc} compact={compact} />
+            ) : (
+              <CvTextThumbnail text={previewText} compact={compact} />
+            )}
 
             <div className="min-w-0 flex-1 text-left">
               {arquivo ? (
                 <>
                   <p className="truncate text-sm font-medium text-zinc-900">{arquivo.name}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
+                  <p className="text-[11px] text-zinc-500">
                     {formatFileSize(arquivo.size)} · {formatDateTime(arquivo.updatedAt)}
                   </p>
                 </>
@@ -163,7 +189,7 @@ export default function CvDropZone({ initialArquivo, initialPreviewText, onUploa
                   {uploading ? "Enviando…" : "Prévia do currículo"}
                 </p>
               )}
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="text-[11px] text-zinc-500">
                 {uploading ? "Aguarde…" : "Clique ou arraste para substituir"}
               </p>
               {pdfSrc && arquivo ? (
@@ -172,21 +198,43 @@ export default function CvDropZone({ initialArquivo, initialPreviewText, onUploa
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(event) => event.stopPropagation()}
-                  className="mt-1 inline-block text-xs font-medium text-emerald-700 underline-offset-2 hover:underline"
+                  className="mt-1 inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100"
                 >
                   Abrir PDF
                 </a>
               ) : null}
             </div>
           </div>
+        ) : compact ? (
+          <div className="flex w-full items-center justify-between gap-3 text-left">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                <IconDocumento className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-900">
+                  {uploading ? "Enviando…" : "Arraste ou escolha o arquivo"}
+                </p>
+                <p className="text-[11px] text-zinc-500">PDF, Markdown ou texto</p>
+              </div>
+            </div>
+            {!uploading ? (
+              <span className="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700">
+                Escolher
+              </span>
+            ) : null}
+          </div>
         ) : (
-          <div className="py-1">
-            <p className="text-sm font-medium text-zinc-900">
+          <div className="flex flex-col items-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+              <IconDocumento className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-zinc-900">
               {uploading ? "Enviando…" : "Arraste o currículo aqui"}
             </p>
             <p className="mt-1 text-xs text-zinc-500">PDF, Markdown ou texto — até 10 MB</p>
             {!uploading ? (
-              <span className="mt-2 inline-block rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white">
+              <span className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-emerald-700">
                 Escolher arquivo
               </span>
             ) : null}
@@ -196,7 +244,7 @@ export default function CvDropZone({ initialArquivo, initialPreviewText, onUploa
 
       {message ? (
         <p
-          className={`mt-2 text-center text-xs font-medium ${isError ? "text-red-600" : "text-emerald-700"}`}
+          className={`${compact ? "mt-1.5" : "mt-3"} text-center text-[11px] font-medium ${isError ? "text-red-600" : "text-emerald-700"}`}
           role="status"
         >
           {message}

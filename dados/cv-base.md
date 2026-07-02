@@ -1,22 +1,27 @@
-# CV Base — Lucca Leça Aggio
+# Lucca Leça Aggio
 
-> Fonte única da verdade. A IA adapta ênfase por vaga; não inventa o que não está aqui.
+> Fonte única da verdade. O cv-base reúne todos os fatos; cada ramificação gera um CV **focado** (dados, dev, marketing, IA).
+
+**Cargo-alvo (base):** Tecnologia — dados · desenvolvimento · growth  
+Santo André, SP · luccalecaaggio@gmail.com · (11) 96889-0043 · https://linkedin.com/in/luccaleca · https://github.com/luccaleca
 
 ## Resumo
 
-Estudante de Sistemas de Informação (IMT, 7º sem.) com experiência prática em SQL, Python e análise de dados aplicados a negócio. Atuei com extração de dados, geração de relatórios e dashboards para apoio à decisão. Busco estágio em análise de dados onde possa contribuir com dados estruturados e insights.
+Estudante de Sistemas de Informação (IMT, 7º sem.) com experiência em **análise de dados** (SQL, Python, Power BI) na Ótica Santo Grau (+20% receita) e portfólio de produtos próprios: **TumaCore** (centro de dados), **TumaIA** (SaaS marketing + IA) e **Tuma Emprego** (hub de candidaturas). Este arquivo é a fonte; versões por segmento enfatizam só a área relevante.
 
-**Áreas:** Análise de Dados · Growth Marketing · BI
+**Stack (visão geral):** SQL · Python · Power BI · PostgreSQL · React · Next.js  
+**Ramificações:** Dados/BI · Desenvolvimento Web · Growth/Marketing · IA aplicada
 
-## Contato
+## Competências
 
-- Santo André, SP
-- luccalecaaggio@gmail.com
-- (11) 96889-0043
-- https://linkedin.com/in/luccaleca
-- https://github.com/luccaleca
+- **Linguagens:** Python, JavaScript, SQL, HTML, CSS
+- **Dados / BI:** Power BI, Excel, Google Analytics 4, Pandas, modelagem relacional, ETL
+- **Web / Dev:** React, Next.js, Node.js, Express, FastAPI, REST APIs
+- **Banco / Cloud:** PostgreSQL, Supabase
+- **Ferramentas:** Git, Google Tag Manager, Google Ads, Meta Ads, n8n, Shopify, VTEX
+- **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)
 
-## Experiência profissional
+## Experiência
 
 ### Ótica Santo Grau — Estagiário em Análise de Dados / Growth Marketing
 
@@ -28,50 +33,40 @@ Estudante de Sistemas de Informação (IMT, 7º sem.) com experiência prática 
 - Realizei análise de dados para foco em público mais relevante em lançamento, contribuindo para crescimento de 20% na receita do período (de R$ 50k para R$ 60k).
 - Modelei estruturas de dados e criei tabelas relacionais para consulta e segmentação da base de clientes, facilitando análises recorrentes pela equipe comercial.
 
-## Projetos pessoais / portfólio
+## Projetos
 
 ### TumaIA — SaaS de marketing com IA (WhatsApp → Instagram)
 
-Plataforma para PMEs: pedido no WhatsApp, contexto da marca no Supabase, IA gera post (imagem + legenda), aprovação e publicação no Instagram. Painel Next.js + API Node/Express, multi-tenant, integração n8n.
+**Stack:** JavaScript, Next.js, React, Express, Supabase, Python, n8n
 
-**Stack:** JavaScript, Next.js, Express, Supabase, Python (IA), n8n, React.
+- Desenvolvi plataforma para PMEs: pedido no WhatsApp, contexto da marca no Supabase, IA gera post (imagem + legenda), aprovação e publicação no Instagram.
+- Implementei painel Next.js e API Node/Express multi-tenant com integração n8n para automação do fluxo operacional.
 
 ### TumaCore — Centro de dados do ecossistema TumaIA
 
-Plataforma B2B de **visualização operacional e consulta assistida a dados** sobre o Postgres/Supabase do TumaIA. Não é só chat: é o **hub** onde o time vê o negócio e pergunta em português.
+**Stack:** Python, FastAPI, Next.js, PostgreSQL, Supabase, RAG (Chroma), LLM (Ollama/OpenRouter/Gemini)
 
-**Módulos:**
-- **Dashboards** — KPIs, evolução de pedidos/gerações, distribuição por segmento e região, mapa do Brasil, fluxo operacional, tabela de empresas (filtros por período).
-- **Analytics** — saúde do produto, uso, performance, tendências e diagnósticos.
-- **Chat SQL** — pergunta em português (gerações, planos, empresas, faturas); a IA lê o schema ao vivo (`information_schema`) e **monta SQL PostgreSQL** para consulta.
-- **Clientes** — visão e busca na carteira.
-
-**Stack:** Python, FastAPI, Next.js, Supabase/PostgreSQL, RAG (Chroma), LLM (Ollama/OpenRouter/Gemini).
+- Construí plataforma B2B de visualização operacional e consulta assistida a dados sobre Postgres/Supabase do TumaIA.
+- Desenvolvi dashboards de KPIs, evolução de pedidos, distribuição por segmento/região, mapa do Brasil e fluxo operacional.
+- Implementei Chat SQL: pergunta em português; a IA lê o schema ao vivo (`information_schema`) e monta SQL PostgreSQL para consulta.
+- Entreguei módulos de analytics (saúde do produto, uso, performance) e visão de carteira de clientes.
 
 ### Tuma Emprego — Hub local de candidaturas (em construção)
 
-Ferramenta local para adaptar CV por vaga, banco de respostas e (futuro) extensão Chrome para autofill em formulários.
+**Stack:** Next.js, React, PostgreSQL, Prisma, YAML
 
-## Formação acadêmica
+- Desenvolvo ferramenta local para adaptar currículo por vaga/segmento, banco de respostas e (futuro) extensão Chrome para autofill em formulários.
 
-### Instituto Mauá de Tecnologia (IMT)
+## Formação
 
-**Bacharelado em Sistemas de Informação** · Ago/2022 – Ago/2027 (cursando) · São Caetano do Sul – SP
+### Instituto Mauá de Tecnologia (IMT) — Bacharelado em Sistemas de Informação
 
-## Formação complementar
+**Período:** Ago/2022 – Ago/2027 (cursando) · São Caetano do Sul – SP · Turno noturno
+
+## Certificações
 
 - Certificação de Analytics — Google Skillshop
 - SQL para Análise de Dados: Do Básico ao Avançado — Midori Ishizuka (Udemy)
 - Power BI + DAX + Projetos na Prática — André Rosa (Udemy)
-- Google Ads (Adwords) Completo — Do Zero ao PRO (M2up)
 - Manipulação e Análise de Dados com Python e Pandas — Clevison Santos (Udemy)
-
-## Idiomas
-
-- Português: nativo
-- Inglês: avançado
-- Espanhol: básico
-
-## Ferramentas
-
-SQL, Python, Excel, Power BI, Google Analytics 4, Google Tag Manager, Google Ads, Meta Ads, Shopify, VTEX, HTML, CSS, JavaScript, React, n8n.
+- Google Ads (Adwords) Completo — Do Zero ao PRO (M2up)

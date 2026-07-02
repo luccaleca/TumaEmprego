@@ -29,6 +29,8 @@ dados/pdfs/*
 dados/fotos/*
 dados/curriculo/principal.pdf
 dados/curriculo/segmentacoes/
+dados/conteudo/banco.yml
+!dados/conteudo/banco.example.yml
 !dados/pdfs/.gitkeep
 !dados/fotos/.gitkeep
 

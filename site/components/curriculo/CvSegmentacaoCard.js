@@ -2,19 +2,27 @@
 
 import { useState } from "react";
 import CvTextThumbnail from "@/components/curriculo/CvTextThumbnail";
-import { THUMB_WIDTH } from "@/components/curriculo/CvPdfThumbnail";
+import { getThumbSize } from "@/components/curriculo/CvPdfThumbnail";
 import { formatDateTime } from "@/lib/format";
 
-const THUMB_HEIGHT = Math.round(THUMB_WIDTH * 1.414);
+const ORIGEM = {
+  manual: { label: "Manual", badge: "bg-zinc-100 text-zinc-700", bar: "border-l-zinc-300" },
+  vaga: { label: "Vaga", badge: "bg-emerald-100 text-emerald-800", bar: "border-l-emerald-400" },
+  busca: { label: "Segmentos", badge: "bg-indigo-100 text-indigo-800", bar: "border-l-indigo-400" },
+};
+
+function metaOrigem(origem) {
+  return ORIGEM[origem] ?? ORIGEM.busca;
+}
 
 function CvSection({ title, body }) {
   return (
-    <details className="group overflow-hidden rounded-lg border border-zinc-200/90 bg-white">
+    <details className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
       <summary className="cursor-pointer list-none px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
-        <p className="text-sm font-medium text-zinc-800">{title}</p>
+        <p className="text-xs font-medium text-zinc-800">{title}</p>
       </summary>
-      <div className="border-t border-zinc-200/80 px-3 py-2">
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-zinc-700">
+      <div className="border-t border-zinc-100 px-3 py-2">
+        <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-zinc-700">
           {body}
         </pre>
       </div>
@@ -22,21 +30,24 @@ function CvSection({ title, body }) {
   );
 }
 
-function PdfThumb() {
+function PdfThumb({ compact }) {
+  const { width, height } = getThumbSize(compact);
+
   return (
     <div
-      className="flex shrink-0 flex-col items-center justify-center rounded-md border border-zinc-200 bg-red-50 shadow-sm"
-      style={{ width: THUMB_WIDTH, height: THUMB_HEIGHT }}
+      className="flex shrink-0 flex-col items-center justify-center rounded-md border border-red-100 bg-gradient-to-br from-red-50 to-white ring-1 ring-red-100/80"
+      style={{ width, height }}
     >
-      <span className="text-sm font-bold text-red-800">PDF</span>
+      <span className="text-[10px] font-bold uppercase tracking-wide text-red-700">PDF</span>
     </div>
   );
 }
 
-export default function CvSegmentacaoCard({ segmentacao, initialSections = null }) {
+export default function CvSegmentacaoCard({ segmentacao, initialSections = null, compact = false }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sections, setSections] = useState(initialSections);
+  const origem = metaOrigem(segmentacao.origem);
 
   const previewText = initialSections?.length
     ? initialSections.map((s) => s.body).join("\n").slice(0, 800)
@@ -66,51 +77,62 @@ export default function CvSegmentacaoCard({ segmentacao, initialSections = null 
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start">
+    <article
+      className={[
+        "overflow-hidden rounded-xl border border-zinc-200/90 border-l-[3px] bg-white transition",
+        compact ? "shadow-none hover:bg-zinc-50/80" : "shadow-sm hover:shadow-md",
+        origem.bar,
+      ].join(" ")}
+    >
+      <div className={`flex items-center gap-2.5 ${compact ? "p-2" : "flex-col gap-4 p-4 sm:flex-row sm:items-start sm:p-5"}`}>
         <div className="shrink-0">
           {segmentacao.hasPdf ? (
-            <PdfThumb />
+            <PdfThumb compact={compact} />
           ) : (
-            <CvTextThumbnail text={previewText ?? "…"} />
+            <CvTextThumbnail text={previewText ?? "…"} compact={compact} />
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">
-            Vaga
-          </p>
-          <h3 className="mt-1 text-lg font-bold leading-snug text-zinc-900">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span
+              className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${origem.badge}`}
+            >
+              {origem.label}
+            </span>
+            <span className="text-[10px] text-zinc-400">
+              {formatDateTime(segmentacao.updatedAt ?? segmentacao.criado_em)}
+            </span>
+          </div>
+
+          <h3
+            className={`font-semibold leading-snug text-zinc-900 ${compact ? "mt-0.5 line-clamp-1 text-sm" : "mt-2 text-base sm:text-lg"}`}
+          >
             {segmentacao.vaga_titulo}
           </h3>
 
-          {segmentacao.vaga_descricao ? (
-            <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap font-sans text-xs leading-relaxed text-zinc-600">
+          {!compact && segmentacao.vaga_descricao ? (
+            <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-500">
               {segmentacao.vaga_descricao}
-            </pre>
+            </p>
           ) : null}
 
-          <p className="mt-2 text-[11px] text-zinc-400">
-            {segmentacao.origem === "manual" ? "Manual" : "Segmentos"} ·{" "}
-            {formatDateTime(segmentacao.updatedAt ?? segmentacao.criado_em)}
-          </p>
-
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-1" : "mt-4"}`}>
             <button
               type="button"
               onClick={toggleOpen}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+              className="rounded-md bg-zinc-900 px-2 py-1 text-[11px] font-medium text-white hover:bg-zinc-800"
             >
-              {loading ? "Carregando…" : open ? "Ocultar" : "Ver currículo"}
+              {loading ? "…" : open ? "Ocultar" : "Ver"}
             </button>
             {pdfUrl ? (
               <a
                 href={pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100"
+                className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50"
               >
-                Abrir PDF
+                PDF
               </a>
             ) : null}
           </div>
@@ -118,15 +140,13 @@ export default function CvSegmentacaoCard({ segmentacao, initialSections = null 
       </div>
 
       {open ? (
-        <div className="space-y-2 border-t border-zinc-100 bg-zinc-50/50 p-4">
+        <div className={`space-y-1.5 border-t border-zinc-100 bg-zinc-50/80 ${compact ? "p-2" : "p-4 sm:px-5"}`}>
           {sections?.length ? (
-            sections.map((sec) => (
-              <CvSection key={sec.title} title={sec.title} body={sec.body} />
-            ))
+            sections.map((sec) => <CvSection key={sec.title} title={sec.title} body={sec.body} />)
           ) : segmentacao.hasPdf ? (
-            <p className="text-sm text-zinc-600">PDF — use Abrir PDF acima.</p>
+            <p className="text-xs text-zinc-600">PDF — use o botão acima.</p>
           ) : (
-            <p className="text-sm text-zinc-500">Sem conteúdo.</p>
+            <p className="text-xs text-zinc-500">Sem conteúdo.</p>
           )}
         </div>
       ) : null}

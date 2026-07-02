@@ -32,7 +32,7 @@ export async function PUT(request) {
 
     if (!Array.isArray(busca.segmentos_ativos) || !busca.segmentos_ativos.length) {
       return NextResponse.json(
-        { error: "Selecione ao menos um segmento" },
+        { error: "Marque ao menos um segmento para gerar currículo" },
         { status: 400 },
       );
     }

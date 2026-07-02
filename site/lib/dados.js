@@ -99,6 +99,8 @@ export function getCvResumo() {
 
   return match[1]
     .replace(/\*\*Áreas:\*\*[^\n]*/g, "")
+    .replace(/\*\*Stack:\*\*[^\n]*/g, "")
+    .replace(/\*\*Foco:\*\*[^\n]*/g, "")
     .trim();
 }
 
@@ -186,8 +188,12 @@ export function saveCvResumo(resumo) {
   const filePath = path.join(DADOS_ROOT, "cv-base.md");
   const raw = readText("cv-base.md");
   const areasMatch = raw.match(/\*\*Áreas:\*\*([^\n]+)/);
+  const stackMatch = raw.match(/\*\*Stack:\*\*([^\n]+)/);
+  const focoMatch = raw.match(/\*\*Foco:\*\*([^\n]+)/);
   const areasLine = areasMatch ? `\n\n**Áreas:**${areasMatch[1]}` : "";
-  const block = `## Resumo\n\n${String(resumo).trim()}${areasLine}\n\n`;
+  const stackLine = stackMatch ? `\n\n**Stack:**${stackMatch[1]}` : "";
+  const focoLine = focoMatch ? `\n\n**Foco:**${focoMatch[1]}` : "";
+  const block = `## Resumo\n\n${String(resumo).trim()}${stackLine}${focoLine}${areasLine}\n\n`;
   const updated = raw.replace(/## Resumo\s*\n+[\s\S]*?(?=\n## )/, block);
 
   if (updated === raw) {
@@ -209,4 +215,32 @@ export function savePerfilCompleto({ profile, respostas, resumo }) {
   if (profile) saveProfile(profile);
   if (respostas) saveRespostasPadrao(respostas);
   if (resumo !== undefined) saveCvResumo(resumo);
+}
+
+const CONTEUDO_BANCO = "conteudo/banco.yml";
+const CONTEUDO_BANCO_EXAMPLE = "conteudo/banco.example.yml";
+
+export function getConteudoBanco() {
+  const filePath = path.join(DADOS_ROOT, CONTEUDO_BANCO);
+  if (!fs.existsSync(filePath)) {
+    const examplePath = path.join(DADOS_ROOT, CONTEUDO_BANCO_EXAMPLE);
+    if (!fs.existsSync(examplePath)) {
+      throw new Error("Arquivo dados/conteudo/banco.example.yml não encontrado");
+    }
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.copyFileSync(examplePath, filePath);
+  }
+  return readYaml(CONTEUDO_BANCO);
+}
+
+export function getCurriculoModelo() {
+  const filePath = path.join(DADOS_ROOT, "curriculo/modelo.md");
+  if (!fs.existsSync(filePath)) return "";
+  return fs.readFileSync(filePath, "utf8");
+}
+
+export function saveConteudoBanco(data) {
+  const dir = path.join(DADOS_ROOT, "conteudo");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "banco.yml"), `${stringify(data)}\n`, "utf8");
 }

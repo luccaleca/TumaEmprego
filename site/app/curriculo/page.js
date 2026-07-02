@@ -24,8 +24,6 @@ export default function CurriculoPage() {
   });
 
   return (
-    <main className="w-full">
-      <CurriculoWorkspace initialArquivo={arquivo} initialSegmentacoes={segmentacoes} />
-    </main>
+    <CurriculoWorkspace initialArquivo={arquivo} initialSegmentacoes={segmentacoes} />
   );
 }

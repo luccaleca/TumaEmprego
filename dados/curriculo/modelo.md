@@ -1,0 +1,46 @@
+# [Nome completo]
+
+> Estrutura ATS — o motor monta cada seção a partir do **cv-base** (cabeçalho/formação) e do **banco de conteúdo** (experiências, projetos, cursos).
+
+**Cargo-alvo:** [por segmento]  
+email · linkedin · cidade
+
+---
+
+## Resumo
+
+Parágrafo objetivo + **Stack** + **Foco** (gerados pelo perfil do segmento).
+
+## Destaques — [Segmento]
+
+- 3–5 bullets dos projetos/experiência mais relevantes para a vaga
+
+## Competências
+
+Bloco do banco (`competencias.<segmento>`).
+
+## Experiência
+
+### [Título adaptado por segmento]
+
+**Período:** … · **Local:** …
+
+- Bullets filtrados e reordenados por relevância
+
+*Nota contextual por segmento.*
+
+## Projetos
+
+### [Projeto] — [Subtítulo por segmento]
+
+**Stack:** …
+
+- Bullets específicos do segmento
+
+## Formação
+
+Copiado do cv-base (IMT, cursos formais, etc.).
+
+## Certificações
+
+Cursos do banco filtrados por segmento (Udemy, Google, etc.).
