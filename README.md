@@ -9,9 +9,9 @@ TumaEmprego/
 ├── dados/       ← seus arquivos (CV, respostas, PDFs)
 ├── site/        ← Next.js: telas + API + banco (porta 3737)
 ├── extensao/    ← Chrome: autofill Gupy/LinkedIn
-├── agente/      ← Cursor Agent: regras + relatórios de vagas
+├── agente/      ← regras do agente IA + relatórios de vagas
 ├── docs/        ← visão e roadmap
-└── .cursor/     ← config do editor (não editar manualmente)
+└── scripts/     ← PDF e utilitários CLI
 ```
 
 ## Onde me acho?
@@ -29,7 +29,7 @@ TumaEmprego/
 | Relatório de vaga | `agente/relatorios/` |
 | Plano do produto | `docs/VISAO.md` |
 
-## Para o Cursor Agent
+## Para quem desenvolve com IA
 
 Leia **`agente/AGENTS.md`** antes de implementar.
 

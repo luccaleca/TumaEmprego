@@ -2,7 +2,7 @@
 
 ## Em uma frase
 
-Hub local: **`site/`** = cadastro + API + banco · **`extensao/`** = autofill · **`agente/`** = Cursor IA · **`dados/`** = seus arquivos.
+Hub local: **`site/`** = cadastro + API + banco · **`extensao/`** = autofill · **`agente/`** = IA · **`dados/`** = seus arquivos.
 
 ## Solução
 
@@ -12,7 +12,7 @@ Hub local: **`site/`** = cadastro + API + banco · **`extensao/`** = autofill ·
 | **PostgreSQL** | dentro do `site/` | Dados + paths para arquivos |
 | **Arquivos** | `dados/` | CV, PDFs, fotos |
 | **Extensão Chrome** | `extensao/` | Preenche formulário → usuário envia |
-| **Cursor Agent** | `agente/` | Avalia vaga, adapta CV, relatórios |
+| **Agente IA** | `agente/` | Avalia vaga, adapta CV, relatórios |
 | **Scripts PDF** | `scripts/` | Playwright → PDF |
 
 ## Fluxo do usuário

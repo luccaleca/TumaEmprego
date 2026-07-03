@@ -26,21 +26,15 @@ async function main() {
   process.chdir(path.join(REPO_ROOT, "site"));
 
   const { adaptarCvParaVaga } = await import(pathToFileURL(path.join(SITE_LIB, "adaptarCvLocal.js")));
-  const { tentarAdaptarComCursor } = await import(pathToFileURL(path.join(SITE_LIB, "adaptarCvCursor.js")));
 
   const pedidoPath = path.join(REPO_ROOT, "dados", "curriculo", "pedido-vaga.json");
   const cvPath = path.join(REPO_ROOT, "dados", "cv-base.md");
-  const promptPath = path.join(REPO_ROOT, "dados", "curriculo", "adaptacao-vaga-prompt.md");
   const outPath = path.join(REPO_ROOT, "dados", "curriculo", "adaptado-vaga.md");
 
   const pedido = JSON.parse(fs.readFileSync(pedidoPath, "utf8"));
   const cvBase = fs.readFileSync(cvPath, "utf8");
-  const prompt = fs.existsSync(promptPath)
-    ? fs.readFileSync(promptPath, "utf8")
-    : "Adapte o CV para a vaga.";
 
-  let conteudo = await tentarAdaptarComCursor(prompt, cvBase);
-  if (!conteudo) conteudo = adaptarCvParaVaga(cvBase, pedido);
+  const conteudo = adaptarCvParaVaga(cvBase, pedido);
 
   fs.writeFileSync(outPath, conteudo, "utf8");
   console.log("adaptado-vaga.md gerado");

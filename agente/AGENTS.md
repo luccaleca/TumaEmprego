@@ -16,7 +16,7 @@
 10. **Perguntar quando faltar info** — CV, métrica, JD incompleta: pedir em vez de chutar.
 11. **UI limpa, sem justificativa** — não colocar na aplicação (títulos, labels, hints, descrições, tooltips) o raciocínio ou contexto do pedido. Explicações ficam **no chat**, não no produto. Na tela: texto curto e direto — ex.: **"Contato"**, não "Dados de contato pedidos em Gupy, Catho, InfoJobs e LinkedIn". O mesmo para comentários no código que só repetem o pedido.
 12. **Linguagem simples** — comentários no código, commits e mensagens em português claro, como programador iniciante; sem jargão nem texto robótico.
-13. **Commits** — só commitar quando o usuário pedir. Título **curto no imperativo** (como o GitHub usa): `adiciona secao tecnologias`, `remove profile.yml do git` — **não** 1ª pessoa (`eu adicionei…`). Corpo opcional, 1–3 linhas, só se precisar. **Nunca** `Co-authored-by`, `Made-with: Cursor`, nem texto que pareça gerado por IA.
+13. **Commits** — só commitar quando o usuário pedir. Título **curto no imperativo** (como o GitHub usa): `adiciona secao tecnologias`, `remove profile.yml do git` — **não** 1ª pessoa (`eu adicionei…`). Corpo opcional, 1–3 linhas, só se precisar. **Nunca** `Co-authored-by`, trailers de ferramenta de IA, nem texto que pareça gerado por IA.
 
 **Comentários no código:** português, só onde não for óbvio — nunca como justificativa de tarefa.
 
@@ -33,7 +33,7 @@
 | App | Next.js (App Router), **JavaScript** — pasta `site/` |
 | Banco | **PostgreSQL local** + Prisma |
 | Arquivos | `dados/pdfs/` e `dados/fotos/` — paths no banco, não binário |
-| IA (dev) | **Cursor Agent** — este arquivo + `docs/VISAO.md` |
+| IA (dev) | **Agente** — este arquivo + `docs/VISAO.md` |
 | PDF | HTML template + Playwright — `scripts/` |
 | Extensão | Chrome MV3 — `extensao/` |
 | Porta dev | `3737` |
@@ -133,4 +133,4 @@ Organização interna (segmentos, ramificações, prompts) fica em `agente/`, `d
 - BYTEA no Postgres para PDF/foto
 - Secrets no código ou commits
 - Texto verboso na UI ou comentários que justificam o pedido do usuário (contexto de portais, JD, etc.)
-- `Co-authored-by`, `Made-with: Cursor` ou assinatura de IA em commits
+- `Co-authored-by`, trailers de ferramenta de IA ou assinatura de IA em commits
