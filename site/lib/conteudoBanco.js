@@ -4,14 +4,21 @@
 
 import { getConteudoBanco } from "./dados.js";
 import { competenciasPerfil } from "./perfilCvSegmento.js";
+import { segmentoEstaAtivo } from "./segmentosAtivos.js";
 
-export { SEGMENTOS, slugParaLabel } from "./conteudoConstants.js";
+export { LABELS_SEGMENTO, slugParaLabel } from "./conteudoConstants.js";
 
 export function loadBanco() {
   return getConteudoBanco();
 }
 
+/** Texto do bullet para um segmento (reframe opcional por área). */
+export function textoBulletParaSegmento(bullet, slug) {
+  return bullet?.texto_por_segmento?.[slug]?.trim() || bullet?.texto?.trim() || "";
+}
+
 function segmentoAtivo(item, slug) {
+  if (!segmentoEstaAtivo(slug)) return false;
   return (item?.segmentos ?? []).includes(slug);
 }
 
@@ -23,7 +30,8 @@ export function experienciaParaSegmento(banco, slug) {
   const nota = exp.nota_por_segmento?.[slug] ?? "";
   const bullets = (exp.bullets ?? [])
     .filter((b) => (b.segmentos ?? []).includes(slug))
-    .map((b) => b.texto);
+    .map((b) => textoBulletParaSegmento(b, slug))
+    .filter(Boolean);
 
   return {
     titulo,
@@ -77,7 +85,31 @@ export function cursosParaSegmento(banco, slug) {
     });
 }
 
+export function ferramentasParaSegmento(banco, slug) {
+  return (banco?.ferramentas ?? []).filter((f) => segmentoAtivo(f, slug));
+}
+
+function agruparFerramentas(ferramentas) {
+  const map = new Map();
+  for (const f of ferramentas) {
+    const cat = f.categoria?.trim() || "Ferramentas";
+    if (!map.has(cat)) map.set(cat, []);
+    map.get(cat).push(f.nome);
+  }
+  return map;
+}
+
 export function competenciasDoBanco(banco, slug) {
+  const ferramentas = ferramentasParaSegmento(banco, slug);
+  if (ferramentas.length) {
+    const grupos = agruparFerramentas(ferramentas);
+    const lines = [...grupos.entries()].map(
+      ([cat, nomes]) => `- **${cat}:** ${nomes.join(", ")}`,
+    );
+    lines.push("- **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)");
+    return lines.join("\n");
+  }
+
   const texto = banco?.competencias?.[slug];
   if (texto?.trim()) return texto.trim();
   return competenciasPerfil({ slug });

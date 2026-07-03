@@ -4,6 +4,7 @@ import { getBusca, saveBusca } from "@/lib/dados";
 import { getVagaCatalogo } from "@/lib/vagaCatalogo";
 import { OPCOES_MODO, OPCOES_MODALIDADE } from "@/lib/buscaOpcoes";
 import { OPCOES_SENIORIDADE } from "@/lib/senioridadeOpcoes";
+import { filtrarChavesTituloPorSenioridade } from "@/lib/tituloSenioridade";
 
 export async function GET() {
   try {
@@ -30,9 +31,9 @@ export async function PUT(request) {
       );
     }
 
-    if (!Array.isArray(busca.segmentos_ativos) || !busca.segmentos_ativos.length) {
+    if (!Array.isArray(busca.segmentos_ativos)) {
       return NextResponse.json(
-        { error: "Marque ao menos um segmento para gerar currículo" },
+        { error: "segmentos_ativos deve ser uma lista" },
         { status: 400 },
       );
     }
@@ -62,7 +63,10 @@ export async function PUT(request) {
 
     saveBusca({
       segmentos_ativos: busca.segmentos_ativos.filter(Boolean),
-      titulos_ativos: busca.titulos_ativos.filter(Boolean),
+      titulos_ativos: filtrarChavesTituloPorSenioridade(
+        busca.titulos_ativos.filter(Boolean),
+        senioridades,
+      ),
       senioridades,
       modalidades_trabalho: modalidades,
       modo_busca: modo,

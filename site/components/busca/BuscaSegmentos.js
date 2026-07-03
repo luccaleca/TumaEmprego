@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cargoEhComplemento } from "@/lib/alvosSegmento";
+import { combinacaoSenioridadeTituloValida } from "@/lib/tituloSenioridade";
 
 const CORES_AREA = {
   "dados-bi-analytics": {
@@ -36,6 +37,18 @@ const CORES_AREA = {
     nicho: "text-indigo-900/70",
     chipAtivo: "border-indigo-500 bg-indigo-100 text-indigo-900 ring-1 ring-indigo-400",
     chipInativo: "border-indigo-200/80 bg-white text-zinc-600 hover:border-indigo-300",
+    chipComplemento:
+      "border-dashed border-amber-400 bg-amber-50/80 text-amber-950 ring-1 ring-amber-300/80",
+    chipDestaque: "ring-2 ring-amber-400 ring-offset-1",
+  },
+  "marketing-growth": {
+    fundo: "bg-orange-50/40",
+    cabecalho: "bg-orange-100/80 text-orange-950",
+    cvAtivo: "border-orange-500 ring-1 ring-orange-400",
+    inativo: "border-orange-200/80",
+    nicho: "text-orange-900/70",
+    chipAtivo: "border-orange-500 bg-orange-100 text-orange-900 ring-1 ring-orange-400",
+    chipInativo: "border-orange-200/80 bg-white text-zinc-600 hover:border-orange-300",
     chipComplemento:
       "border-dashed border-amber-400 bg-amber-50/80 text-amber-950 ring-1 ring-amber-300/80",
     chipDestaque: "ring-2 ring-amber-400 ring-offset-1",
@@ -88,17 +101,30 @@ function expandidosIniciais(catalogo, segmentosCv, chavesAtivas) {
   return set;
 }
 
-function TituloChip({ titulo, ativo, complemento, destacado, tema, onToggle }) {
+function TituloChip({ titulo, ativo, complemento, bloqueado, destacado, tema, onToggle }) {
   return (
     <button
       type="button"
-      onClick={() => onToggle(titulo.chave)}
+      onClick={() => !bloqueado && onToggle(titulo.chave)}
+      disabled={bloqueado}
       aria-pressed={ativo}
-      title={complemento ? "Entra como complemento nos CVs marcados" : undefined}
+      title={
+        bloqueado
+          ? "Incompatível com as senioridades selecionadas (ex.: Estágio não combina com Especialista ou Coordenador)"
+          : complemento
+            ? "Entra como complemento nos CVs marcados"
+            : undefined
+      }
       className={[
         "rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition",
-        ativo ? (complemento ? tema.chipComplemento : tema.chipAtivo) : tema.chipInativo,
-        destacado ? tema.chipDestaque : "",
+        bloqueado
+          ? "cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-400"
+          : ativo
+            ? complemento
+              ? tema.chipComplemento
+              : tema.chipAtivo
+            : tema.chipInativo,
+        destacado && !bloqueado ? tema.chipDestaque : "",
       ].join(" ")}
     >
       {titulo.titulo}
@@ -110,8 +136,11 @@ export default function BuscaSegmentos({
   catalogo,
   segmentosAtivos,
   titulosAtivos,
+  senioridades,
   onToggleSegmento,
   onToggleTitulo,
+  onMarcarTodosSegmentos,
+  onDesmarcarTodosSegmentos,
   buscando = false,
   highlightChaves,
   abrirSegmento = null,
@@ -169,10 +198,29 @@ export default function BuscaSegmentos({
         <div>
           <h2 className="text-sm font-semibold text-zinc-900">Segmentos</h2>
           <p className="mt-0.5 text-xs text-zinc-500">
-            Checkbox gera CV do segmento. Cargos de outras áreas entram como complemento.
+            Checkbox gera CV do segmento. Cargos de outras áreas entram como complemento. Cargos
+            sênior (Especialista, Coordenador…) só aparecem se a senioridade compatível estiver
+            marcada.
           </p>
         </div>
-        <div className="flex gap-2 text-xs">
+        <div className="flex flex-wrap gap-2 text-xs">
+          <button
+            type="button"
+            onClick={onMarcarTodosSegmentos}
+            className="rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+          >
+            Marcar tudo
+          </button>
+          <button
+            type="button"
+            onClick={onDesmarcarTodosSegmentos}
+            className="rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+          >
+            Desmarcar tudo
+          </button>
+          <span className="hidden text-zinc-300 sm:inline" aria-hidden>
+            |
+          </span>
           <button
             type="button"
             onClick={abrirTodos}
@@ -263,6 +311,10 @@ export default function BuscaSegmentos({
                           const ativo = chavesAtivas.has(titulo.chave);
                           const complemento =
                             ativo && cargoEhComplemento(titulo.chave, segmentosAtivos);
+                          const compativel = (senioridades ?? ["estagio"]).some((s) =>
+                            combinacaoSenioridadeTituloValida(s, titulo.titulo),
+                          );
+                          const bloqueado = !compativel && !ativo;
 
                           return (
                             <li key={titulo.chave}>
@@ -270,6 +322,7 @@ export default function BuscaSegmentos({
                                 titulo={titulo}
                                 ativo={ativo}
                                 complemento={complemento}
+                                bloqueado={bloqueado}
                                 destacado={buscando && highlightChaves?.has(titulo.chave)}
                                 tema={tema}
                                 onToggle={onToggleTitulo}

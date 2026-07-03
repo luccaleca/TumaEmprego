@@ -4,6 +4,7 @@ const CORES_AREA = {
   "dados-bi-analytics": "border-emerald-200 bg-emerald-50 text-emerald-950",
   desenvolvimento: "border-sky-200 bg-sky-50 text-sky-950",
   "engenharia-software": "border-indigo-200 bg-indigo-50 text-indigo-950",
+  "marketing-growth": "border-orange-200 bg-orange-50 text-orange-950",
   "ia-ml": "border-violet-200 bg-violet-50 text-violet-950",
 };
 

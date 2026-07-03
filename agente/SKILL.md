@@ -23,6 +23,7 @@ description: Hub local de candidaturas BR — avaliar vagas, adaptar CV, métric
 ## Regras inegociáveis
 
 - Não inventar experiência, ferramentas ou números
+- **Currículo:** só conteúdo de CV real no markdown — ver seção “Metadados da plataforma” em `agente/AGENTS.md` (sem `Cargo-alvo (base)`, comentários HTML, blockquotes internos)
 - PDFs em `dados/pdfs/`
 - App em `site/`, extensão em `extensao/`
 - UI com texto curto — sem justificativas do pedido em labels, hints ou comentários

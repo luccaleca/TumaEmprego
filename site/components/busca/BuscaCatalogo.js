@@ -16,6 +16,11 @@ const CORES_AREA = {
     chipInativo: "border-indigo-200/80 bg-white/90 text-zinc-600 hover:border-indigo-300",
     chipDestaque: "ring-2 ring-amber-400 ring-offset-1",
   },
+  "marketing-growth": {
+    chipAtivo: "border-orange-500 bg-orange-100 text-orange-900 ring-1 ring-orange-400",
+    chipInativo: "border-orange-200/80 bg-white/90 text-zinc-600 hover:border-orange-300",
+    chipDestaque: "ring-2 ring-amber-400 ring-offset-1",
+  },
   "ia-ml": {
     chipAtivo: "border-violet-500 bg-violet-100 text-violet-900 ring-1 ring-violet-400",
     chipInativo: "border-violet-200/80 bg-white/90 text-zinc-600 hover:border-violet-300",

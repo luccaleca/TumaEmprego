@@ -128,43 +128,22 @@ export default function SegmentosTopo({
           ) : null}
         </div>
 
-        <details className="group rounded-lg border border-zinc-100 bg-zinc-50/50">
-          <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-zinc-600 select-none">
-            Mais opções
-          </summary>
-          <div className="space-y-3 border-t border-zinc-100 px-3 py-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FormField
-                label="Abrangência"
-                hint={HINT_MODO[preferencias.modo_busca] ?? ""}
-              >
-                <select
-                  className={selectClass}
-                  value={preferencias.modo_busca ?? "focado"}
-                  onChange={(e) => update("modo_busca", e.target.value)}
-                >
-                  {OPCOES_MODO.map((option) => (
-                    <option key={option} value={option}>
-                      {LABEL_MODO[option]}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="Nota mínima">
-                <input
-                  type="number"
-                  min={1}
-                  max={5}
-                  step={0.5}
-                  className={inputClass}
-                  value={preferencias.nota_minima ?? 4}
-                  onChange={(e) => update("nota_minima", e.target.value)}
-                />
-              </FormField>
-            </div>
-          </div>
-        </details>
-      </div>
-    </section>
+        <FormField
+          label="Abrangência"
+          hint={HINT_MODO[preferencias.modo_busca] ?? ""}
+        >
+          <select
+            className={selectClass}
+            value={preferencias.modo_busca ?? "focado"}
+            onChange={(e) => update("modo_busca", e.target.value)}
+          >
+            {OPCOES_MODO.map((option) => (
+              <option key={option} value={option}>
+                {LABEL_MODO[option]}
+              </option>
+            ))}
+          </select>
+        </FormField>
+      </div>    </section>
   );
 }

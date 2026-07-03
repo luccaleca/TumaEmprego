@@ -2,6 +2,7 @@
  * Adaptação local de cv-base.md — monta CV focado por segmento/vaga.
  */
 
+import { slugsSegmentosAtivos } from "./segmentosAtivos.js";
 import {
   buildResumoPerfil,
   getPerfil,
@@ -81,7 +82,18 @@ function montarProjetos(perfil, banco) {
   return projetos.map((p) => formatarBlocoProjeto(p)).join("\n\n");
 }
 
-function montarExperiencia(perfil, banco, parsed) {
+function termosEfetivos(perfil, ctx) {
+  if (ctx.tipo !== "vaga") return perfil.termos;
+  const extra = `${ctx.titulo ?? ""}\n${ctx.descricao ?? ""}`.toLowerCase();
+  const palavras = extra
+    .split(/[^\p{L}\p{N}+#.]+/u)
+    .map((w) => w.trim())
+    .filter((w) => w.length > 2);
+  return [...new Set([...perfil.termos, ...palavras])];
+}
+
+function montarExperiencia(perfil, banco, parsed, ctx) {
+  const termos = termosEfetivos(perfil, ctx);
   const exp = experienciaParaSegmento(banco, perfil.slug);
   if (exp) {
     const periodo = exp.periodo
@@ -89,7 +101,7 @@ function montarExperiencia(perfil, banco, parsed) {
       : "";
     const bullets = reorderBullets(
       exp.bullets.map((b) => `- ${b}`),
-      perfil.termos,
+      termos,
       5,
     );
     const nota = exp.nota ? `\n\n*${exp.nota}*` : "";
@@ -102,7 +114,7 @@ function montarExperiencia(perfil, banco, parsed) {
   const sub = splitSubsections(sec.body).find((s) => s.title);
   if (!sub) return sec.body;
 
-  const bullets = reorderBullets(extractBullets(sub.body), perfil.termos, 5);
+  const bullets = reorderBullets(extractBullets(sub.body), termos, 5);
   const periodo =
     sub.body.match(/\*\*Período:\*\*[^\n]+/)?.[0] ??
     "**Período:** Fev/2025 – Set/2025 · São Paulo – SP";
@@ -110,15 +122,16 @@ function montarExperiencia(perfil, banco, parsed) {
   return `### ${perfil.expTitulo}\n\n${periodo}\n\n${bullets.join("\n")}\n\n*${perfil.expNota}*`;
 }
 
-function montarDestaques(perfil, banco, parsed) {
-  const expBullets = extractBullets(montarExperiencia(perfil, banco, parsed));
+function montarDestaques(perfil, banco, parsed, ctx) {
+  const termos = termosEfetivos(perfil, ctx);
+  const expBullets = extractBullets(montarExperiencia(perfil, banco, parsed, ctx));
   const projBullets = [];
 
   for (const proj of projetosParaSegmento(banco, perfil.slug, perfil.projetosOrdem).slice(0, 2)) {
     projBullets.push(...(proj.bullets ?? []).map((b) => `- ${b}`));
   }
 
-  const all = reorderBullets([...projBullets, ...expBullets], perfil.termos, 5);
+  const all = reorderBullets([...projBullets, ...expBullets], termos, 5);
   return all.length ? all.join("\n") : null;
 }
 
@@ -129,10 +142,8 @@ function adaptarCabecalho(preamble, perfil) {
 
   return `${nome}
 
-> Versão adaptada para **${perfil.label}** — derivada do cv-base.
-
 **Cargo-alvo:** ${perfil.cargoAlvo}  
-${contato.replace(/^\*\*Cargo-alvo:\*\*[^\n]*\n?/, "").trim()}`;
+${contato.replace(/^\*\*Cargo-alvo(\s*\([^)]*\))?:\*\*[^\n]*\n?/i, "").trim()}`;
 }
 
 function rebuildCv({ preamble, sections, headerComment }) {
@@ -140,11 +151,23 @@ function rebuildCv({ preamble, sections, headerComment }) {
   return `${headerComment}\n\n${preamble}\n\n${body}`.trim() + "\n";
 }
 
+function resolverPerfilSlugAdaptacao(ctx) {
+  if (ctx.tipo === "busca") {
+    return resolverPerfilSlug(ctx.slug);
+  }
+
+  const inferido = resolverPerfilSlug(inferirPerfilPorVaga(ctx.titulo ?? "", ctx.descricao ?? ""));
+  const ativos = slugsSegmentosAtivos().map(resolverPerfilSlug);
+  if (!ativos.length) return inferido;
+  if (ativos.includes(inferido)) return inferido;
+  return resolverPerfilSlug(ativos[0]);
+}
+
 function adaptarInterno(cvBase, ctx) {
   const perfilSlug =
     ctx.tipo === "busca"
       ? resolverPerfilSlug(ctx.slug)
-      : inferirPerfilPorVaga(ctx.titulo ?? "", ctx.descricao ?? "");
+      : resolverPerfilSlugAdaptacao(ctx);
 
   const perfil = getPerfil(perfilSlug);
   const banco = loadBanco();
@@ -152,7 +175,7 @@ function adaptarInterno(cvBase, ctx) {
   const parsed = parseSections(cvBase);
   const headerComment = `<!-- Adaptado em ${new Date().toISOString()} — ${contextoLabel} — ${perfil.slug} -->`;
 
-  const destaques = montarDestaques(perfil, banco, parsed);
+  const destaques = montarDestaques(perfil, banco, parsed, ctx);
   const sections = [
     { title: "Resumo", body: buildResumoPerfil(perfil, ctx) },
   ];
@@ -163,7 +186,7 @@ function adaptarInterno(cvBase, ctx) {
 
   sections.push(
     { title: "Competências", body: competenciasDoBanco(banco, perfil.slug) },
-    { title: "Experiência", body: montarExperiencia(perfil, banco, parsed) },
+    { title: "Experiência", body: montarExperiencia(perfil, banco, parsed, ctx) },
     { title: "Projetos", body: montarProjetos(perfil, banco) },
   );
 

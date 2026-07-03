@@ -1,7 +1,7 @@
 "use client";
 
 import CheckboxChipGroup from "@/components/profile/CheckboxChipGroup";
-import { FormField, inputClass, selectClass } from "@/components/profile/FormField";
+import { FormField, selectClass } from "@/components/profile/FormField";
 import {
   HINT_MODO,
   LABEL_MODO,
@@ -48,35 +48,22 @@ export default function BuscaPreferencias({
           value={preferencias.modalidades_trabalho}
           onChange={(v) => update("modalidades_trabalho", v)}
         />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField
-            label="Abrangência"
-            hint={HINT_MODO[preferencias.modo_busca] ?? ""}
+        <FormField
+          label="Abrangência"
+          hint={HINT_MODO[preferencias.modo_busca] ?? ""}
+        >
+          <select
+            className={selectClass}
+            value={preferencias.modo_busca ?? "focado"}
+            onChange={(e) => update("modo_busca", e.target.value)}
           >
-            <select
-              className={selectClass}
-              value={preferencias.modo_busca ?? "focado"}
-              onChange={(e) => update("modo_busca", e.target.value)}
-            >
-              {OPCOES_MODO.map((option) => (
-                <option key={option} value={option}>
-                  {LABEL_MODO[option]}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Nota mínima (aderência)">
-            <input
-              type="number"
-              min={1}
-              max={5}
-              step={0.5}
-              className={inputClass}
-              value={preferencias.nota_minima ?? 4}
-              onChange={(e) => update("nota_minima", e.target.value)}
-            />
-          </FormField>
-        </div>
+            {OPCOES_MODO.map((option) => (
+              <option key={option} value={option}>
+                {LABEL_MODO[option]}
+              </option>
+            ))}
+          </select>
+        </FormField>
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import { OPCOES_MODALIDADE } from "@/lib/buscaOpcoes";
 import { labelSenioridade, OPCOES_SENIORIDADE } from "@/lib/senioridadeOpcoes";
+import { combinacaoSenioridadeTituloValida } from "@/lib/tituloSenioridade";
 
 export function normalizarSenioridades(fonte) {
   if (Array.isArray(fonte?.senioridades) && fonte.senioridades.length) {
@@ -54,6 +55,7 @@ export function expandirAlvosCandidatura(alvos, senioridades) {
 
   for (const alvo of alvos ?? []) {
     for (const slug of niveis) {
+      if (!combinacaoSenioridadeTituloValida(slug, alvo.titulo)) continue;
       expandidos.push({
         ...alvo,
         senioridade: slug,

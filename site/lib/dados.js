@@ -99,8 +99,10 @@ export function getCvResumo() {
 
   return match[1]
     .replace(/\*\*Áreas:\*\*[^\n]*/g, "")
-    .replace(/\*\*Stack:\*\*[^\n]*/g, "")
+    .replace(/\*\*Stack(\s*\([^)]*\))?:\*\*[^\n]*/g, "")
+    .replace(/\*\*Ramificações:\*\*[^\n]*/g, "")
     .replace(/\*\*Foco:\*\*[^\n]*/g, "")
+    .replace(/[^\n]*(?:fonte; versões por segmento|este arquivo é a fonte)[^\n]*/gi, "")
     .trim();
 }
 

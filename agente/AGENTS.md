@@ -53,8 +53,41 @@ scripts/    = gerar PDF, utilitários
 ### CV e ênfase por vaga
 
 - **Nunca inventar** empregos, anos, ferramentas ou métricas.
-- **Sempre** partir de `dados/cv-base.md` e `dados/resultados/`.
-- **Adaptar** = reordenar bullets, mudar ênfase (dev | bi | dados), keywords da JD **só com base real**.
+- **Sempre** partir de `dados/cv-base.md`, `dados/conteudo/banco.yml` e `dados/resultados/`.
+- **Adaptar** = **reframe**, não criar fatos novos.
+
+#### Reframe por segmento (a ideia central)
+
+Uma mesma experiência (ex.: Empresa Exemplo Ltda) pode envolver **várias competências reais** — dev, dados, marketing, etc. Cada variação de currículo **destaca o que importa para aquela área**, usando só o que a pessoa de fato fez ou faria naturalmente naquele papel.
+
+| Segmento | Ênfase na mesma experiência |
+|---|---|
+| **Desenvolvimento** | React, Next.js, Node.js, JavaScript, SQL, automações, Git, entregas web |
+| **Dados / BI** | SQL, consultas, Python/Pandas, Power BI, modelagem, KPIs |
+| **Marketing / Growth** | Google Ads, Meta Ads, segmentação, funil, KPIs, Power BI |
+| **IA** | Base analítica (SQL, Python) que sustenta produto e priorização |
+
+**Como fazer:** bullets em `dados/conteudo/banco.yml` com `segmentos` (em quais CVs aparece) e, quando o mesmo fato precisa de wording diferente, `texto_por_segmento` (reframe por área). Métricas só de `dados/resultados/`.
+
+**Como NÃO fazer:** inventar cargo, stack ou entrega que não existiu; copiar o mesmo parágrafo de resumo em todos os segmentos; tratar variação como “outro emprego”.
+
+### Metadados da plataforma — NUNCA no currículo
+
+`dados/cv-base.md` e os `.md` de variação alimentam o **PDF enviado a recrutadores**. Só pode ir para o markdown do currículo o que apareceria num CV real.
+
+**Proibido** (nem comentário HTML):
+
+- `<!-- ... -->` com notas internas do Tuma Emprego
+- `**Cargo-alvo (base):**` — metadado interno; no cv-base **não** existe cargo-alvo
+- Blockquotes explicativos: `> Fonte única…`, `> Versão adaptada…`, `> Estrutura ATS…`, `> derivada do cv-base`
+- Linhas de segmentação: `**Stack (visão geral):**`, `**Ramificações:**`, `**Áreas:**`, `**Foco:**` (fora do parágrafo do resumo)
+- Frases tipo “Este arquivo é a fonte…”, “versões por segmento enfatizam…”
+
+**Permitido no cabeçalho do cv-base:** `# Nome` + uma linha de contato (cidade · e-mail · telefone · links).
+
+**Variações por segmento:** pode ter `**Cargo-alvo:**` (sem “base”) com o cargo daquela versão — isso é conteúdo de CV, não metadado da plataforma.
+
+Organização interna (segmentos, ramificações, prompts) fica em `agente/`, `dados/curriculo/*.json`, código — **nunca** no texto que vira PDF.
 
 ### Métricas e resultados
 

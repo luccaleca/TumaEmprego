@@ -12,78 +12,77 @@ experiencias:
       - marketing-growth
       - ia-ml
     titulo_por_segmento:
-      dados-bi-analytics: Empresa Exemplo Ltda — Estagiário em Análise de Dados
-      desenvolvimento: Empresa Exemplo Ltda — Automação com Python e SQL (apoio técnico a dados comerciais)
-      marketing-growth: Empresa Exemplo Ltda — Estagiário em Growth Marketing / Análise de Dados
-      ia-ml: Empresa Exemplo Ltda — Análise de Dados aplicada a decisões de produto
+      dados-bi-analytics: Empresa Exemplo Ltda — Assistente de Análise de Dados
+      desenvolvimento: Empresa Exemplo Ltda — Assistente de Desenvolvimento de Software
+      marketing-growth: Empresa Exemplo Ltda — Assistente de Growth / Performance
+      ia-ml: Empresa Exemplo Ltda — Análise de Dados para Produto e Operação
     nota_por_segmento:
-      dados-bi-analytics: Foco em SQL, Python, Power BI, modelagem e KPIs comerciais para decisão de negócio.
-      desenvolvimento: Python e SQL para pipelines de dados que sustentaram dashboards e relatórios.
-      marketing-growth: "Growth orientado a dados: segmentação, KPIs, Power BI e impacto de +20% na receita (métrica de exemplo)."
-      ia-ml: Base analítica (SQL, Python, Power BI) que sustenta experimentos e priorização.
+      dados-bi-analytics: Foco em SQL, Python, Power BI, modelagem relacional e KPIs comerciais.
+      desenvolvimento: Foco em React, Next.js, Node.js, JavaScript, SQL e automações que sustentaram a operação.
+      marketing-growth: Foco em Google Ads, Meta Ads, segmentação de público, KPIs e Power BI.
+      ia-ml: Foco em base analítica (SQL, Python) para leitura de performance e priorização.
     bullets:
-      - texto: Desenvolvi consultas SQL e scripts Python para cruzar vendas, estoque e campanhas.
+      - texto: Consultas SQL e base relacional de clientes e vendas.
+        texto_por_segmento:
+          dados-bi-analytics: Desenvolvi **consultas SQL** para extração e análise de dados de vendas, gerando relatórios semanais usados pela equipe comercial na tomada de decisão.
+          desenvolvimento: Modelei **consultas SQL** sobre base relacional de clientes e vendas, consumidas por **scripts Python/Node** e ferramentas internas.
+          ia-ml: Estruturei **consultas SQL** e datasets de vendas/clientes como base para análises e priorização de ações.
         segmentos:
           - dados-bi-analytics
           - desenvolvimento
           - ia-ml
-      - texto: Modelei dashboards no Power BI com KPIs comerciais e funil de conversão.
+      - texto: Tratamento de dados com Python.
+        texto_por_segmento:
+          dados-bi-analytics: Tratei e transformei bases em CSV com **Python** e **Pandas**, estruturando dados brutos para análise de performance e segmentação de público.
+          desenvolvimento: Automatizei rotinas em **Python** para limpar, cruzar e disponibilizar dados que alimentavam reports e fluxos da operação.
+        segmentos:
+          - dados-bi-analytics
+          - desenvolvimento
+      - texto: Dashboards Power BI e KPIs comerciais.
+        texto_por_segmento:
+          dados-bi-analytics: Construí dashboards em **Power BI** para acompanhamento de KPIs comerciais, apoiando a identificação de segmentos mais rentáveis.
+          marketing-growth: Modelei dashboards no **Power BI** com KPIs comerciais, funil de conversão e leitura de performance para campanhas.
         segmentos:
           - dados-bi-analytics
           - marketing-growth
-      - texto: Apoiei segmentação de público e leitura de performance para ações de growth.
-        segmentos:
-          - marketing-growth
-          - dados-bi-analytics
-      - texto: Automatizei rotinas de dados que alimentaram relatórios semanais da operação.
+      - texto: Interfaces e entregas web com React e Next.js.
         segmentos:
           - desenvolvimento
-          - dados-bi-analytics
-      - texto: Contribuí para aumento de ~20% na receita com insights sobre mix de produtos e sazonalidade.
+        texto_por_segmento:
+          desenvolvimento: Desenvolvi e mantive interfaces em **React** e **Next.js** para ferramentas internas e fluxos da operação, com **JavaScript** e **Git** no dia a dia.
+      - texto: Automações e integrações com Node.js.
+        segmentos:
+          - desenvolvimento
+        texto_por_segmento:
+          desenvolvimento: Implementei automações e rotinas em **Node.js** para integrar dados de vendas, campanhas e relatórios recorrentes da equipe.
+      - texto: Campanhas Google Ads e Meta Ads.
+        segmentos:
+          - marketing-growth
+        texto_por_segmento:
+          marketing-growth: Apoiei campanhas de **Google Ads** e **Meta Ads** com leitura de performance, segmentação de público e ajustes orientados a dados.
+      - texto: Segmentação de público e growth.
         segmentos:
           - marketing-growth
           - dados-bi-analytics
+        texto_por_segmento:
+          marketing-growth: Conduzi análises de segmentação de público e sazonalidade para direcionar ações de **growth** e lançamentos comerciais.
+          dados-bi-analytics: Realizei análise de dados para foco em público mais relevante em lançamento, apoiando direcionamento estratégico da equipe.
+      - texto: Modelagem relacional da base de clientes.
+        segmentos:
+          - dados-bi-analytics
+          - desenvolvimento
+        texto_por_segmento:
+          dados-bi-analytics: Modelei estruturas de dados e criei tabelas relacionais para consulta e segmentação da base de clientes, facilitando análises recorrentes.
+          desenvolvimento: Participei da **modelagem relacional** da base de clientes e das consultas que sustentavam scripts, reports e rotinas da operação.
+      - texto: Impacto de ~20% na receita do período.
+        segmentos:
+          - marketing-growth
+          - dados-bi-analytics
+        texto_por_segmento:
+          marketing-growth: Contribuí para aumento de **~20% na receita** do período (métrica de exemplo) com insights sobre mix de produtos, público e sazonalidade.
+          dados-bi-analytics: Contribuí para crescimento de **~20% na receita** (métrica de exemplo) com análises de mix de produtos e segmentos mais rentáveis.
 
 projetos:
-  - id: tumacore
-    nome: TumaCore
-    segmentos:
-      - dados-bi-analytics
-      - desenvolvimento
-      - marketing-growth
-      - ia-ml
-    ordem_por_segmento:
-      dados-bi-analytics: 1
-      ia-ml: 1
-      marketing-growth: 2
-      desenvolvimento: 3
-    subtitulo_por_segmento:
-      dados-bi-analytics: Centro de dados
-      desenvolvimento: Plataforma B2B
-      marketing-growth: KPIs e analytics
-      ia-ml: RAG + Chat SQL
-    stack_por_segmento:
-      dados-bi-analytics: Python, FastAPI, Next.js, PostgreSQL, Supabase, RAG (Chroma), LLM
-      desenvolvimento: Python, FastAPI, Next.js, PostgreSQL, Supabase
-      marketing-growth: Next.js, PostgreSQL, KPIs, Analytics
-      ia-ml: Python, FastAPI, RAG (Chroma), LLM, PostgreSQL, Next.js
-    bullets_por_segmento:
-      dados-bi-analytics:
-        - "Construí **centro de dados** do ecossistema TumaIA: hub operacional sobre Postgres/Supabase com KPIs, evolução de pedidos e distribuição por segmento/região."
-        - "Desenvolvi **Chat SQL**: pergunta em português → leitura do `information_schema` → geração de SQL PostgreSQL executável."
-        - Entreguei módulos de **analytics** (saúde do produto, performance, tendências) e visão de carteira de clientes.
-      desenvolvimento:
-        - Desenvolvi plataforma B2B com **FastAPI + Next.js** e PostgreSQL/Supabase.
-        - Implementei API de consulta assistida a dados e módulos de dashboards operacionais.
-        - Integrei RAG (Chroma) e LLM (Ollama/OpenRouter/Gemini) ao produto.
-      marketing-growth:
-        - "Construí dashboards de **KPIs de growth**: evolução de pedidos, segmentos, regiões e funil operacional."
-        - Entreguei analytics de saúde do produto, uso e performance para orientar campanhas.
-      ia-ml:
-        - Arquitetei **RAG + LLM** sobre PostgreSQL com leitura dinâmica de schema.
-        - Implementei **Chat SQL** em linguagem natural com geração de consultas PostgreSQL.
-        - Integrei Ollama, OpenRouter e Gemini em fluxo Next.js + FastAPI.
-
   - id: tumaia
     nome: TumaIA
     segmentos:
@@ -91,29 +90,59 @@ projetos:
       - marketing-growth
       - ia-ml
     ordem_por_segmento:
-      desenvolvimento: 1
       marketing-growth: 1
+      desenvolvimento: 1
       ia-ml: 2
     subtitulo_por_segmento:
-      desenvolvimento: SaaS full stack
-      marketing-growth: SaaS de marketing com IA
+      marketing-growth: Automação de posts no Instagram
+      desenvolvimento: SaaS Next.js + API + IA
       ia-ml: IA generativa em produção
     stack_por_segmento:
-      desenvolvimento: JavaScript, Next.js, React, Express, Supabase, Python, n8n
-      marketing-growth: Next.js, Supabase, n8n, IA generativa, Instagram
-      ia-ml: Python (IA), Next.js, Supabase, n8n, LLM
+      marketing-growth: WhatsApp, n8n, Instagram API, Supabase, IA generativa
+      desenvolvimento: Next.js (App Router), React, Node/Express, Supabase, Ollama, LLM
+      ia-ml: LLM, Replicate/FLUX, Supabase, n8n, Next.js
     bullets_por_segmento:
-      desenvolvimento:
-        - "Desenvolvi SaaS multi-tenant: **Next.js + React**, API **Node/Express** e **Supabase**."
-        - Implementei fluxo WhatsApp → IA gera post → aprovação → publicação no Instagram.
-        - Integrei **n8n** para automação do pipeline operacional.
       marketing-growth:
-        - "Criei SaaS de **marketing com IA** para PMEs: WhatsApp → geração de criativo + legenda → Instagram."
-        - Automatizei aprovação e publicação com **n8n**.
-        - Contextualizei marca no Supabase para posts alinhados à identidade visual.
+        - "SaaS para PMEs: pedido pelo **WhatsApp** → IA gera criativo + legenda → aprovação → **publicação no Instagram**."
+        - Automatizei o fluxo com **n8n** (webhook, contexto de marca no Supabase, aprovação antes de publicar).
+        - Produto **WhatsApp-first** — painel web só configura marca, catálogo e mídias.
+      desenvolvimento:
+        - "Monorepo **Next.js (App Router)** + **Express** multi-tenant com auth e rotas de IA."
+        - Integrei **Ollama** (API OpenAI-compatible) e geração de imagem via Replicate no pipeline do produto.
+        - Persistência e contexto de marca em **Supabase**; automações expostas para **n8n**.
       ia-ml:
-        - Produto com **IA generativa** para posts (imagem + legenda) a partir de contexto de marca.
-        - Orquestração via n8n e integração com APIs de publicação.
+        - Pipeline de **IA generativa** (imagem + legenda) a partir do contexto da empresa.
+        - Orquestração n8n + APIs de publicação; limites e billing configuráveis no backend.
+
+  - id: tumacore
+    nome: TumaCore
+    segmentos:
+      - dados-bi-analytics
+      - desenvolvimento
+      - ia-ml
+    ordem_por_segmento:
+      dados-bi-analytics: 1
+      ia-ml: 1
+      desenvolvimento: 2
+    subtitulo_por_segmento:
+      dados-bi-analytics: Centro de dados e BI
+      desenvolvimento: FastAPI + Next.js + Postgres
+      ia-ml: RAG + Chat SQL
+    stack_por_segmento:
+      dados-bi-analytics: Python, FastAPI, Next.js, PostgreSQL, Supabase, dashboards, KPIs
+      desenvolvimento: Python, FastAPI, Next.js, PostgreSQL, Chroma, LLM
+      ia-ml: Python, FastAPI, RAG (Chroma), Ollama, OpenRouter, Gemini, PostgreSQL
+    bullets_por_segmento:
+      dados-bi-analytics:
+        - "**Centro de dados** do ecossistema TumaIA — KPIs, evolução de pedidos, segmentos e regiões sobre Postgres/Supabase."
+        - "**Chat SQL**: pergunta em português → leitura do schema → SQL PostgreSQL executável."
+        - Dashboards de analytics (saúde do produto, performance, tendências).
+      desenvolvimento:
+        - API **FastAPI** + painel **Next.js** com proxy e auth Supabase.
+        - Leitura dinâmica de `information_schema` para consultas assistidas a dados.
+      ia-ml:
+        - **RAG (Chroma)** + LLM (Ollama / OpenRouter / Gemini) sobre PostgreSQL.
+        - Chat em linguagem natural com injeção de schema e cache configurável.
 
   - id: tuma-emprego
     nome: Tuma Emprego
@@ -250,6 +279,69 @@ cursos:
     ordem: 21
     concluido: false
 
+ferramentas:
+  - id: python
+    nome: Python
+    categoria: Dados / back-end
+    segmentos: [dados-bi-analytics, desenvolvimento, ia-ml, marketing-growth]
+  - id: sql
+    nome: SQL
+    categoria: Dados / back-end
+    segmentos: [dados-bi-analytics, marketing-growth, ia-ml]
+  - id: powerbi
+    nome: Power BI
+    categoria: BI
+    segmentos: [dados-bi-analytics, marketing-growth]
+  - id: postgresql
+    nome: PostgreSQL
+    categoria: Banco de dados
+    segmentos: [dados-bi-analytics, desenvolvimento, ia-ml]
+  - id: pandas
+    nome: Pandas
+    categoria: Dados
+    segmentos: [dados-bi-analytics, ia-ml]
+  - id: nextjs
+    nome: Next.js (App Router)
+    categoria: Front-end
+    segmentos: [desenvolvimento, ia-ml, marketing-growth]
+  - id: react
+    nome: React
+    categoria: Front-end
+    segmentos: [desenvolvimento]
+  - id: node
+    nome: Node.js / Express
+    categoria: Back-end
+    segmentos: [desenvolvimento]
+  - id: fastapi
+    nome: FastAPI
+    categoria: Back-end
+    segmentos: [desenvolvimento, ia-ml, dados-bi-analytics]
+  - id: ollama
+    nome: Ollama / LLM local
+    categoria: IA
+    segmentos: [desenvolvimento, ia-ml, dados-bi-analytics]
+  - id: rag
+    nome: RAG (Chroma)
+    categoria: IA
+    segmentos: [ia-ml, dados-bi-analytics]
+  - id: n8n
+    nome: n8n
+    categoria: Automação
+    segmentos: [marketing-growth, desenvolvimento, ia-ml]
+  - id: ga4
+    nome: Google Analytics 4
+    categoria: Marketing / analytics
+    segmentos: [marketing-growth, dados-bi-analytics]
+  - id: google-ads
+    nome: Google Ads
+    categoria: Marketing
+    segmentos: [marketing-growth]
+  - id: git
+    nome: Git
+    categoria: DevOps
+    segmentos: [desenvolvimento]
+
+# legado — usado só se ferramentas estiver vazio
 competencias:
   dados-bi-analytics: |
     - **Linguagens / dados:** Python, SQL, Excel

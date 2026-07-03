@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { getCvBase, saveCvBase } from "@/lib/dados";
-import { parseCvBase } from "@/lib/cv";
+import { parseCvDocument, sectionsForDisplay, cleanPreambleForExport } from "@/lib/cv";
 
 export async function GET() {
   try {
     const content = getCvBase();
+    const { preamble, sections } = parseCvDocument(content);
     return NextResponse.json({
       content,
-      sections: parseCvBase(content),
+      preamble: cleanPreambleForExport(preamble),
+      sections: sectionsForDisplay(sections),
     });
   } catch (err) {
     return NextResponse.json(
@@ -25,7 +27,13 @@ export async function PUT(request) {
     }
     saveCvBase(content);
     const saved = getCvBase();
-    return NextResponse.json({ ok: true, content: saved, sections: parseCvBase(saved) });
+    const parsed = parseCvDocument(saved);
+    return NextResponse.json({
+      ok: true,
+      content: saved,
+      preamble: cleanPreambleForExport(parsed.preamble),
+      sections: sectionsForDisplay(parsed.sections),
+    });
   } catch (err) {
     return NextResponse.json(
       { error: "Não foi possível salvar", detail: err.message },

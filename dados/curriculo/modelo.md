@@ -1,8 +1,8 @@
+<!-- Modelo de referência. Metadados da plataforma: ver agente/AGENTS.md — não vão para o PDF. -->
+
 # [Nome completo]
 
-> Estrutura ATS — o motor monta cada seção a partir do **cv-base** (cabeçalho/formação) e do **banco de conteúdo** (experiências, projetos, cursos).
-
-**Cargo-alvo:** [por segmento]  
+**Cargo-alvo:** [por segmento — só em variações; cv-base não tem cargo-alvo]  
 email · linkedin · cidade
 
 ---

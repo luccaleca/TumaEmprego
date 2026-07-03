@@ -39,10 +39,12 @@ export const PERFIS = {
     ],
     projetosOrdem: ["TumaCore", "Tuma Emprego"],
     projetosOmitir: ["TumaIA"],
-    expTitulo: "Empresa Exemplo Ltda — Estagiário em Análise de Dados",
-    expNota: "Foco em SQL, Python, Power BI, modelagem e KPIs comerciais para decisão de negócio.",
+    expTitulo: "Empresa Exemplo Ltda — Assistente de Análise de Dados",
+    expNota: "Foco em SQL, Python, Power BI, modelagem relacional e KPIs comerciais.",
     resumoExtra:
       "Projeto principal: **TumaCore** — hub de dados com dashboards, analytics e Chat SQL sobre PostgreSQL.",
+    resumoExp:
+      "Na Empresa Exemplo Ltda, atuei com **SQL**, **Python** e **Power BI** — consultas, dashboards e modelagem que apoiaram a equipe comercial, incluindo contribuição para **+20% de receita** (métrica de exemplo).",
   },
 
   desenvolvimento: {
@@ -66,10 +68,12 @@ export const PERFIS = {
     ],
     projetosOrdem: ["TumaIA", "Tuma Emprego", "TumaCore"],
     projetosOmitir: [],
-    expTitulo: "Empresa Exemplo Ltda — Automação com Python e SQL (apoio técnico a dados comerciais)",
-    expNota: "Python e SQL para pipelines de dados que sustentaram dashboards e relatórios.",
+    expTitulo: "Empresa Exemplo Ltda — Assistente de Desenvolvimento de Software",
+    expNota: "Foco em React, Next.js, Node.js, JavaScript, SQL e automações que sustentaram a operação.",
     resumoExtra:
       "Portfólio: **TumaIA** (SaaS Next.js + Express + Supabase) e **Tuma Emprego** (Next.js + PostgreSQL + Prisma).",
+    resumoExp:
+      "Na Empresa Exemplo Ltda, como assistente de desenvolvimento, atuei com **React**, **Next.js**, **Node.js**, **JavaScript** e **SQL** — interfaces, automações, rotinas de dados e entregas incrementais em ambiente de produto real.",
   },
 
   "marketing-growth": {
@@ -91,11 +95,12 @@ export const PERFIS = {
     ],
     projetosOrdem: ["TumaIA", "TumaCore"],
     projetosOmitir: ["Tuma Emprego"],
-    expTitulo: "Empresa Exemplo Ltda — Estagiário em Growth Marketing / Análise de Dados",
-    expNota:
-      "Growth orientado a dados: segmentação, KPIs, Power BI e impacto de +20% na receita (métrica de exemplo).",
+    expTitulo: "Empresa Exemplo Ltda — Assistente de Growth / Performance",
+    expNota: "Foco em Google Ads, Meta Ads, segmentação de público, KPIs e Power BI.",
     resumoExtra:
       "Projeto **TumaIA** — SaaS de marketing com IA para geração e publicação de conteúdo (WhatsApp → Instagram).",
+    resumoExp:
+      "Na Empresa Exemplo Ltda, atuei com **Google Ads**, **Meta Ads**, **SQL** e **Power BI** — campanhas, segmentação de público e KPIs comerciais, com contribuição para **+20% de receita** (métrica de exemplo).",
   },
 
   "ia-ml": {
@@ -116,10 +121,12 @@ export const PERFIS = {
     ],
     projetosOrdem: ["TumaCore", "TumaIA"],
     projetosOmitir: ["Tuma Emprego"],
-    expTitulo: "Empresa Exemplo Ltda — Análise de Dados aplicada a decisões de produto",
-    expNota: "Base analítica (SQL, Python, Power BI) que sustenta experimentos e priorização.",
+    expTitulo: "Empresa Exemplo Ltda — Análise de Dados para Produto e Operação",
+    expNota: "Foco em base analítica (SQL, Python) para leitura de performance e priorização.",
     resumoExtra:
       "**TumaCore**: RAG + Chat SQL com leitura de schema PostgreSQL e consultas em linguagem natural.",
+    resumoExp:
+      "Na Empresa Exemplo Ltda, montei base analítica com **SQL**, **Python** e **Power BI** que sustentou leitura de performance, segmentação e priorização de ações.",
   },
 };
 
@@ -192,9 +199,12 @@ export function buildResumoPerfil(perfil, ctx) {
       ? `Candidato a **${ctx.titulo}**`
       : `Busco **${senior}** como ${cargos || perfil.label}`;
 
-  const paragrafo = `${objetivo}. Com entregas em ${perfil.stack}. Na Empresa Exemplo Ltda, atuei com SQL, Python e Power BI gerando insights e dashboards — incluindo contribuição para **+20% de receita** (métrica de exemplo). ${perfil.resumoExtra}`;
+  const paragrafo = `${objetivo}. Com entregas em ${perfil.stack}. ${perfil.resumoExp ?? ""} ${perfil.resumoExtra}`.replace(
+    /\s{2,}/g,
+    " ",
+  ).trim();
 
-  return `${paragrafo}\n\n**Stack:** ${perfil.stack}\n**Foco:** ${perfil.foco}`;
+  return paragrafo;
 }
 
 export function competenciasPerfil(perfil) {

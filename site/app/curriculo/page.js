@@ -1,21 +1,35 @@
 import CurriculoWorkspace from "@/components/curriculo/CurriculoWorkspace";
 import { parseCvBase } from "@/lib/cv";
-import { getCurriculoArquivo } from "@/lib/dados";
+import { getBusca, getCurriculoArquivo } from "@/lib/dados";
+import { sincronizarSlotsSegmento } from "@/lib/adaptarCvBusca";
+import { getVagaCatalogo } from "@/lib/vagaCatalogo";
 import {
   getSegmentacaoConteudo,
-  listSegmentacoes,
+  listSegmentacoesVisiveis,
   migrarAdaptadoBuscaLegado,
+  migrarSegmentacoesParaSlots,
 } from "@/lib/segmentacoes";
 
 export const metadata = {
   title: "Tuma Emprego — Currículo",
 };
 
-export default function CurriculoPage() {
+export default async function CurriculoPage() {
   migrarAdaptadoBuscaLegado();
+  migrarSegmentacoesParaSlots();
+
+  const busca = getBusca();
+  const catalogo = await getVagaCatalogo();
+
+  try {
+    await sincronizarSlotsSegmento(busca, catalogo);
+  } catch {
+    /* cv-base vazio ou erro de leitura — slots aparecem quando houver base */
+  }
+
   const arquivo = getCurriculoArquivo();
 
-  const segmentacoes = listSegmentacoes().map((seg) => {
+  const segmentacoes = listSegmentacoesVisiveis(busca.segmentos_ativos ?? []).map((seg) => {
     if (!seg.hasMd) return seg;
     const conteudo = getSegmentacaoConteudo(seg.id);
     const sections =
@@ -24,6 +38,10 @@ export default function CurriculoPage() {
   });
 
   return (
-    <CurriculoWorkspace initialArquivo={arquivo} initialSegmentacoes={segmentacoes} />
+    <CurriculoWorkspace
+      initialArquivo={arquivo}
+      initialSegmentacoes={segmentacoes}
+      segmentosAtivos={busca.segmentos_ativos ?? []}
+    />
   );
 }

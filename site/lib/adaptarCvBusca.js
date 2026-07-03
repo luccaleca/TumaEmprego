@@ -9,8 +9,9 @@ import {
   preferenciasFromBusca,
 } from "@/lib/preferenciasBusca";
 import { areaSlugFromChave } from "@/lib/alvosSegmento";
-import { criarSegmentacaoFromPedido } from "@/lib/segmentacoes";
+import { upsertSlotSegmentacao, migrarSegmentacoesParaSlots } from "@/lib/segmentacoes";
 import { adaptarCvParaBusca } from "@/lib/adaptarCvLocal";
+import { SEGMENTOS_CV_SLOTS } from "@/lib/conteudoConstants";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 const PEDIDO_PATH = path.join(DADOS_ROOT, "curriculo", "pedido-adaptacao.json");
@@ -27,7 +28,7 @@ function mapAlvosExpandidos(alvos, senioridades) {
   }));
 }
 
-export function montarPedidosAdaptacao(busca, catalogo) {
+export function montarPedidoAdaptacaoPorSlug(busca, catalogo, slug) {
   const preferencias = preferenciasFromBusca(busca);
   const todos = listarTitulosAtivos(catalogo, busca.titulos_ativos ?? []);
 
@@ -38,25 +39,27 @@ export function montarPedidosAdaptacao(busca, catalogo) {
     profile = {};
   }
 
-  return (busca.segmentos_ativos ?? []).map((slug) => {
-    const area = (catalogo ?? []).find((a) => a.slug === slug);
-    const primarios = todos.filter((t) => areaSlugFromChave(t.chave) === slug);
-    const complementares = todos.filter((t) => areaSlugFromChave(t.chave) !== slug);
+  const area = (catalogo ?? []).find((a) => a.slug === slug);
+  const primarios = todos.filter((t) => areaSlugFromChave(t.chave) === slug);
+  const complementares = todos.filter((t) => areaSlugFromChave(t.chave) !== slug);
 
-    return {
-      criado_em: new Date().toISOString(),
-      segmento: {
-        slug,
-        nome: area?.nome ?? slug,
-      },
-      preferencias,
-      alvos_primarios: mapAlvosExpandidos(primarios, preferencias.senioridades),
-      alvos_complementares: mapAlvosExpandidos(complementares, preferencias.senioridades),
-      candidato: {
-        nome: profile.nome ?? "",
-      },
-    };
-  });
+  return {
+    criado_em: new Date().toISOString(),
+    segmento: {
+      slug,
+      nome: area?.nome ?? slug,
+    },
+    preferencias,
+    alvos_primarios: mapAlvosExpandidos(primarios, preferencias.senioridades),
+    alvos_complementares: mapAlvosExpandidos(complementares, preferencias.senioridades),
+    candidato: {
+      nome: profile.nome ?? "",
+    },
+  };
+}
+
+export function montarPedidosAdaptacao(busca, catalogo) {
+  return SEGMENTOS_CV_SLOTS.map((slug) => montarPedidoAdaptacaoPorSlug(busca, catalogo, slug));
 }
 
 /** @deprecated use montarPedidosAdaptacao */
@@ -93,7 +96,6 @@ Leia \`agente/AGENTS.md\` e \`dados/cv-base.md\`.
 - Senioridades: ${labelsSenioridades(pedido.preferencias.senioridades)}
 - Modalidade: ${labelModalidades(pedido.preferencias.modalidades_trabalho)}
 - Modo: ${pedido.preferencias.modo_busca}
-- Nota mínima: ${pedido.preferencias.nota_minima}
 
 ## Alvos principais (ênfase no CV)
 ${formatarListaAlvos(pedido.alvos_primarios) || "- CV geral do segmento, sem cargo específico marcado"}
@@ -103,22 +105,17 @@ ${formatarListaAlvos(pedido.alvos_complementares) || "- (nenhum)"}
 `;
 }
 
-export async function executarAdaptacaoCv(busca, catalogo) {
+export async function executarAdaptacaoCv(busca, catalogo, { regenerar = false } = {}) {
+  migrarSegmentacoesParaSlots();
   const pedidos = montarPedidosAdaptacao(busca, catalogo);
   fs.mkdirSync(path.dirname(PEDIDO_PATH), { recursive: true });
   fs.writeFileSync(PEDIDO_PATH, `${JSON.stringify({ pedidos }, null, 2)}\n`, "utf8");
 
-  if (!pedidos.length) {
-    return {
-      status: "ignorado",
-      motivo: "sem_segmentos_cv",
-      pedidoPath: "dados/curriculo/pedido-adaptacao.json",
-    };
-  }
-
   const cvBase = getCvBase()?.trim();
   if (!cvBase) {
-    fs.writeFileSync(PROMPT_PATH, montarPromptAdaptacao(pedidos[0]), "utf8");
+    if (pedidos.length) {
+      fs.writeFileSync(PROMPT_PATH, montarPromptAdaptacao(pedidos[0]), "utf8");
+    }
     return {
       status: "pendente",
       motivo: "sem_cv_base",
@@ -128,27 +125,35 @@ export async function executarAdaptacaoCv(busca, catalogo) {
   }
 
   const segmentacoes = [];
+  const ativos = new Set(busca.segmentos_ativos ?? []);
 
   for (const pedido of pedidos) {
     fs.writeFileSync(PEDIDO_PATH, `${JSON.stringify(pedido, null, 2)}\n`, "utf8");
-    const prompt = montarPromptAdaptacao(pedido);
-    fs.writeFileSync(PROMPT_PATH, prompt, "utf8");
+    fs.writeFileSync(PROMPT_PATH, montarPromptAdaptacao(pedido), "utf8");
 
     const conteudo = adaptarCvParaBusca(cvBase, pedido);
-
-    segmentacoes.push(criarSegmentacaoFromPedido(pedido, conteudo));
+    const seg = upsertSlotSegmentacao(pedido, conteudo, { regenerar });
+    segmentacoes.push(seg);
   }
+
+  const visiveis = segmentacoes.filter((s) => ativos.has(s.segmento_slug));
 
   return {
     status: "concluido",
     segmentacoes,
-    segmentacao: segmentacoes[0],
+    segmentacao: visiveis[0] ?? segmentacoes[0],
+    slots_total: segmentacoes.length,
+    slots_visiveis: visiveis.length,
     pedidoPath: "dados/curriculo/pedido-adaptacao.json",
   };
 }
 
+export async function sincronizarSlotsSegmento(busca, catalogo) {
+  return executarAdaptacaoCv(busca, catalogo, { regenerar: false });
+}
+
 export async function adaptarAposSalvarBusca(buscaSalva, catalogo) {
-  return executarAdaptacaoCv(buscaSalva ?? getBusca(), catalogo);
+  return executarAdaptacaoCv(buscaSalva ?? getBusca(), catalogo, { regenerar: false });
 }
 
 export function getAdaptacaoBuscaPath() {

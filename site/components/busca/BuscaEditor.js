@@ -8,6 +8,10 @@ import SegmentosTopo from "@/components/busca/SegmentosTopo";
 import { contarAlvosTotais } from "@/lib/alvosSegmento";
 import { buscarNoCatalogo } from "@/lib/buscaCatalogo";
 import { buscaIgual, preferenciasFromBusca } from "@/lib/preferenciasBusca";
+import {
+  filtrarChavesTituloPorSenioridade,
+  listarChavesTituloCompativeis,
+} from "@/lib/tituloSenioridade";
 
 export default function BuscaEditor({ initial, catalogo }) {
   const [salvo, setSalvo] = useState(initial);
@@ -22,7 +26,7 @@ export default function BuscaEditor({ initial, catalogo }) {
 
   const segmentosAtivos = busca.segmentos_ativos ?? [];
   const titulosAtivos = busca.titulos_ativos ?? [];
-  const podeSalvar = segmentosAtivos.length > 0;
+  const podeSalvar = true;
   const preferencias = preferenciasFromBusca(busca);
   const buscando = consulta.trim().length > 0;
 
@@ -37,7 +41,16 @@ export default function BuscaEditor({ initial, catalogo }) {
   );
 
   function setPreferencias(prefs) {
-    setBusca((prev) => ({ ...prev, ...prefs }));
+    setBusca((prev) => {
+      const next = { ...prev, ...prefs };
+      if (prefs.senioridades) {
+        next.titulos_ativos = filtrarChavesTituloPorSenioridade(
+          next.titulos_ativos,
+          prefs.senioridades,
+        );
+      }
+      return next;
+    });
   }
 
   function toggleSegmento(slug) {
@@ -56,6 +69,25 @@ export default function BuscaEditor({ initial, catalogo }) {
       else set.add(chave);
       return { ...prev, titulos_ativos: [...set] };
     });
+  }
+
+  function marcarTodosSegmentos() {
+    setBusca((prev) => {
+      const senioridades = preferenciasFromBusca(prev).senioridades;
+      return {
+        ...prev,
+        segmentos_ativos: (catalogo ?? []).map((a) => a.slug),
+        titulos_ativos: listarChavesTituloCompativeis(catalogo, senioridades),
+      };
+    });
+  }
+
+  function desmarcarTodosSegmentos() {
+    setBusca((prev) => ({
+      ...prev,
+      segmentos_ativos: [],
+      titulos_ativos: [],
+    }));
   }
 
   function irParaArea(chave) {
@@ -86,13 +118,18 @@ export default function BuscaEditor({ initial, catalogo }) {
       setBusca(data.busca);
       setAdaptacao(data.adaptacao ?? null);
 
-      const n = data.adaptacao?.segmentacoes?.length ?? 0;
+      const n = data.adaptacao?.slots_total ?? data.adaptacao?.segmentacoes?.length ?? 0;
+      const vis = data.adaptacao?.slots_visiveis ?? n;
       if (data.adaptacao?.status === "concluido") {
-        setMessage(n > 1 ? `Salvo. ${n} currículos gerados.` : "Salvo. Currículo gerado.");
+        setMessage(
+          vis > 0
+            ? `Salvo. ${vis} variação${vis > 1 ? "ões" : ""} visível${vis > 1 ? "is" : ""} (${n} slots fixos no disco).`
+            : `Salvo. ${n} variações mantidas — ative segmentos para exibir.`,
+        );
       } else if (data.adaptacao?.status === "pendente") {
         setMessage("Salvo. Adaptação pendente — veja Currículo.");
       } else {
-        setMessage("Salvo.");
+        setMessage("Salvo. Revise Conteúdo se mudou as áreas ativas.");
       }
     } catch (err) {
       setMessage(err.message || "Erro ao salvar");
@@ -119,8 +156,11 @@ export default function BuscaEditor({ initial, catalogo }) {
         catalogo={catalogo}
         segmentosAtivos={segmentosAtivos}
         titulosAtivos={titulosAtivos}
+        senioridades={preferencias.senioridades}
         onToggleSegmento={toggleSegmento}
         onToggleTitulo={toggleTitulo}
+        onMarcarTodosSegmentos={marcarTodosSegmentos}
+        onDesmarcarTodosSegmentos={desmarcarTodosSegmentos}
         buscando={buscando}
         highlightChaves={highlightChaves}
         abrirSegmento={segmentoAberto}

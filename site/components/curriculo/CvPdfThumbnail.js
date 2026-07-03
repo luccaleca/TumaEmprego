@@ -4,8 +4,25 @@ import { useEffect, useState } from "react";
 
 export const THUMB_WIDTH = 120;
 export const THUMB_COMPACT_WIDTH = 72;
+export const THUMB_AUDIENCE_WIDTH = 100;
+export const THUMB_STAGE_WIDTH = 156;
 
-export function getThumbSize(compact = false) {
+export function getThumbSize(variant = "default") {
+  if (variant === "audienceCard") {
+    return { width: 104, height: 96 };
+  }
+  if (variant === "audienceTile") {
+    return { width: 58, height: 72 };
+  }
+  if (variant === "audience") {
+    const width = THUMB_AUDIENCE_WIDTH;
+    return { width, height: Math.round(width * 0.72) };
+  }
+  if (variant === "stage") {
+    const width = THUMB_STAGE_WIDTH;
+    return { width, height: Math.round(width * 1.414) };
+  }
+  const compact = variant === "compact";
   const width = compact ? THUMB_COMPACT_WIDTH : THUMB_WIDTH;
   return { width, height: Math.round(width * 1.414) };
 }
@@ -14,8 +31,9 @@ function isFile(value) {
   return typeof File !== "undefined" && value instanceof File;
 }
 
-export default function CvPdfThumbnail({ src, compact = false }) {
-  const { width, height } = getThumbSize(compact);
+export default function CvPdfThumbnail({ src, compact = false, variant }) {
+  const sizeVariant = variant ?? (compact ? "compact" : "default");
+  const { width, height } = getThumbSize(sizeVariant);
   const [thumbUrl, setThumbUrl] = useState(null);
   const [status, setStatus] = useState("loading");
 

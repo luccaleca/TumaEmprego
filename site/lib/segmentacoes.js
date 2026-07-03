@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 
+import { SEGMENTOS_CV_SLOTS } from "./conteudoConstants.js";
+
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 const SEG_ROOT = path.join(DADOS_ROOT, "curriculo", "segmentacoes");
 const LEGADO_ADAPTADO = path.join(DADOS_ROOT, "curriculo", "adaptado-busca.md");
@@ -120,6 +122,218 @@ export function getSegmentacaoConteudo(id) {
 export function getSegmentacaoPdfPath(id) {
   const pdfPath = path.join(dirPath(id), "curriculo.pdf");
   return fs.existsSync(pdfPath) ? pdfPath : null;
+}
+
+function idSegmentacaoValido(id) {
+  return typeof id === "string" && /^seg-[a-z0-9-]+$/i.test(id);
+}
+
+export function idSlotSegmento(slug) {
+  return `seg-var-${slug}`;
+}
+
+export function isSlotSegmento(meta) {
+  if (!meta) return false;
+  if (meta.slot === true) return true;
+  const slug = meta.segmento_slug;
+  return Boolean(slug && meta.id === idSlotSegmento(slug));
+}
+
+export function getSegmentacaoSlot(slug) {
+  const id = idSlotSegmento(slug);
+  if (!fs.existsSync(metaPath(id))) return null;
+  return getSegmentacao(id);
+}
+
+export function upsertSlotSegmentacao(pedido, conteudoMd, { regenerar = false } = {}) {
+  const slug = pedido?.segmento?.slug;
+  if (!slug) throw new Error("segmento.slug obrigatório");
+
+  const id = idSlotSegmento(slug);
+  const dir = dirPath(id);
+  const mdPath = path.join(dir, "curriculo.md");
+  const exists = fs.existsSync(metaPath(id));
+  const prev = exists ? readMeta(id) : null;
+
+  const primarios = pedido.alvos_primarios ?? pedido.alvos ?? [];
+  const segmentoNome = pedido.segmento?.nome ?? slug;
+
+  const meta = {
+    id,
+    vaga_titulo: tituloVagaFromSegmento(segmentoNome, primarios),
+    vaga_descricao: descricaoVagaFromPedido(pedido),
+    origem: "segmento",
+    segmento_slug: slug,
+    slot: true,
+    alvos: primarios,
+    alvos_complementares: pedido.alvos_complementares ?? [],
+    criado_em: prev?.criado_em ?? new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+    formato: "markdown",
+  };
+
+  fs.mkdirSync(dir, { recursive: true });
+
+  const semConteudo = !fs.existsSync(mdPath);
+  if (conteudoMd?.trim() && (regenerar || semConteudo || !exists)) {
+    fs.writeFileSync(mdPath, conteudoMd.trim());
+  }
+
+  fs.writeFileSync(metaPath(id), `${JSON.stringify(meta, null, 2)}\n`);
+  return getSegmentacao(id);
+}
+
+/** Move legado (seg-* com origem busca) para slots fixos e remove duplicatas. */
+export function migrarSegmentacoesParaSlots() {
+  if (!fs.existsSync(SEG_ROOT)) return;
+
+  const all = listSegmentacoes();
+
+  for (const slug of SEGMENTOS_CV_SLOTS) {
+    const slotId = idSlotSegmento(slug);
+    const legados = all.filter(
+      (s) =>
+        s.segmento_slug === slug &&
+        !isSlotSegmento(s) &&
+        (s.origem === "busca" || s.origem === "segmento"),
+    );
+
+    if (!fs.existsSync(metaPath(slotId)) && legados.length) {
+      const melhor = legados.sort((a, b) =>
+        String(b.updatedAt ?? b.criado_em).localeCompare(String(a.updatedAt ?? a.criado_em)),
+      )[0];
+      const srcDir = dirPath(melhor.id);
+      fs.mkdirSync(dirPath(slotId), { recursive: true });
+      for (const file of ["curriculo.md", "curriculo.pdf"]) {
+        const src = path.join(srcDir, file);
+        if (fs.existsSync(src)) {
+          fs.copyFileSync(src, path.join(dirPath(slotId), file));
+        }
+      }
+      const meta = {
+        ...readMeta(melhor.id),
+        id: slotId,
+        origem: "segmento",
+        segmento_slug: slug,
+        slot: true,
+      };
+      fs.writeFileSync(metaPath(slotId), `${JSON.stringify(meta, null, 2)}\n`);
+    }
+
+    for (const leg of legados) {
+      if (leg.id !== slotId) {
+        try {
+          fs.rmSync(dirPath(leg.id), { recursive: true, force: true });
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }
+}
+
+function ordemSegmentacao(a, b) {
+  const ia = SEGMENTOS_CV_SLOTS.indexOf(a.segmento_slug);
+  const ib = SEGMENTOS_CV_SLOTS.indexOf(b.segmento_slug);
+  if (ia >= 0 && ib >= 0) return ia - ib;
+  if (ia >= 0) return -1;
+  if (ib >= 0) return 1;
+  return String(b.criado_em).localeCompare(String(a.criado_em));
+}
+
+/** Slots de segmento visíveis + variações extras (vaga / manual). */
+export function listSegmentacoesVisiveis(segmentosAtivos = []) {
+  migrarSegmentacoesParaSlots();
+  const ativos = new Set(segmentosAtivos ?? []);
+  const all = listSegmentacoes();
+
+  return all
+    .filter((seg) => {
+      if (isSlotSegmento(seg)) {
+        return ativos.has(seg.segmento_slug);
+      }
+      if (seg.origem === "vaga" || seg.origem === "manual") {
+        return true;
+      }
+      return false;
+    })
+    .sort(ordemSegmentacao);
+}
+
+export function excluirSegmentacao(id) {
+  if (!idSegmentacaoValido(id)) {
+    throw new Error("ID inválido");
+  }
+
+  const meta = readMeta(id);
+  if (isSlotSegmento(meta)) {
+    throw new Error(
+      "Variação fixa do segmento — desmarque a área em Segmentos para ocultar, em vez de excluir",
+    );
+  }
+
+  const dir = dirPath(id);
+  if (!fs.existsSync(dir)) {
+    return false;
+  }
+
+  fs.rmSync(dir, { recursive: true, force: true });
+  return true;
+}
+
+export function salvarSegmentacaoConteudo(id, content) {
+  if (!idSegmentacaoValido(id)) {
+    throw new Error("ID inválido");
+  }
+
+  if (!String(content ?? "").trim()) {
+    throw new Error("Conteúdo vazio");
+  }
+
+  if (!fs.existsSync(metaPath(id))) {
+    throw new Error("Segmentação não encontrada");
+  }
+
+  const pdfPath = path.join(dirPath(id), "curriculo.pdf");
+  if (fs.existsSync(pdfPath)) {
+    throw new Error("Variação em PDF — substitua o arquivo para editar por texto");
+  }
+
+  fs.writeFileSync(path.join(dirPath(id), "curriculo.md"), content.trim(), "utf8");
+  return getSegmentacao(id);
+}
+
+export function salvarSegmentacaoPdf(id, buffer) {
+  if (!idSegmentacaoValido(id)) {
+    throw new Error("ID inválido");
+  }
+
+  if (!Buffer.isBuffer(buffer) || !buffer.length) {
+    throw new Error("PDF inválido");
+  }
+
+  if (!fs.existsSync(metaPath(id))) {
+    throw new Error("Segmentação não encontrada");
+  }
+
+  fs.writeFileSync(path.join(dirPath(id), "curriculo.pdf"), buffer);
+  return getSegmentacao(id);
+}
+
+export function statusPdfSegmentacao(id) {
+  const mdPath = path.join(dirPath(id), "curriculo.md");
+  const pdfPath = path.join(dirPath(id), "curriculo.pdf");
+  const temPdf = fs.existsSync(pdfPath);
+  const temMd = fs.existsSync(mdPath);
+
+  if (!temPdf) {
+    return { temPdf: false, desatualizado: false, pdfUpdatedAt: null };
+  }
+
+  const pdfUpdatedAt = fs.statSync(pdfPath).mtime.toISOString();
+  const desatualizado = temMd && fs.statSync(mdPath).mtimeMs > fs.statSync(pdfPath).mtimeMs;
+
+  return { temPdf: true, desatualizado, pdfUpdatedAt };
 }
 
 export function criarSegmentacao({
