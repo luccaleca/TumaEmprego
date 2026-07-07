@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FormField,
   inputClass,
@@ -10,19 +10,22 @@ import {
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { DataTags } from "@/components/profile/ViewData";
 import ExperienciasWorkspace from "@/components/conteudo/ExperienciasWorkspace";
+import { ConteudoFiltros } from "@/components/conteudo/ConteudoFiltros";
 import {
   SegmentChips,
   SegmentEditTabs,
-  SegmentTabs,
 } from "@/components/conteudo/SegmentChips";
 import { slugParaLabel } from "@/lib/conteudoConstants";
-
-const TABS = [
-  { id: "experiencias", label: "Experiência" },
-  { id: "cursos", label: "Cursos" },
-  { id: "projetos", label: "Projetos" },
-  { id: "ferramentas", label: "Ferramentas" },
-];
+import {
+  ESCOPO_TUDO,
+  contarItensPorEscopo,
+  escopoEhTudo,
+  filtrarItensPorEscopo,
+} from "@/lib/conteudoFiltro";
+import {
+  importarFerramentasDoPerfil,
+  mesclarFerramentas,
+} from "@/lib/ferramentasPerfil";
 
 const CATEGORIAS_FERRAMENTA = [
   "Dados / back-end",
@@ -75,68 +78,6 @@ function emptyFerramenta(defaultSegmentos) {
   };
 }
 
-function ConteudoSemSegmentos() {
-  return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-6 text-center">
-      <p className="text-sm font-medium text-amber-950">Nenhuma área de vaga selecionada</p>
-      <p className="mt-1 text-sm text-amber-900/80">
-        Escolha em Segmentos para quais áreas você vai aplicar. O Conteúdo mostra só essas áreas.
-      </p>
-      <Link
-        href="/segmentos"
-        className="mt-4 inline-block rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
-      >
-        Ir para Segmentos
-      </Link>
-    </div>
-  );
-}
-
-function MapPorSegmento({ value, onChange, label, rows = 2, segmentos = [] }) {
-  return (
-    <div className="space-y-2 rounded-lg border border-zinc-100 bg-zinc-50/50 p-2.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{label}</p>
-      {segmentos.map((seg) => (
-        <FormField key={seg.slug} label={seg.label} full>
-          <textarea
-            className={textareaClass}
-            rows={rows}
-            value={value?.[seg.slug] ?? ""}
-            onChange={(e) => onChange({ ...value, [seg.slug]: e.target.value })}
-          />
-        </FormField>
-      ))}
-    </div>
-  );
-}
-
-function BulletsPorSegmento({ value, onChange, segmentos = [] }) {
-  return (
-    <div className="space-y-2 rounded-lg border border-zinc-100 bg-zinc-50/50 p-2.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Bullets por área</p>
-      {segmentos.map((seg) => (
-        <FormField key={seg.slug} label={seg.label} full>
-          <textarea
-            className={textareaClass}
-            rows={4}
-            value={(value?.[seg.slug] ?? []).join("\n")}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                [seg.slug]: e.target.value
-                  .split("\n")
-                  .map((l) => l.trim())
-                  .filter(Boolean),
-              })
-            }
-            placeholder="Um bullet por linha"
-          />
-        </FormField>
-      ))}
-    </div>
-  );
-}
-
 function ViewCard({ title, subtitle, children, defaultOpen = false }) {
   return (
     <details className="overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-50/40" open={defaultOpen}>
@@ -149,44 +90,83 @@ function ViewCard({ title, subtitle, children, defaultOpen = false }) {
   );
 }
 
-function ProjetosView({ items, previewSlug, segmentosAtivos }) {
-  if (!items?.length) return <p className="text-sm italic text-zinc-400">Nenhum projeto.</p>;
-
-  const visiveis = items.filter((p) => (p.segmentos ?? []).includes(previewSlug));
+function ProjetosView({ items, escopo, todosSegmentos }) {
+  const visiveis = filtrarItensPorEscopo(items, escopo);
   if (!visiveis.length) {
     return (
       <p className="text-sm italic text-zinc-400">
-        Nenhum projeto marcado para {slugParaLabel(previewSlug, segmentosAtivos)}.
+        {escopoEhTudo(escopo) ? "Nenhum projeto cadastrado." : "Nenhum projeto nesta área."}
       </p>
     );
   }
 
   return (
     <div className="space-y-2">
-      {visiveis.map((proj, i) => (
-        <ViewCard
-          key={proj.id}
-          title={`${proj.nome}${proj.subtitulo_por_segmento?.[previewSlug] ? ` — ${proj.subtitulo_por_segmento[previewSlug]}` : ""}`}
-          subtitle={proj.stack_por_segmento?.[previewSlug]}
-          defaultOpen={i === 0}
-        >
-          {(proj.bullets_por_segmento?.[previewSlug] ?? []).length ? (
-            <ul className="list-inside list-disc space-y-1 text-sm text-zinc-700">
-              {proj.bullets_por_segmento[previewSlug].map((b, bi) => (
-                <li key={bi}>{b}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm italic text-zinc-400">Sem bullets nesta área.</p>
-          )}
-        </ViewCard>
-      ))}
+      {visiveis.map((proj, i) => {
+        const segs = proj.segmentos ?? [];
+        const tituloBase = proj.nome || proj.id;
+
+        if (escopoEhTudo(escopo)) {
+          return (
+            <ViewCard
+              key={proj.id}
+              title={tituloBase}
+              subtitle={segs.map((s) => slugParaLabel(s, todosSegmentos)).join(" · ")}
+              defaultOpen={i === 0}
+            >
+              <div className="space-y-3">
+                {segs.map((slug) => {
+                  const bullets = proj.bullets_por_segmento?.[slug] ?? [];
+                  if (!bullets.length && !proj.subtitulo_por_segmento?.[slug]) return null;
+                  return (
+                    <div key={slug}>
+                      <p className="text-xs font-medium text-zinc-600">
+                        {slugParaLabel(slug, todosSegmentos)}
+                        {proj.subtitulo_por_segmento?.[slug] ? ` — ${proj.subtitulo_por_segmento[slug]}` : ""}
+                      </p>
+                      {proj.stack_por_segmento?.[slug] ? (
+                        <p className="text-xs text-zinc-500">{proj.stack_por_segmento[slug]}</p>
+                      ) : null}
+                      {bullets.length ? (
+                        <ul className="mt-1 list-inside list-disc space-y-1 text-sm text-zinc-700">
+                          {bullets.map((b, bi) => (
+                            <li key={bi}>{b}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </ViewCard>
+          );
+        }
+
+        return (
+          <ViewCard
+            key={proj.id}
+            title={`${tituloBase}${proj.subtitulo_por_segmento?.[escopo] ? ` — ${proj.subtitulo_por_segmento[escopo]}` : ""}`}
+            subtitle={proj.stack_por_segmento?.[escopo]}
+            defaultOpen={i === 0}
+          >
+            {(proj.bullets_por_segmento?.[escopo] ?? []).length ? (
+              <ul className="list-inside list-disc space-y-1 text-sm text-zinc-700">
+                {proj.bullets_por_segmento[escopo].map((b, bi) => (
+                  <li key={bi}>{b}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm italic text-zinc-400">Sem bullets nesta área.</p>
+            )}
+          </ViewCard>
+        );
+      })}
     </div>
   );
 }
 
-function ProjetosEdit({ banco, setBanco, updateProjeto, editSegment, segmentosAtivos }) {
-  const slugs = segmentosAtivos.map((s) => s.slug);
+function ProjetosEdit({ banco, setBanco, updateProjeto, editSegment, todosSegmentos }) {
+  const slugs = todosSegmentos.map((s) => s.slug);
 
   return (
     <div className="space-y-3">
@@ -209,12 +189,12 @@ function ProjetosEdit({ banco, setBanco, updateProjeto, editSegment, segmentosAt
             <SegmentChips
               value={proj.segmentos}
               onChange={(segmentos) => updateProjeto(i, { segmentos })}
-              label="Aparece nas vagas de"
-              segmentos={segmentosAtivos}
+              label="Aparece nas áreas de"
+              segmentos={todosSegmentos}
             />
             {(proj.segmentos ?? []).includes(editSegment) ? (
               <>
-                <FormField label={`Subtítulo · ${slugParaLabel(editSegment, segmentosAtivos)}`} full>
+                <FormField label={`Subtítulo · ${slugParaLabel(editSegment, todosSegmentos)}`} full>
                   <input
                     className={inputClass}
                     value={proj.subtitulo_por_segmento?.[editSegment] ?? ""}
@@ -228,7 +208,7 @@ function ProjetosEdit({ banco, setBanco, updateProjeto, editSegment, segmentosAt
                     }
                   />
                 </FormField>
-                <FormField label={`Stack · ${slugParaLabel(editSegment, segmentosAtivos)}`} full>
+                <FormField label={`Stack · ${slugParaLabel(editSegment, todosSegmentos)}`} full>
                   <input
                     className={inputClass}
                     value={proj.stack_por_segmento?.[editSegment] ?? ""}
@@ -239,7 +219,7 @@ function ProjetosEdit({ banco, setBanco, updateProjeto, editSegment, segmentosAt
                     }
                   />
                 </FormField>
-                <FormField label={`Bullets · ${slugParaLabel(editSegment, segmentosAtivos)}`} full>
+                <FormField label={`Bullets · ${slugParaLabel(editSegment, todosSegmentos)}`} full>
                   <textarea
                     className={textareaClass}
                     rows={5}
@@ -268,8 +248,37 @@ function ProjetosEdit({ banco, setBanco, updateProjeto, editSegment, segmentosAt
   );
 }
 
-function CursosEdit({ banco, updateCurso, setBanco, segmentosAtivos }) {
-  const slugs = segmentosAtivos.map((s) => s.slug);
+function CursosView({ items, escopo, todosSegmentos }) {
+  const visiveis = filtrarItensPorEscopo(items, escopo);
+  if (!visiveis.length) {
+    return (
+      <p className="text-sm italic text-zinc-400">
+        {escopoEhTudo(escopo) ? "Nenhum curso cadastrado." : "Nenhum curso nesta área."}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {visiveis.map((c, i) => (
+        <ViewCard
+          key={c.id}
+          title={c.titulo || c.id}
+          subtitle={[c.instrutor, c.plataforma].filter(Boolean).join(" · ")}
+          defaultOpen={i === 0}
+        >
+          <DataTags
+            items={(c.segmentos ?? []).map((s) => slugParaLabel(s, todosSegmentos))}
+            tone="neutral"
+          />
+        </ViewCard>
+      ))}
+    </div>
+  );
+}
+
+function CursosEdit({ banco, updateCurso, setBanco, todosSegmentos }) {
+  const slugs = todosSegmentos.map((s) => s.slug);
 
   return (
     <div className="space-y-2">
@@ -296,7 +305,7 @@ function CursosEdit({ banco, updateCurso, setBanco, segmentosAtivos }) {
               value={curso.segmentos}
               onChange={(segmentos) => updateCurso(i, { segmentos })}
               label="Áreas"
-              segmentos={segmentosAtivos}
+              segmentos={todosSegmentos}
             />
           </div>
         </div>
@@ -305,19 +314,38 @@ function CursosEdit({ banco, updateCurso, setBanco, segmentosAtivos }) {
   );
 }
 
-function FerramentasView({ items, previewSlug }) {
-  const lista = (items ?? []).filter((f) => (f.segmentos ?? []).includes(previewSlug));
-  if (!lista.length) return <p className="text-sm italic text-zinc-400">Nenhuma ferramenta nesta área.</p>;
+function FerramentasView({ items, escopo, temSóPerfil }) {
+  const lista = filtrarItensPorEscopo(items, escopo);
+  if (!lista.length) {
+    return (
+      <p className="text-sm italic text-zinc-400">
+        {escopoEhTudo(escopo)
+          ? "Nada aqui ainda. Cadastre em Tecnologias ou use “Trazer do perfil”."
+          : "Nenhuma ferramenta nesta área."}
+      </p>
+    );
+  }
 
   const byCat = new Map();
   for (const f of lista) {
     const cat = f.categoria || "Ferramentas";
     if (!byCat.has(cat)) byCat.set(cat, []);
-    byCat.get(cat).push(f.nome);
+    const rotulo = f.nivel ? `${f.nome} (${f.nivel})` : f.nome;
+    const sufixo = f.origem === "perfil" ? " · perfil" : "";
+    byCat.get(cat).push(`${rotulo}${sufixo}`);
   }
 
   return (
     <div className="space-y-2">
+      {temSóPerfil ? (
+        <p className="rounded-lg border border-sky-200 bg-sky-50/60 px-3 py-2 text-xs text-sky-900">
+          Itens marcados com <strong>perfil</strong> vêm de{" "}
+          <Link href="/" className="font-medium underline">
+            Perfil (Tecnologias)
+          </Link>
+          . Use “Trazer do perfil” para fixar áreas por CV e editar aqui.
+        </p>
+      ) : null}
       {[...byCat.entries()].map(([cat, nomes]) => (
         <ViewCard key={cat} title={cat} defaultOpen>
           <p className="text-sm text-zinc-700">{nomes.join(" · ")}</p>
@@ -327,8 +355,8 @@ function FerramentasView({ items, previewSlug }) {
   );
 }
 
-function FerramentasEdit({ banco, setBanco, updateFerramenta, segmentosAtivos }) {
-  const slugs = segmentosAtivos.map((s) => s.slug);
+function FerramentasEdit({ banco, setBanco, updateFerramenta, todosSegmentos }) {
+  const slugs = todosSegmentos.map((s) => s.slug);
 
   return (
     <div className="space-y-2">
@@ -366,7 +394,7 @@ function FerramentasEdit({ banco, setBanco, updateFerramenta, segmentosAtivos })
               value={f.segmentos}
               onChange={(segmentos) => updateFerramenta(i, { segmentos })}
               label="Áreas"
-              segmentos={segmentosAtivos}
+              segmentos={todosSegmentos}
             />
           </div>
         </div>
@@ -396,7 +424,7 @@ function useTabEditor() {
       setEditing(false);
       setMessage("");
     },
-    async saveEdit(banco, setBanco, setSegmentosAtivos) {
+    async saveEdit(banco, setBanco, setSegmentosAtivos, setTodosSegmentos, setFerramentasPerfil) {
       setSaving(true);
       setMessage("");
       try {
@@ -410,6 +438,12 @@ function useTabEditor() {
         setBanco(data.banco);
         if (data.segmentosAtivos && setSegmentosAtivos) {
           setSegmentosAtivos(data.segmentosAtivos);
+        }
+        if (data.todosSegmentos && setTodosSegmentos) {
+          setTodosSegmentos(data.todosSegmentos);
+        }
+        if (data.ferramentasPerfil && setFerramentasPerfil) {
+          setFerramentasPerfil(data.ferramentasPerfil);
         }
         snapshotRef.current = null;
         setEditing(false);
@@ -426,14 +460,37 @@ function useTabEditor() {
 export default function ConteudoEditor() {
   const [banco, setBanco] = useState(null);
   const [segmentosAtivos, setSegmentosAtivos] = useState([]);
-  const [tab, setTab] = useState("experiencias");
-  const [previewSlug, setPreviewSlug] = useState("");
+  const [todosSegmentos, setTodosSegmentos] = useState([]);
+  const [escopo, setEscopo] = useState(ESCOPO_TUDO);
+  const [tipo, setTipo] = useState("experiencias");
   const [editSegment, setEditSegment] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [ferramentasPerfil, setFerramentasPerfil] = useState([]);
+  const [importandoPerfil, setImportandoPerfil] = useState(false);
   const tabEditor = useTabEditor();
 
-  const slugs = segmentosAtivos.map((s) => s.slug);
+  const slugsCatalogo = todosSegmentos.map((s) => s.slug);
+
+  const ferramentasExibidas = useMemo(
+    () => mesclarFerramentas(banco?.ferramentas, ferramentasPerfil),
+    [banco?.ferramentas, ferramentasPerfil],
+  );
+
+  const pendentesPerfil = useMemo(() => {
+    const bancoNomes = new Set((banco?.ferramentas ?? []).map((f) => String(f.nome).toLowerCase()));
+    return (ferramentasPerfil ?? []).filter((f) => f.nome && !bancoNomes.has(String(f.nome).toLowerCase()));
+  }, [banco?.ferramentas, ferramentasPerfil]);
+
+  const contagemPorTipo = useMemo(
+    () => ({
+      experiencias: contarItensPorEscopo(banco?.experiencias, escopo),
+      projetos: contarItensPorEscopo(banco?.projetos, escopo),
+      cursos: contarItensPorEscopo(banco?.cursos, escopo),
+      ferramentas: contarItensPorEscopo(ferramentasExibidas, escopo),
+    }),
+    [banco, escopo, ferramentasExibidas],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -444,6 +501,8 @@ export default function ConteudoEditor() {
       if (!res.ok) throw new Error(data.detail ?? data.error);
       setBanco(data.banco);
       setSegmentosAtivos(data.segmentosAtivos ?? []);
+      setTodosSegmentos(data.todosSegmentos ?? data.segmentosAtivos ?? []);
+      setFerramentasPerfil(data.ferramentasPerfil ?? []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -456,13 +515,12 @@ export default function ConteudoEditor() {
   }, [load]);
 
   useEffect(() => {
-    if (!slugs.length) return;
-    if (!slugs.includes(previewSlug)) setPreviewSlug(slugs[0]);
-    if (!slugs.includes(editSegment)) setEditSegment(slugs[0]);
-  }, [slugs.join("|"), previewSlug, editSegment]);
+    if (!slugsCatalogo.length) return;
+    if (!slugsCatalogo.includes(editSegment)) setEditSegment(slugsCatalogo[0]);
+  }, [slugsCatalogo.join("|"), editSegment]);
 
-  function switchTab(next) {
-    setTab(next);
+  function switchTipo(next) {
+    setTipo(next);
     tabEditor.cancelEdit(setBanco);
   }
 
@@ -480,6 +538,28 @@ export default function ConteudoEditor() {
       cursos[index] = { ...cursos[index], ...patch };
       return { ...prev, cursos };
     });
+  }
+
+  async function importarFerramentasPerfil() {
+    if (!banco || !pendentesPerfil.length) return;
+    setImportandoPerfil(true);
+    setError("");
+    const atualizado = importarFerramentasDoPerfil(banco, ferramentasPerfil);
+    try {
+      const res = await fetch("/api/conteudo", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ banco: atualizado }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? data.error);
+      setBanco(data.banco);
+      setFerramentasPerfil(data.ferramentasPerfil ?? []);
+    } catch (err) {
+      setError(err.message || "Erro ao importar");
+    } finally {
+      setImportandoPerfil(false);
+    }
   }
 
   function updateFerramenta(index, patch) {
@@ -505,42 +585,52 @@ export default function ConteudoEditor() {
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-b from-zinc-50/80 via-white to-zinc-50/40 pb-10">
       <div className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6">
-        <div className="mb-4 flex flex-wrap gap-1">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => switchTab(t.id)}
-              className={
-                tab === t.id
-                  ? "rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white"
-                  : "rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
-              }
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="mb-2">
+          <h1 className="text-lg font-semibold text-zinc-900">Conteúdo</h1>
+          <p className="text-sm text-zinc-500">
+            Tudo que você já fez — filtre por área ou tipo para ver o inventário.
+          </p>
         </div>
+
+        <ConteudoFiltros
+          escopo={escopo}
+          onEscopoChange={setEscopo}
+          tipo={tipo}
+          onTipoChange={switchTipo}
+          todosSegmentos={todosSegmentos}
+          contagemPorTipo={contagemPorTipo}
+        />
 
         {error ? (
           <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
         ) : null}
 
-        {!segmentosAtivos.length ? <ConteudoSemSegmentos /> : null}
-
-        {segmentosAtivos.length && tab === "experiencias" ? (
-          <ExperienciasWorkspace banco={banco} setBanco={setBanco} segmentosAtivos={segmentosAtivos} />
+        {!segmentosAtivos.length ? (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
+            <p className="text-sm text-amber-950">
+              Nenhuma área ativa em Segmentos — você ainda pode cadastrar tudo aqui. Para gerar CVs por vaga,{" "}
+              <Link href="/segmentos" className="font-medium text-emerald-800 underline">
+                escolha suas áreas
+              </Link>
+              .
+            </p>
+          </div>
         ) : null}
 
-        {segmentosAtivos.length && tab !== "experiencias" ? (
-          <>
-            <div className="mb-3">
-              <SegmentTabs value={previewSlug} onChange={setPreviewSlug} segmentos={segmentosAtivos} />
-            </div>
+        {tipo === "experiencias" ? (
+          <ExperienciasWorkspace
+            banco={banco}
+            setBanco={setBanco}
+            escopo={escopo}
+            todosSegmentos={todosSegmentos}
+          />
+        ) : null}
 
+        {tipo !== "experiencias" ? (
+          <>
             {tabEditor.editing ? (
               <div className="mb-3">
-                <SegmentEditTabs value={editSegment} onChange={setEditSegment} segmentos={segmentosAtivos} />
+                <SegmentEditTabs value={editSegment} onChange={setEditSegment} segmentos={todosSegmentos} />
               </div>
             ) : null}
 
@@ -550,52 +640,43 @@ export default function ConteudoEditor() {
               </p>
             ) : null}
 
-            {tab === "cursos" ? (
+            {tipo === "cursos" ? (
               <ProfileSection
                 title="Cursos"
                 isEditing={tabEditor.editing}
                 saving={tabEditor.saving}
                 onEdit={() => tabEditor.startEdit(banco)}
                 onCancel={() => tabEditor.cancelEdit(setBanco)}
-                onSave={() => tabEditor.saveEdit(banco, setBanco, setSegmentosAtivos)}
-                view={
-                  <div className="space-y-2">
-                    {(banco.cursos ?? [])
-                      .filter((c) => (c.segmentos ?? []).includes(previewSlug))
-                      .map((c) => (
-                        <ViewCard key={c.id} title={c.titulo || c.id} subtitle={c.instrutor}>
-                          <DataTags
-                            items={(c.segmentos ?? []).map((s) => slugParaLabel(s, segmentosAtivos))}
-                            tone="neutral"
-                          />
-                        </ViewCard>
-                      ))}
-                  </div>
+                onSave={() =>
+                  tabEditor.saveEdit(banco, setBanco, setSegmentosAtivos, setTodosSegmentos, setFerramentasPerfil)
                 }
+                view={<CursosView items={banco.cursos} escopo={escopo} todosSegmentos={todosSegmentos} />}
                 edit={
                   <CursosEdit
                     banco={banco}
                     setBanco={setBanco}
                     updateCurso={updateCurso}
-                    segmentosAtivos={segmentosAtivos}
+                    todosSegmentos={todosSegmentos}
                   />
                 }
               />
             ) : null}
 
-            {tab === "projetos" ? (
+            {tipo === "projetos" ? (
               <ProfileSection
                 title="Projetos"
                 isEditing={tabEditor.editing}
                 saving={tabEditor.saving}
                 onEdit={() => tabEditor.startEdit(banco)}
                 onCancel={() => tabEditor.cancelEdit(setBanco)}
-                onSave={() => tabEditor.saveEdit(banco, setBanco, setSegmentosAtivos)}
+                onSave={() =>
+                  tabEditor.saveEdit(banco, setBanco, setSegmentosAtivos, setTodosSegmentos, setFerramentasPerfil)
+                }
                 view={
                   <ProjetosView
                     items={banco.projetos}
-                    previewSlug={previewSlug}
-                    segmentosAtivos={segmentosAtivos}
+                    escopo={escopo}
+                    todosSegmentos={todosSegmentos}
                   />
                 }
                 edit={
@@ -604,30 +685,60 @@ export default function ConteudoEditor() {
                     setBanco={setBanco}
                     updateProjeto={updateProjeto}
                     editSegment={editSegment}
-                    segmentosAtivos={segmentosAtivos}
+                    todosSegmentos={todosSegmentos}
                   />
                 }
               />
             ) : null}
 
-            {tab === "ferramentas" ? (
-              <ProfileSection
-                title="Ferramentas"
-                isEditing={tabEditor.editing}
-                saving={tabEditor.saving}
-                onEdit={() => tabEditor.startEdit(banco)}
-                onCancel={() => tabEditor.cancelEdit(setBanco)}
-                onSave={() => tabEditor.saveEdit(banco, setBanco, setSegmentosAtivos)}
-                view={<FerramentasView items={banco.ferramentas} previewSlug={previewSlug} />}
-                edit={
-                  <FerramentasEdit
-                    banco={banco}
-                    setBanco={setBanco}
-                    updateFerramenta={updateFerramenta}
-                    segmentosAtivos={segmentosAtivos}
-                  />
-                }
-              />
+            {tipo === "ferramentas" ? (
+              <>
+                {pendentesPerfil.length && !tabEditor.editing ? (
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
+                    <p className="text-xs text-emerald-950">
+                      {pendentesPerfil.length} ferramenta(s) em{" "}
+                      <Link href="/" className="font-medium underline">
+                        Perfil → Tecnologias
+                      </Link>{" "}
+                      ainda não estão no banco de Conteúdo.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={importandoPerfil}
+                      onClick={importarFerramentasPerfil}
+                      className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
+                    >
+                      {importandoPerfil ? "Importando…" : "Trazer do perfil"}
+                    </button>
+                  </div>
+                ) : null}
+                <ProfileSection
+                  title="Ferramentas"
+                  description="Stack técnico por área — alimenta a seção de competências do CV."
+                  isEditing={tabEditor.editing}
+                  saving={tabEditor.saving}
+                  onEdit={() => tabEditor.startEdit(banco)}
+                  onCancel={() => tabEditor.cancelEdit(setBanco)}
+                  onSave={() =>
+                    tabEditor.saveEdit(banco, setBanco, setSegmentosAtivos, setTodosSegmentos, setFerramentasPerfil)
+                  }
+                  view={
+                    <FerramentasView
+                      items={ferramentasExibidas}
+                      escopo={escopo}
+                      temSóPerfil={!(banco.ferramentas ?? []).length && ferramentasPerfil.length > 0}
+                    />
+                  }
+                  edit={
+                    <FerramentasEdit
+                      banco={banco}
+                      setBanco={setBanco}
+                      updateFerramenta={updateFerramenta}
+                      todosSegmentos={todosSegmentos}
+                    />
+                  }
+                />
+              </>
             ) : null}
           </>
         ) : null}

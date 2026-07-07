@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { getConteudoBanco, getCurriculoModelo, saveConteudoBanco } from "@/lib/dados";
-import { podarBancoPorSegmentosAtivos, resolverSegmentosAtivos } from "@/lib/segmentosAtivos";
+import { getConteudoBanco, getCurriculoModelo, getTecnologias, saveConteudoBanco } from "@/lib/dados";
+import { ferramentasDoPerfil } from "@/lib/ferramentasPerfil";
+import { listarTodosSegmentosCatalogo, resolverSegmentosAtivos } from "@/lib/segmentosAtivos";
 import { getVagaCatalogo } from "@/lib/vagaCatalogo";
 
 export async function GET() {
   try {
     const catalogo = await getVagaCatalogo();
     const segmentosAtivos = resolverSegmentosAtivos(catalogo);
+    const ferramentasPerfil = ferramentasDoPerfil(getTecnologias());
 
     return NextResponse.json({
       banco: getConteudoBanco(),
       modelo: getCurriculoModelo(),
       segmentosAtivos,
+      todosSegmentos: listarTodosSegmentosCatalogo(catalogo),
+      ferramentasPerfil,
     });
   } catch (err) {
     return NextResponse.json(
@@ -31,14 +35,15 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Campo banco obrigatório" }, { status: 400 });
     }
 
-    const podado = podarBancoPorSegmentosAtivos(banco);
-    saveConteudoBanco(podado);
+    saveConteudoBanco(banco);
 
     const catalogo = await getVagaCatalogo();
     return NextResponse.json({
       ok: true,
       banco: getConteudoBanco(),
       segmentosAtivos: resolverSegmentosAtivos(catalogo),
+      todosSegmentos: listarTodosSegmentosCatalogo(catalogo),
+      ferramentasPerfil: ferramentasDoPerfil(getTecnologias()),
     });
   } catch (err) {
     return NextResponse.json(
