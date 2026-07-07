@@ -1,369 +1,85 @@
 # Banco de conteúdo — alimenta as variações de currículo por segmento.
-# Copie para banco.yml (gitignored) ou deixe a API criar na primeira leitura.
+# Na primeira leitura a API copia para banco.yml (gitignored). Substitua pelos seus dados reais.
 
 experiencias:
   - id: empresa-exemplo
     empresa: Empresa Exemplo Ltda
-    periodo: Fev/2025 – Set/2025
-    local: São Paulo – SP
+    periodo: Jan/2024 – Dez/2024
+    local: Cidade – UF
     segmentos:
       - dados-bi-analytics
       - desenvolvimento
-      - marketing-growth
-      - ia-ml
     titulo_por_segmento:
-      dados-bi-analytics: Empresa Exemplo Ltda — Assistente de Análise de Dados
-      desenvolvimento: Empresa Exemplo Ltda — Assistente de Desenvolvimento de Software
-      marketing-growth: Empresa Exemplo Ltda — Assistente de Growth / Performance
-      ia-ml: Empresa Exemplo Ltda — Análise de Dados para Produto e Operação
+      dados-bi-analytics: Empresa Exemplo — Estagiário(a) em Análise de Dados
+      desenvolvimento: Empresa Exemplo — Estagiário(a) em Desenvolvimento
     nota_por_segmento:
-      dados-bi-analytics: Foco em SQL, Python, Power BI, modelagem relacional e KPIs comerciais.
-      desenvolvimento: Foco em React, Next.js, Node.js, JavaScript, SQL e automações que sustentaram a operação.
-      marketing-growth: Foco em Google Ads, Meta Ads, segmentação de público, KPIs e Power BI.
-      ia-ml: Foco em base analítica (SQL, Python) para leitura de performance e priorização.
+      dados-bi-analytics: Foco em SQL, Python e dashboards.
+      desenvolvimento: Foco em React, Node.js e integrações internas.
     bullets:
-      - texto: Consultas SQL e base relacional de clientes e vendas.
+      - texto: Consultas SQL e relatórios.
         texto_por_segmento:
-          dados-bi-analytics: Desenvolvi **consultas SQL** para extração e análise de dados de vendas, gerando relatórios semanais usados pela equipe comercial na tomada de decisão.
-          desenvolvimento: Modelei **consultas SQL** sobre base relacional de clientes e vendas, consumidas por **scripts Python/Node** e ferramentas internas.
-          ia-ml: Estruturei **consultas SQL** e datasets de vendas/clientes como base para análises e priorização de ações.
+          dados-bi-analytics: Desenvolvi **consultas SQL** para relatórios semanais usados pelo time comercial.
+          desenvolvimento: Modelei **consultas SQL** consumidas por scripts e rotinas da operação.
         segmentos:
           - dados-bi-analytics
           - desenvolvimento
-          - ia-ml
-      - texto: Tratamento de dados com Python.
+      - texto: Dashboard em Power BI.
         texto_por_segmento:
-          dados-bi-analytics: Tratei e transformei bases em CSV com **Python** e **Pandas**, estruturando dados brutos para análise de performance e segmentação de público.
-          desenvolvimento: Automatizei rotinas em **Python** para limpar, cruzar e disponibilizar dados que alimentavam reports e fluxos da operação.
+          dados-bi-analytics: Construí dashboards em **Power BI** com KPIs do negócio.
         segmentos:
           - dados-bi-analytics
-          - desenvolvimento
-      - texto: Dashboards Power BI e KPIs comerciais.
-        texto_por_segmento:
-          dados-bi-analytics: Construí dashboards em **Power BI** para acompanhamento de KPIs comerciais, apoiando a identificação de segmentos mais rentáveis.
-          marketing-growth: Modelei dashboards no **Power BI** com KPIs comerciais, funil de conversão e leitura de performance para campanhas.
-        segmentos:
-          - dados-bi-analytics
-          - marketing-growth
-      - texto: Interfaces e entregas web com React e Next.js.
-        segmentos:
-          - desenvolvimento
-        texto_por_segmento:
-          desenvolvimento: Desenvolvi e mantive interfaces em **React** e **Next.js** para ferramentas internas e fluxos da operação, com **JavaScript** e **Git** no dia a dia.
-      - texto: Automações e integrações com Node.js.
-        segmentos:
-          - desenvolvimento
-        texto_por_segmento:
-          desenvolvimento: Implementei automações e rotinas em **Node.js** para integrar dados de vendas, campanhas e relatórios recorrentes da equipe.
-      - texto: Campanhas Google Ads e Meta Ads.
-        segmentos:
-          - marketing-growth
-        texto_por_segmento:
-          marketing-growth: Apoiei campanhas de **Google Ads** e **Meta Ads** com leitura de performance, segmentação de público e ajustes orientados a dados.
-      - texto: Segmentação de público e growth.
-        segmentos:
-          - marketing-growth
-          - dados-bi-analytics
-        texto_por_segmento:
-          marketing-growth: Conduzi análises de segmentação de público e sazonalidade para direcionar ações de **growth** e lançamentos comerciais.
-          dados-bi-analytics: Realizei análise de dados para foco em público mais relevante em lançamento, apoiando direcionamento estratégico da equipe.
-      - texto: Modelagem relacional da base de clientes.
-        segmentos:
-          - dados-bi-analytics
-          - desenvolvimento
-        texto_por_segmento:
-          dados-bi-analytics: Modelei estruturas de dados e criei tabelas relacionais para consulta e segmentação da base de clientes, facilitando análises recorrentes.
-          desenvolvimento: Participei da **modelagem relacional** da base de clientes e das consultas que sustentavam scripts, reports e rotinas da operação.
-      - texto: Impacto de ~20% na receita do período.
-        segmentos:
-          - marketing-growth
-          - dados-bi-analytics
-        texto_por_segmento:
-          marketing-growth: Contribuí para aumento de **~20% na receita** do período (métrica de exemplo) com insights sobre mix de produtos, público e sazonalidade.
-          dados-bi-analytics: Contribuí para crescimento de **~20% na receita** (métrica de exemplo) com análises de mix de produtos e segmentos mais rentáveis.
 
 projetos:
-  - id: tumaia
-    nome: TumaIA
-    segmentos:
-      - desenvolvimento
-      - marketing-growth
-      - ia-ml
-    ordem_por_segmento:
-      marketing-growth: 1
-      desenvolvimento: 1
-      ia-ml: 2
-    subtitulo_por_segmento:
-      marketing-growth: Automação de posts no Instagram
-      desenvolvimento: SaaS Next.js + API + IA
-      ia-ml: IA generativa em produção
-    stack_por_segmento:
-      marketing-growth: WhatsApp, n8n, Instagram API, Supabase, IA generativa
-      desenvolvimento: Next.js (App Router), React, Node/Express, Supabase, Ollama, LLM
-      ia-ml: LLM, Replicate/FLUX, Supabase, n8n, Next.js
-    bullets_por_segmento:
-      marketing-growth:
-        - "SaaS para PMEs: pedido pelo **WhatsApp** → IA gera criativo + legenda → aprovação → **publicação no Instagram**."
-        - Automatizei o fluxo com **n8n** (webhook, contexto de marca no Supabase, aprovação antes de publicar).
-        - Produto **WhatsApp-first** — painel web só configura marca, catálogo e mídias.
-      desenvolvimento:
-        - "Monorepo **Next.js (App Router)** + **Express** multi-tenant com auth e rotas de IA."
-        - Integrei **Ollama** (API OpenAI-compatible) e geração de imagem via Replicate no pipeline do produto.
-        - Persistência e contexto de marca em **Supabase**; automações expostas para **n8n**.
-      ia-ml:
-        - Pipeline de **IA generativa** (imagem + legenda) a partir do contexto da empresa.
-        - Orquestração n8n + APIs de publicação; limites e billing configuráveis no backend.
-
-  - id: tumacore
-    nome: TumaCore
-    segmentos:
-      - dados-bi-analytics
-      - desenvolvimento
-      - ia-ml
-    ordem_por_segmento:
-      dados-bi-analytics: 1
-      ia-ml: 1
-      desenvolvimento: 2
-    subtitulo_por_segmento:
-      dados-bi-analytics: Centro de dados e BI
-      desenvolvimento: FastAPI + Next.js + Postgres
-      ia-ml: RAG + Chat SQL
-    stack_por_segmento:
-      dados-bi-analytics: Python, FastAPI, Next.js, PostgreSQL, Supabase, dashboards, KPIs
-      desenvolvimento: Python, FastAPI, Next.js, PostgreSQL, Chroma, LLM
-      ia-ml: Python, FastAPI, RAG (Chroma), Ollama, OpenRouter, Gemini, PostgreSQL
-    bullets_por_segmento:
-      dados-bi-analytics:
-        - "**Centro de dados** do ecossistema TumaIA — KPIs, evolução de pedidos, segmentos e regiões sobre Postgres/Supabase."
-        - "**Chat SQL**: pergunta em português → leitura do schema → SQL PostgreSQL executável."
-        - Dashboards de analytics (saúde do produto, performance, tendências).
-      desenvolvimento:
-        - API **FastAPI** + painel **Next.js** com proxy e auth Supabase.
-        - Leitura dinâmica de `information_schema` para consultas assistidas a dados.
-      ia-ml:
-        - **RAG (Chroma)** + LLM (Ollama / OpenRouter / Gemini) sobre PostgreSQL.
-        - Chat em linguagem natural com injeção de schema e cache configurável.
-
-  - id: tuma-emprego
-    nome: Tuma Emprego
+  - id: projeto-portfolio
+    nome: Projeto de Portfólio
     segmentos:
       - desenvolvimento
       - dados-bi-analytics
-    ordem_por_segmento:
-      desenvolvimento: 2
-      dados-bi-analytics: 2
     subtitulo_por_segmento:
-      desenvolvimento: Hub de candidaturas
-      dados-bi-analytics: Segmentação e adaptação de CV
+      desenvolvimento: App web full stack
+      dados-bi-analytics: Painel de métricas
     stack_por_segmento:
-      desenvolvimento: Next.js, React, PostgreSQL, Prisma, YAML
-      dados-bi-analytics: PostgreSQL, YAML, segmentação
+      desenvolvimento: Next.js, Node.js, PostgreSQL
+      dados-bi-analytics: SQL, Python, Power BI
     bullets_por_segmento:
       desenvolvimento:
-        - Desenvolvo hub local com **Next.js**, **PostgreSQL + Prisma** e configs YAML.
-        - Implementei adaptação de CV por vaga/segmento e banco de respostas.
+        - API REST e front em **Next.js**
+        - Deploy e versionamento com **Git**
       dados-bi-analytics:
-        - Ferramenta com **PostgreSQL** e perfis de busca (segmentos, senioridade) para priorizar candidaturas.
-        - Motor de adaptação de CV por segmento com keywords e reordenação de conteúdo.
+        - Pipeline simples de **ETL** em Python
+        - Dashboard de KPIs para acompanhamento
 
 cursos:
-  - id: analytics-google
-    titulo: Certificação de Analytics
-    instrutor: Google Skillshop
-    plataforma: Google
+  - id: curso-sql
+    titulo: SQL para Análise de Dados
+    instrutor: Instrutor Exemplo
+    plataforma: Udemy
     segmentos:
       - dados-bi-analytics
-      - marketing-growth
     ordem: 1
     concluido: true
-  - id: sql-midori
-    titulo: "SQL para Análise de Dados: Do Básico ao Avançado"
-    instrutor: Midori Ishizuka
-    plataforma: Udemy
-    segmentos:
-      - dados-bi-analytics
-      - marketing-growth
-    ordem: 2
-    concluido: false
-  - id: python-portilla
-    titulo: Python para Data Science e Machine Learning Bootcamp
-    instrutor: José Portilla
-    plataforma: Udemy
-    segmentos:
-      - dados-bi-analytics
-      - ia-ml
-      - desenvolvimento
-    ordem: 3
-    concluido: false
-  - id: postgresql-mafra
-    titulo: "PostgreSQL: Do Básico ao Avançado"
-    instrutor: Felipe Mafra
-    plataforma: Udemy
-    segmentos:
-      - dados-bi-analytics
-      - ia-ml
-    ordem: 4
-    concluido: false
-  - id: powerbi-rosa
-    titulo: Microsoft Power BI para Data Science
-    instrutor: André Rosa
-    plataforma: Udemy
-    segmentos:
-      - dados-bi-analytics
-      - marketing-growth
-    ordem: 5
-    concluido: false
-  - id: pandas-clevison
-    titulo: Manipulação e Análise de Dados com Python e Pandas
-    instrutor: Clevison Santos
-    plataforma: Udemy
-    segmentos:
-      - dados-bi-analytics
-      - ia-ml
-    ordem: 6
-    concluido: false
-  - id: javascript-schmedtmann
-    titulo: The Complete JavaScript Course 2024
-    instrutor: Jonas Schmedtmann
-    plataforma: Udemy
-    segmentos:
-      - desenvolvimento
-    ordem: 10
-    concluido: false
-  - id: react-schwarzmueller
-    titulo: React - The Complete Guide
-    instrutor: Maximilian Schwarzmüller
-    plataforma: Udemy
-    segmentos:
-      - desenvolvimento
-    ordem: 11
-    concluido: false
-  - id: nextjs-schwarzmueller
-    titulo: Next.js & React - The Complete Guide
-    instrutor: Maximilian Schwarzmüller
-    plataforma: Udemy
-    segmentos:
-      - desenvolvimento
-    ordem: 12
-    concluido: false
-  - id: node-schmedtmann
-    titulo: "Node.js, Express, MongoDB & More: The Complete Bootcamp"
-    instrutor: Jonas Schmedtmann
-    plataforma: Udemy
-    segmentos:
-      - desenvolvimento
-    ordem: 13
-    concluido: false
-  - id: typescript-schwarzmueller
-    titulo: Understanding TypeScript
-    instrutor: Maximilian Schwarzmüller
-    plataforma: Udemy
-    segmentos:
-      - desenvolvimento
-    ordem: 14
-    concluido: false
-  - id: google-ads-m2up
-    titulo: Google Ads (Adwords) Completo — Do Zero ao PRO
-    instrutor: M2up
-    plataforma: Udemy
-    segmentos:
-      - marketing-growth
-    ordem: 20
-    concluido: false
-  - id: digital-marketing-percival
-    titulo: The Complete Digital Marketing Guide
-    instrutor: Rob Percival
-    plataforma: Udemy
-    segmentos:
-      - marketing-growth
-    ordem: 21
-    concluido: false
 
 ferramentas:
   - id: python
     nome: Python
     categoria: Dados / back-end
-    segmentos: [dados-bi-analytics, desenvolvimento, ia-ml, marketing-growth]
+    segmentos: [dados-bi-analytics, desenvolvimento]
   - id: sql
     nome: SQL
     categoria: Dados / back-end
-    segmentos: [dados-bi-analytics, marketing-growth, ia-ml]
-  - id: powerbi
-    nome: Power BI
-    categoria: BI
-    segmentos: [dados-bi-analytics, marketing-growth]
-  - id: postgresql
-    nome: PostgreSQL
-    categoria: Banco de dados
-    segmentos: [dados-bi-analytics, desenvolvimento, ia-ml]
-  - id: pandas
-    nome: Pandas
-    categoria: Dados
-    segmentos: [dados-bi-analytics, ia-ml]
-  - id: nextjs
-    nome: Next.js (App Router)
-    categoria: Front-end
-    segmentos: [desenvolvimento, ia-ml, marketing-growth]
+    segmentos: [dados-bi-analytics]
   - id: react
     nome: React
     categoria: Front-end
     segmentos: [desenvolvimento]
-  - id: node
-    nome: Node.js / Express
-    categoria: Back-end
-    segmentos: [desenvolvimento]
-  - id: fastapi
-    nome: FastAPI
-    categoria: Back-end
-    segmentos: [desenvolvimento, ia-ml, dados-bi-analytics]
-  - id: ollama
-    nome: Ollama / LLM local
-    categoria: IA
-    segmentos: [desenvolvimento, ia-ml, dados-bi-analytics]
-  - id: rag
-    nome: RAG (Chroma)
-    categoria: IA
-    segmentos: [ia-ml, dados-bi-analytics]
-  - id: n8n
-    nome: n8n
-    categoria: Automação
-    segmentos: [marketing-growth, desenvolvimento, ia-ml]
-  - id: ga4
-    nome: Google Analytics 4
-    categoria: Marketing / analytics
-    segmentos: [marketing-growth, dados-bi-analytics]
-  - id: google-ads
-    nome: Google Ads
-    categoria: Marketing
-    segmentos: [marketing-growth]
-  - id: git
-    nome: Git
-    categoria: DevOps
-    segmentos: [desenvolvimento]
 
-# legado — usado só se ferramentas estiver vazio
+# Legado — usado só se ferramentas estiver vazio
 competencias:
   dados-bi-analytics: |
-    - **Linguagens / dados:** Python, SQL, Excel
-    - **BI / visualização:** Power BI, DAX, dashboards, KPIs, Google Analytics 4
-    - **Banco de dados:** PostgreSQL, Supabase, modelagem relacional, ETL
-    - **Bibliotecas:** Pandas, tratamento de CSV, consultas analíticas
-    - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)
+    - **Dados:** Python, SQL, Excel
+    - **BI:** Power BI, dashboards, KPIs
+    - **Idiomas:** Português (nativo), Inglês (intermediário)
   desenvolvimento: |
-    - **Front-end:** React, Next.js, HTML, CSS, JavaScript, TypeScript
-    - **Back-end:** Node.js, Express, FastAPI, REST APIs
-    - **Banco / DevOps:** PostgreSQL, Supabase, Prisma, Git
-    - **Automação:** n8n, Python para apoio a produto
-    - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)
-  marketing-growth: |
-    - **Performance / mídia:** Google Ads, Meta Ads, campanhas e otimização
-    - **Analytics:** Google Analytics 4, Google Tag Manager, funis e KPIs
-    - **Dados para growth:** SQL, Python, Power BI, segmentação de público
-    - **E-commerce:** Shopify, VTEX, relatórios comerciais
-    - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)
-  ia-ml: |
-    - **IA / ML:** LLM, RAG (Chroma), prompt engineering, OpenRouter/Gemini/Ollama
-    - **Back-end:** Python, FastAPI, APIs de inferência
-    - **Dados:** PostgreSQL, SQL, analytics para features de IA
-    - **Web:** Next.js, React — produto com IA embarcada
-    - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)
+    - **Front-end:** React, Next.js, JavaScript
+    - **Back-end:** Node.js, REST APIs
+    - **Idiomas:** Português (nativo), Inglês (intermediário)

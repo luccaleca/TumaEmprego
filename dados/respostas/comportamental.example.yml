@@ -1,0 +1,47 @@
+# Histórias comportamentais (STAR) — copie para comportamental.yml e preencha com casos reais.
+# tags = palavras que o Agent usa para escolher a história na pergunta do formulário
+
+historias:
+
+  - id: impacto_com_dados
+    tags:
+      - resultado
+      - impacto
+      - dados
+      - sql
+    pergunta_exemplo: "Conte uma situação em que seus dados geraram impacto no negócio"
+    situacao: >
+      Descreva o contexto: equipe, problema de negócio, prazo.
+    tarefa: >
+      Qual era sua responsabilidade específica.
+    acao: >
+      O que você fez (ferramentas, método, colaboração).
+    resultado: >
+      Resultado mensurável ou feedback do time.
+    reflexao: >
+      O que você aprendeu (opcional).
+
+  - id: aprendizado_rapido
+    tags:
+      - aprendizado
+      - adaptacao
+      - curso
+    pergunta_exemplo: "Como você aprende algo novo rapidamente?"
+    situacao: >
+      Contexto em que precisou dominar ferramenta ou processo novo.
+    tarefa: >
+      O que precisava entregar e em quanto tempo.
+    acao: >
+      Como estudou e aplicou (curso, documentação, mentoria, prática).
+    resultado: >
+      Entrega concluída ou habilidade usada depois.
+    reflexao: >
+      Lição que leva para o próximo desafio.
+
+respostas_curtas:
+  por_que_area: >
+    Motivo genuíno para a área da vaga (dados, dev, marketing, etc.).
+  maior_qualidade: >
+    Uma qualidade sua com exemplo breve.
+  maior_desenvolvimento: >
+    O que está melhorando agora (honesto e positivo).

@@ -2,6 +2,8 @@
  * Perfis de currículo por segmento/vaga — o motor local monta um CV focado por área.
  */
 
+import { getFonteCandidato, termosParaSegmento, termosTecnologiaCandidato } from "./fonteCandidato.js";
+
 export const CERTS_UDEMY = {
   python: "Python para Data Science e Machine Learning Bootcamp — José Portilla (Udemy)",
   sql: "SQL para Análise de Dados: Do Básico ao Avançado — Midori Ishizuka (Udemy)",
@@ -37,14 +39,14 @@ export const PERFIS = {
       CERTS_UDEMY.powerbi,
       CERTS_UDEMY.pandas,
     ],
-    projetosOrdem: ["TumaCore", "Tuma Emprego"],
-    projetosOmitir: ["TumaIA"],
-    expTitulo: "Empresa Exemplo Ltda — Assistente de Análise de Dados",
-    expNota: "Foco em SQL, Python, Power BI, modelagem relacional e KPIs comerciais.",
+    projetosOrdem: ["Projeto de Portfólio"],
+    projetosOmitir: [],
+    expTitulo: "Experiência profissional — Análise de Dados",
+    expNota: "Foco em SQL, Python, Power BI e KPIs.",
     resumoExtra:
-      "Projeto principal: **TumaCore** — hub de dados com dashboards, analytics e Chat SQL sobre PostgreSQL.",
+      "Destaque projetos de dados e BI do seu banco de conteúdo (`conteudo/banco.yml`).",
     resumoExp:
-      "Na Empresa Exemplo Ltda, atuei com **SQL**, **Python** e **Power BI** — consultas, dashboards e modelagem que apoiaram a equipe comercial, incluindo contribuição para **+20% de receita** (métrica de exemplo).",
+      "Experiência com **SQL**, **Python** e **Power BI** — consultas, dashboards e análises que apoiaram decisões de negócio.",
   },
 
   desenvolvimento: {
@@ -66,14 +68,14 @@ export const PERFIS = {
       CERTS_UDEMY.typescript,
       CERTS_UDEMY.python,
     ],
-    projetosOrdem: ["TumaIA", "Tuma Emprego", "TumaCore"],
+    projetosOrdem: ["Projeto de Portfólio"],
     projetosOmitir: [],
-    expTitulo: "Empresa Exemplo Ltda — Assistente de Desenvolvimento de Software",
-    expNota: "Foco em React, Next.js, Node.js, JavaScript, SQL e automações que sustentaram a operação.",
+    expTitulo: "Experiência profissional — Desenvolvimento de Software",
+    expNota: "Foco em React, Next.js, Node.js e entregas web.",
     resumoExtra:
-      "Portfólio: **TumaIA** (SaaS Next.js + Express + Supabase) e **Tuma Emprego** (Next.js + PostgreSQL + Prisma).",
+      "Inclua projetos full stack do seu `banco.yml` (front, API, banco).",
     resumoExp:
-      "Na Empresa Exemplo Ltda, como assistente de desenvolvimento, atuei com **React**, **Next.js**, **Node.js**, **JavaScript** e **SQL** — interfaces, automações, rotinas de dados e entregas incrementais em ambiente de produto real.",
+      "Experiência com **React**, **Next.js**, **Node.js** e **SQL** — interfaces, APIs e automações em ambiente real.",
   },
 
   "marketing-growth": {
@@ -93,14 +95,14 @@ export const PERFIS = {
       CERTS_UDEMY.powerbi,
       CERTS_UDEMY.sql,
     ],
-    projetosOrdem: ["TumaIA", "TumaCore"],
-    projetosOmitir: ["Tuma Emprego"],
-    expTitulo: "Empresa Exemplo Ltda — Assistente de Growth / Performance",
-    expNota: "Foco em Google Ads, Meta Ads, segmentação de público, KPIs e Power BI.",
+    projetosOrdem: ["Projeto de Portfólio"],
+    projetosOmitir: [],
+    expTitulo: "Experiência profissional — Marketing / Growth",
+    expNota: "Foco em campanhas, analytics e KPIs.",
     resumoExtra:
-      "Projeto **TumaIA** — SaaS de marketing com IA para geração e publicação de conteúdo (WhatsApp → Instagram).",
+      "Projetos com tráfego pago, GA4 ou growth vêm do seu conteúdo cadastrado.",
     resumoExp:
-      "Na Empresa Exemplo Ltda, atuei com **Google Ads**, **Meta Ads**, **SQL** e **Power BI** — campanhas, segmentação de público e KPIs comerciais, com contribuição para **+20% de receita** (métrica de exemplo).",
+      "Experiência com **Google Ads**, **Meta Ads**, **SQL** e **Power BI** — campanhas, segmentação e leitura de performance.",
   },
 
   "ia-ml": {
@@ -119,14 +121,14 @@ export const PERFIS = {
       CERTS_UDEMY.sql,
       CERTS_UDEMY.postgresql,
     ],
-    projetosOrdem: ["TumaCore", "TumaIA"],
-    projetosOmitir: ["Tuma Emprego"],
-    expTitulo: "Empresa Exemplo Ltda — Análise de Dados para Produto e Operação",
-    expNota: "Foco em base analítica (SQL, Python) para leitura de performance e priorização.",
+    projetosOrdem: ["Projeto de Portfólio"],
+    projetosOmitir: [],
+    expTitulo: "Experiência profissional — Dados para Produto",
+    expNota: "Foco em base analítica e priorização com SQL/Python.",
     resumoExtra:
-      "**TumaCore**: RAG + Chat SQL com leitura de schema PostgreSQL e consultas em linguagem natural.",
+      "Projetos com LLM, RAG ou automação devem estar no `banco.yml`.",
     resumoExp:
-      "Na Empresa Exemplo Ltda, montei base analítica com **SQL**, **Python** e **Power BI** que sustentou leitura de performance, segmentação e priorização de ações.",
+      "Experiência montando base analítica com **SQL**, **Python** e ferramentas de BI para apoiar produto e operação.",
   },
 };
 
@@ -147,7 +149,8 @@ const TERMOS_IA = [
 const TERMOS_DEV = [
   "desenvolvedor", "developer", "react", "next.js", "nextjs", "javascript", "typescript",
   "front-end", "frontend", "back-end", "backend", "full stack", "fullstack", "node",
-  "programador", "software", " web ",
+  "programador", "software", " web ", "n8n", "automação", "automacao", "integração",
+  "integracao", "fastapi", "webhook", "low-code", "low code", "api rest",
 ];
 
 const TERMOS_DADOS = [
@@ -171,16 +174,33 @@ export function resolverPerfilSlug(slug) {
   return SLUG_ALIASES[slug] ?? slug;
 }
 
-export function inferirPerfilPorVaga(titulo, descricao) {
+export function inferirPerfilPorVaga(titulo, descricao, fonte = null) {
+  const f = fonte ?? getFonteCandidato();
   const texto = `${titulo}\n${descricao}`;
+
   const scores = {
     "marketing-growth": scoreTermos(texto, TERMOS_MARKETING) * 2,
     "ia-ml": scoreTermos(texto, TERMOS_IA) * 2,
     desenvolvimento: scoreTermos(texto, TERMOS_DEV) * 2,
     "dados-bi-analytics": scoreTermos(texto, TERMOS_DADOS) * 2,
   };
+
+  for (const slug of Object.keys(scores)) {
+    for (const termo of termosParaSegmento(slug, f)) {
+      if (normalize(texto).includes(normalize(termo))) {
+        scores[slug] += 3;
+      }
+    }
+  }
+
   const winner = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
   return winner[1] === 0 ? "dados-bi-analytics" : winner[0];
+}
+
+/** Termos do candidato (tecnologias + perfil) para reordenação de bullets. */
+export function termosCandidatoParaPerfil(perfilSlug, fonte = null) {
+  const f = fonte ?? getFonteCandidato();
+  return [...new Set([...(termosParaSegmento(perfilSlug, f)), ...termosTecnologiaCandidato(f)])];
 }
 
 export function getPerfil(slug) {

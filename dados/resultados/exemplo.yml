@@ -1,0 +1,22 @@
+# Modelo de fonte de fatos para o motor de CV — copie e renomeie (ex.: minha-empresa.yml).
+# Arquivos em resultados/ são locais (gitignored); só este exemplo fica no repositório.
+
+empresa: "Empresa Exemplo Ltda"
+cargo: "Estagiário(a) em Análise de Dados"
+periodo: "Jan/2024 – Dez/2024"
+local: "Cidade – UF"
+
+feitos:
+  - o_que_fiz: "Consultas SQL e relatórios periódicos"
+    resultado: "Time usou para decisão comercial"
+    enfases:
+      dados: [sql, relatórios]
+      dev: [sql, scripts]
+    metricas:
+      frequencia: "semanal"
+
+  - o_que_fiz: "Dashboard em Power BI"
+    resultado: "KPIs visíveis para gestão"
+    enfases:
+      dados: [power bi, kpi]
+      marketing: [power bi, funil]

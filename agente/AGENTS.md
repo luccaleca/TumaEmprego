@@ -9,7 +9,7 @@
 3. **Explicar o porquê** — ao criar arquivo ou comando, dizer em 1 linha o que faz.
 4. **JavaScript só** — sem TypeScript; sem bibliotecas extras sem necessidade.
 5. **Respeitar as pastas** — `dados/` = arquivos do usuário · `site/` = app · `extensao/` = Chrome · `agente/` = IA · `scripts/` = utilitários.
-6. **Nunca inventar no CV** — só `dados/cv-base.md` e `dados/resultados/`; ênfase por vaga, mesmos fatos.
+6. **Nunca inventar no CV** — consultar **toda** a fonte do candidato (perfil, tecnologias, conteúdo, formação, busca, resultados, cv-base); ênfase por vaga, mesmos fatos.
 7. **Código simples** — preferir a solução mais óbvia; evitar over-engineering.
 8. **Não commitar** — só quando o usuário pedir explicitamente.
 9. **Não apagar dados** — não sobrescrever `cv-base.md` ou `profile.yml` sem backup ou confirmação.
@@ -53,12 +53,20 @@ scripts/    = gerar PDF, utilitários
 ### CV e ênfase por vaga
 
 - **Nunca inventar** empregos, anos, ferramentas ou métricas.
-- **Sempre** partir de `dados/cv-base.md`, `dados/conteudo/banco.yml` e `dados/resultados/`.
+- **Sempre** consultar a fonte unificada do candidato antes de adaptar:
+  - `dados/cv-base.md`
+  - `dados/conteudo/banco.yml` (experiências, projetos, cursos, competências)
+  - `dados/config/profile.yml` (contato, identificação)
+  - `dados/config/tecnologias.yml` (níveis e stack — ex.: n8n em *outras*)
+  - `dados/config/formacao.yml`
+  - `dados/config/busca.yml` (segmentos e cargos alvo)
+  - `dados/resultados/*.yml` (métricas confirmadas)
+  - No código: `site/lib/fonteCandidato.js` (`getFonteCandidato()`)
 - **Adaptar** = **reframe**, não criar fatos novos.
 
 #### Reframe por segmento (a ideia central)
 
-Uma mesma experiência (ex.: Empresa Exemplo Ltda) pode envolver **várias competências reais** — dev, dados, marketing, etc. Cada variação de currículo **destaca o que importa para aquela área**, usando só o que a pessoa de fato fez ou faria naturalmente naquele papel.
+Uma mesma experiência (ex.: estágio em varejo) pode envolver **várias competências reais** — dev, dados, marketing, etc. Cada variação de currículo **destaca o que importa para aquela área**, usando só o que a pessoa de fato fez ou faria naturalmente naquele papel.
 
 | Segmento | Ênfase na mesma experiência |
 |---|---|

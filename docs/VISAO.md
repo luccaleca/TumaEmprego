@@ -57,6 +57,6 @@ Hub local: **`site/`** = cadastro + API + banco · **`extensao/`** = autofill ·
 - Playwright, Chrome MV3, Gmail API (fase 2)
 - `localhost:3737` — local no PC (v1)
 
-## Persona
+## Persona (exemplo)
 
-**Usuário** — estágio análise de dados, LinkedIn + Catho + InfoJobs + Gupy.
+Estudante ou profissional em início de carreira em dados, desenvolvimento ou marketing — busca estágio/trainee via LinkedIn, Catho, InfoJobs, Gupy, etc. Cada pessoa preenche seus próprios arquivos em `dados/` (não versionados).

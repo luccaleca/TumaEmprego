@@ -47,11 +47,13 @@ Também funciona de dentro de `site/` com `npm run dev`.
 
 ## Ordem sugerida
 
-1. `dados/` — preencher CV e perfil  
-2. `site/` — app + Postgres  
+1. `dados/` — na primeira execução o site copia os `*.example` para arquivos locais (gitignored); preencha com seus dados  
+2. `site/` — app + Postgres (catálogo de vagas)  
 3. `scripts/` — gerar PDF  
 4. `extensao/` — autofill  
 5. `agente/` — avaliar vagas com IA  
+
+Detalhes dos arquivos em **`dados/README.md`**.
 
 ## Status
 

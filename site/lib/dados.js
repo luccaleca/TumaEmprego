@@ -5,6 +5,20 @@ import { normalizarModalidades, normalizarSenioridades } from "./preferenciasBus
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 
+function ensureDataFile(relativePath, exampleRelativePath) {
+  const filePath = path.join(DADOS_ROOT, relativePath);
+  if (fs.existsSync(filePath)) return filePath;
+
+  const examplePath = path.join(DADOS_ROOT, exampleRelativePath);
+  if (!fs.existsSync(examplePath)) {
+    throw new Error(`Arquivo ${exampleRelativePath} não encontrado em dados/`);
+  }
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.copyFileSync(examplePath, filePath);
+  return filePath;
+}
+
 function readYaml(relativePath) {
   const filePath = path.join(DADOS_ROOT, relativePath);
   const raw = fs.readFileSync(filePath, "utf8");
@@ -17,18 +31,22 @@ function readText(relativePath) {
 }
 
 export function getProfile() {
+  ensureDataFile("config/profile.yml", "config/profile.example.yml");
   return readYaml("config/profile.yml");
 }
 
 export function getFormacao() {
+  ensureDataFile("config/formacao.yml", "config/formacao.example.yml");
   return readYaml("config/formacao.yml");
 }
 
 export function getTecnologias() {
+  ensureDataFile("config/tecnologias.yml", "config/tecnologias.example.yml");
   return readYaml("config/tecnologias.yml");
 }
 
 export function getBusca() {
+  ensureDataFile("config/busca.yml", "config/busca.example.yml");
   const raw = readYaml("config/busca.yml");
   let profile = null;
   try {
@@ -81,18 +99,22 @@ export function saveBusca(busca) {
 }
 
 export function getCurriculoAtivo() {
+  ensureDataFile("curriculo/ativo.yml", "curriculo/ativo.example.yml");
   return readYaml("curriculo/ativo.yml");
 }
 
 export function getRespostasPadrao() {
+  ensureDataFile("respostas/padrao.yml", "respostas/padrao.example.yml");
   return readYaml("respostas/padrao.yml");
 }
 
 export function getComportamental() {
+  ensureDataFile("respostas/comportamental.yml", "respostas/comportamental.example.yml");
   return readYaml("respostas/comportamental.yml");
 }
 
 export function getCvResumo() {
+  ensureDataFile("cv-base.md", "cv-base.example.md");
   const raw = readText("cv-base.md");
   const match = raw.match(/## Resumo\s*\n+([\s\S]*?)(?=\n## )/);
   if (!match) return "";
@@ -107,6 +129,7 @@ export function getCvResumo() {
 }
 
 export function getCvBase() {
+  ensureDataFile("cv-base.md", "cv-base.example.md");
   return readText("cv-base.md");
 }
 
@@ -223,15 +246,7 @@ const CONTEUDO_BANCO = "conteudo/banco.yml";
 const CONTEUDO_BANCO_EXAMPLE = "conteudo/banco.example.yml";
 
 export function getConteudoBanco() {
-  const filePath = path.join(DADOS_ROOT, CONTEUDO_BANCO);
-  if (!fs.existsSync(filePath)) {
-    const examplePath = path.join(DADOS_ROOT, CONTEUDO_BANCO_EXAMPLE);
-    if (!fs.existsSync(examplePath)) {
-      throw new Error("Arquivo dados/conteudo/banco.example.yml não encontrado");
-    }
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.copyFileSync(examplePath, filePath);
-  }
+  ensureDataFile(CONTEUDO_BANCO, CONTEUDO_BANCO_EXAMPLE);
   return readYaml(CONTEUDO_BANCO);
 }
 

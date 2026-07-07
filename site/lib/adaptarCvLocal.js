@@ -8,6 +8,7 @@ import {
   getPerfil,
   inferirPerfilPorVaga,
   resolverPerfilSlug,
+  termosCandidatoParaPerfil,
 } from "./perfilCvSegmento.js";
 import {
   cursosParaSegmento,
@@ -17,6 +18,11 @@ import {
   loadBanco,
   projetosParaSegmento,
 } from "./conteudoBanco.js";
+import {
+  formatarContatoCv,
+  formatarFormacaoCv,
+  getFonteCandidato,
+} from "./fonteCandidato.js";
 
 function normalize(text) {
   return String(text ?? "")
@@ -82,18 +88,20 @@ function montarProjetos(perfil, banco) {
   return projetos.map((p) => formatarBlocoProjeto(p)).join("\n\n");
 }
 
-function termosEfetivos(perfil, ctx) {
-  if (ctx.tipo !== "vaga") return perfil.termos;
+function termosEfetivos(perfil, ctx, fonte) {
+  const base = [...perfil.termos, ...termosCandidatoParaPerfil(perfil.slug, fonte)];
+  if (ctx.tipo !== "vaga") return [...new Set(base)];
+
   const extra = `${ctx.titulo ?? ""}\n${ctx.descricao ?? ""}`.toLowerCase();
   const palavras = extra
     .split(/[^\p{L}\p{N}+#.]+/u)
     .map((w) => w.trim())
     .filter((w) => w.length > 2);
-  return [...new Set([...perfil.termos, ...palavras])];
+  return [...new Set([...base, ...palavras])];
 }
 
-function montarExperiencia(perfil, banco, parsed, ctx) {
-  const termos = termosEfetivos(perfil, ctx);
+function montarExperiencia(perfil, banco, parsed, ctx, fonte) {
+  const termos = termosEfetivos(perfil, ctx, fonte);
   const exp = experienciaParaSegmento(banco, perfil.slug);
   if (exp) {
     const periodo = exp.periodo
@@ -122,9 +130,9 @@ function montarExperiencia(perfil, banco, parsed, ctx) {
   return `### ${perfil.expTitulo}\n\n${periodo}\n\n${bullets.join("\n")}\n\n*${perfil.expNota}*`;
 }
 
-function montarDestaques(perfil, banco, parsed, ctx) {
-  const termos = termosEfetivos(perfil, ctx);
-  const expBullets = extractBullets(montarExperiencia(perfil, banco, parsed, ctx));
+function montarDestaques(perfil, banco, parsed, ctx, fonte) {
+  const termos = termosEfetivos(perfil, ctx, fonte);
+  const expBullets = extractBullets(montarExperiencia(perfil, banco, parsed, ctx, fonte));
   const projBullets = [];
 
   for (const proj of projetosParaSegmento(banco, perfil.slug, perfil.projetosOrdem).slice(0, 2)) {
@@ -135,28 +143,31 @@ function montarDestaques(perfil, banco, parsed, ctx) {
   return all.length ? all.join("\n") : null;
 }
 
-function adaptarCabecalho(preamble, perfil) {
-  const lines = preamble.split("\n");
-  const nome = lines.find((l) => l.startsWith("# ")) ?? "# Nome do Candidato";
-  const contato = lines.find((l) => l.includes("@") && l.includes("linkedin")) ?? "";
+function adaptarCabecalho(parsed, perfil, fonte) {
+  const nome = fonte.profile?.nome?.trim()
+    ? `# ${fonte.profile.nome.trim()}`
+    : parsed.preamble.split("\n").find((l) => l.startsWith("# ")) ?? "# Candidato";
+
+  const contato = formatarContatoCv(fonte.profile, parsed.preamble);
 
   return `${nome}
 
 **Cargo-alvo:** ${perfil.cargoAlvo}  
-${contato.replace(/^\*\*Cargo-alvo(\s*\([^)]*\))?:\*\*[^\n]*\n?/i, "").trim()}`;
+${contato}`;
 }
 
-function rebuildCv({ preamble, sections, headerComment }) {
-  const body = sections.map((s) => `## ${s.title}\n\n${s.body}`).join("\n\n");
-  return `${headerComment}\n\n${preamble}\n\n${body}`.trim() + "\n";
-}
-
-function resolverPerfilSlugAdaptacao(ctx) {
+function resolverPerfilSlugAdaptacao(ctx, fonte) {
   if (ctx.tipo === "busca") {
     return resolverPerfilSlug(ctx.slug);
   }
 
-  const inferido = resolverPerfilSlug(inferirPerfilPorVaga(ctx.titulo ?? "", ctx.descricao ?? ""));
+  if (ctx.segmento_slug) {
+    return resolverPerfilSlug(ctx.segmento_slug);
+  }
+
+  const inferido = resolverPerfilSlug(
+    inferirPerfilPorVaga(ctx.titulo ?? "", ctx.descricao ?? "", fonte),
+  );
   const ativos = slugsSegmentosAtivos().map(resolverPerfilSlug);
   if (!ativos.length) return inferido;
   if (ativos.includes(inferido)) return inferido;
@@ -164,18 +175,19 @@ function resolverPerfilSlugAdaptacao(ctx) {
 }
 
 function adaptarInterno(cvBase, ctx) {
+  const fonte = ctx.fonte ?? getFonteCandidato();
   const perfilSlug =
     ctx.tipo === "busca"
       ? resolverPerfilSlug(ctx.slug)
-      : resolverPerfilSlugAdaptacao(ctx);
+      : resolverPerfilSlugAdaptacao(ctx, fonte);
 
   const perfil = getPerfil(perfilSlug);
-  const banco = loadBanco();
+  const banco = fonte.banco ?? loadBanco();
   const contextoLabel = ctx.tipo === "vaga" ? ctx.titulo : ctx.nome ?? perfil.label;
   const parsed = parseSections(cvBase);
   const headerComment = `<!-- Adaptado em ${new Date().toISOString()} — ${contextoLabel} — ${perfil.slug} -->`;
 
-  const destaques = montarDestaques(perfil, banco, parsed, ctx);
+  const destaques = montarDestaques(perfil, banco, parsed, ctx, fonte);
   const sections = [
     { title: "Resumo", body: buildResumoPerfil(perfil, ctx) },
   ];
@@ -185,13 +197,18 @@ function adaptarInterno(cvBase, ctx) {
   }
 
   sections.push(
-    { title: "Competências", body: competenciasDoBanco(banco, perfil.slug) },
-    { title: "Experiência", body: montarExperiencia(perfil, banco, parsed, ctx) },
+    { title: "Competências", body: competenciasDoBanco(banco, perfil.slug, fonte) },
+    { title: "Experiência", body: montarExperiencia(perfil, banco, parsed, ctx, fonte) },
     { title: "Projetos", body: montarProjetos(perfil, banco) },
   );
 
-  const formacao = parsed.sections.find((s) => /formação|formacao/i.test(s.title));
-  if (formacao) sections.push({ title: "Formação", body: formacao.body });
+  const formacaoMd = formatarFormacaoCv(fonte.formacao);
+  if (formacaoMd) {
+    sections.push({ title: "Formação", body: formacaoMd });
+  } else {
+    const formacao = parsed.sections.find((s) => /formação|formacao/i.test(s.title));
+    if (formacao) sections.push({ title: "Formação", body: formacao.body });
+  }
 
   const certs = cursosParaSegmento(banco, perfil.slug);
   sections.push({
@@ -200,27 +217,41 @@ function adaptarInterno(cvBase, ctx) {
   });
 
   return rebuildCv({
-    preamble: adaptarCabecalho(parsed.preamble, perfil),
+    preamble: adaptarCabecalho(parsed, perfil, fonte),
     sections,
     headerComment,
   });
 }
 
+function rebuildCv({ preamble, sections, headerComment }) {
+  const body = sections.map((s) => `## ${s.title}\n\n${s.body}`).join("\n\n");
+  return `${headerComment}\n\n${preamble}\n\n${body}`.trim() + "\n";
+}
+
 export function adaptarCvParaBusca(cvBase, pedido) {
+  const fonte = pedido.fonte ?? getFonteCandidato();
   return adaptarInterno(cvBase, {
     tipo: "busca",
     slug: pedido.segmento?.slug ?? "dados-bi-analytics",
     nome: pedido.segmento?.nome,
     primarios: pedido.alvos_primarios ?? pedido.alvos ?? [],
     complementares: pedido.alvos_complementares ?? [],
+    fonte,
   });
 }
 
 export function adaptarCvParaVaga(cvBase, pedido) {
+  const fonte = pedido.fonte ?? getFonteCandidato();
+  const segmento_slug =
+    pedido.segmento_slug ??
+    inferirPerfilPorVaga(pedido.vaga_titulo, pedido.vaga_descricao, fonte);
+
   return adaptarInterno(cvBase, {
     tipo: "vaga",
     titulo: pedido.vaga_titulo,
     descricao: pedido.vaga_descricao,
+    segmento_slug,
+    fonte,
   });
 }
 

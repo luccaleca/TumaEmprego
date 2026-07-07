@@ -22,17 +22,57 @@ scripts/sql/dumps/
 *.dump
 *.backup.sql
 
-# Dados pessoais — não versionar
+# ── Dados pessoais (local) — versionar só *.example.yml / *.example.md ──
+
+dados/cv-base.md
+!dados/cv-base.example.md
+
 dados/config/profile.yml
+!dados/config/profile.example.yml
+
 dados/config/busca.yml
-dados/pdfs/*
-dados/fotos/*
-dados/curriculo/principal.pdf
-dados/curriculo/segmentacoes/
+!dados/config/busca.example.yml
+
+dados/config/formacao.yml
+!dados/config/formacao.example.yml
+
+dados/config/tecnologias.yml
+!dados/config/tecnologias.example.yml
+
 dados/conteudo/banco.yml
 !dados/conteudo/banco.example.yml
+
+dados/respostas/padrao.yml
+!dados/respostas/padrao.example.yml
+
+dados/respostas/comportamental.yml
+!dados/respostas/comportamental.example.yml
+
+dados/curriculo/ativo.yml
+!dados/curriculo/ativo.example.yml
+
+dados/curriculo/principal.pdf
+dados/curriculo/segmentacoes/
+dados/curriculo/vagas/*
+!dados/curriculo/vagas/.gitkeep
+dados/curriculo/adaptacao-prompt.md
+!dados/curriculo/adaptacao-prompt.example.md
+dados/curriculo/pedido-adaptacao.json
+dados/curriculo/teste-variacoes/
+dados/curriculo/bancorbras*.md
+
+dados/resultados/*
+!dados/resultados/.gitkeep
+!dados/resultados/exemplo.yml
+
+dados/pdfs/*
 !dados/pdfs/.gitkeep
+
+dados/fotos/*
 !dados/fotos/.gitkeep
+
+dados/candidaturas/*
+!dados/candidaturas/.gitkeep
 
 # Playwright
 playwright-report/
