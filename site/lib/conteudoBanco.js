@@ -5,6 +5,7 @@
 import { getConteudoBanco } from "./dados.js";
 import { competenciasPerfil } from "./perfilCvSegmento.js";
 import { segmentoEstaAtivo } from "./segmentosAtivos.js";
+import { getFonteCandidato, termosParaSegmento } from "./fonteCandidato.js";
 
 export { LABELS_SEGMENTO, slugParaLabel } from "./conteudoConstants.js";
 
@@ -99,18 +100,48 @@ function agruparFerramentas(ferramentas) {
   return map;
 }
 
-export function competenciasDoBanco(banco, slug) {
+function enriquecerComTecnologiasPerfil(body, slug, fonte) {
+  const f = fonte ?? getFonteCandidato();
+  const termos = termosParaSegmento(slug, f);
+  if (!termos.length) return body;
+
+  const lower = body.toLowerCase();
+  const faltando = termos.filter((t) => !lower.includes(String(t).toLowerCase()));
+  if (!faltando.length) return body;
+
+  const niveis = (f.tecnologias?.comNivel ?? [])
+    .filter((t) => faltando.some((x) => x.toLowerCase() === t.nome.toLowerCase()))
+    .map((t) => `${t.nome} (${t.nivel})`);
+
+  const semNivel = faltando.filter(
+    (t) => !niveis.some((n) => n.toLowerCase().startsWith(t.toLowerCase())),
+  );
+
+  const extras = [...niveis, ...semNivel];
+  if (!extras.length) return body;
+
+  const linha = `- **Stack (perfil):** ${extras.join(", ")}`;
+  if (body.includes("**Idiomas:**")) {
+    return body.replace(/- \*\*Idiomas:\*\*/, `${linha}\n- **Idiomas:**`);
+  }
+  return `${body.trim()}\n${linha}`;
+}
+
+export function competenciasDoBanco(banco, slug, fonte = null) {
   const ferramentas = ferramentasParaSegmento(banco, slug);
+  let body;
+
   if (ferramentas.length) {
     const grupos = agruparFerramentas(ferramentas);
     const lines = [...grupos.entries()].map(
       ([cat, nomes]) => `- **${cat}:** ${nomes.join(", ")}`,
     );
     lines.push("- **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)");
-    return lines.join("\n");
+    body = lines.join("\n");
+  } else {
+    const texto = banco?.competencias?.[slug];
+    body = texto?.trim() ? texto.trim() : competenciasPerfil({ slug });
   }
 
-  const texto = banco?.competencias?.[slug];
-  if (texto?.trim()) return texto.trim();
-  return competenciasPerfil({ slug });
+  return enriquecerComTecnologiasPerfil(body, slug, fonte);
 }

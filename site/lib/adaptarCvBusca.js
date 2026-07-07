@@ -12,6 +12,7 @@ import { areaSlugFromChave } from "@/lib/alvosSegmento";
 import { upsertSlotSegmentacao, migrarSegmentacoesParaSlots } from "@/lib/segmentacoes";
 import { adaptarCvParaBusca } from "@/lib/adaptarCvLocal";
 import { SEGMENTOS_CV_SLOTS } from "@/lib/conteudoConstants";
+import { getFonteCandidato, montarContextoFonteParaPrompt } from "@/lib/fonteCandidato";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 const PEDIDO_PATH = path.join(DADOS_ROOT, "curriculo", "pedido-adaptacao.json");
@@ -81,16 +82,24 @@ function formatarListaAlvos(alvos) {
 }
 
 export function montarPromptAdaptacao(pedido) {
+  const fonte = getFonteCandidato();
+  const contexto = montarContextoFonteParaPrompt(fonte, {
+    segmentoSlug: pedido.segmento?.slug,
+  });
+
   return `# Adaptação de CV — ${pedido.segmento.nome}
 
-Leia \`agente/AGENTS.md\` e \`dados/cv-base.md\`.
+Leia \`agente/AGENTS.md\`.
 
 ## Regras
 - Não inventar experiência, ferramentas ou números.
+- Consultar perfil, tecnologias, conteúdo, formação e resultados (fonte abaixo).
 - **Foco principal:** segmento "${pedido.segmento.nome}" e alvos principais abaixo.
 - **Complemento:** mencionar alvos de outros segmentos como habilidade extra, sem roubar o foco.
 - Manter markdown compatível com cv-base (mesmas seções).
 - Escrever o resultado completo em markdown na resposta (não em arquivo).
+
+${contexto}
 
 ## Preferências
 - Senioridades: ${labelsSenioridades(pedido.preferencias.senioridades)}
@@ -131,7 +140,8 @@ export async function executarAdaptacaoCv(busca, catalogo, { regenerar = false }
     fs.writeFileSync(PEDIDO_PATH, `${JSON.stringify(pedido, null, 2)}\n`, "utf8");
     fs.writeFileSync(PROMPT_PATH, montarPromptAdaptacao(pedido), "utf8");
 
-    const conteudo = adaptarCvParaBusca(cvBase, pedido);
+    const fonte = getFonteCandidato();
+    const conteudo = adaptarCvParaBusca(cvBase, { ...pedido, fonte });
     const seg = upsertSlotSegmentacao(pedido, conteudo, { regenerar });
     segmentacoes.push(seg);
   }
