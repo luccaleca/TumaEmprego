@@ -1,24 +1,16 @@
-import { CAMPOS_NIVEL } from "./tecnologiasCampos.js";
-
-function parseOutrasTecnologias(texto) {
-  return String(texto ?? "")
-    .split(/[,;]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-/** Lista plana de tecnologias do perfil (com nível quando houver). Client-safe. */
+/** Lista plana do perfil — só o que está no catálogo e marcado. */
 export function extrairTecnologiasPerfil(tecnologias) {
-  if (!tecnologias) return { comNivel: [], outras: [], todas: [] };
+  if (!tecnologias) return { comNivel: [], todas: [] };
 
-  const comNivel = CAMPOS_NIVEL.filter((c) => tecnologias[c.key]?.trim()).map((c) => ({
-    nome: c.label,
-    slug: c.key,
-    nivel: tecnologias[c.key].trim(),
+  const comNivel = (tecnologias.itens ?? []).map((item) => ({
+    nome: item.nome,
+    slug: item.slug,
+    categoria: item.categoria ?? "",
+    vertenteSlug: item.vertenteSlug ?? "",
+    segmentosCv: item.segmentosCv ?? [],
   }));
 
-  const outras = parseOutrasTecnologias(tecnologias.outras);
-  const todas = [...comNivel.map((t) => t.nome), ...outras];
+  const todas = comNivel.map((t) => t.nome);
 
-  return { comNivel, outras, todas: [...new Set(todas)] };
+  return { comNivel, todas: [...new Set(todas)] };
 }

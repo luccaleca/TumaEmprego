@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { parseCvBase } from "@/lib/cv";
-import { criarSegmentacao, listSegmentacoes, migrarAdaptadoBuscaLegado } from "@/lib/segmentacoes";
+import { getBusca } from "@/lib/dados";
+import { sincronizarSlotsSegmento } from "@/lib/adaptarCvBusca";
+import { getVagaCatalogo } from "@/lib/vagaCatalogo";
+import {
+  criarSegmentacao,
+  getSegmentacaoConteudo,
+  listSegmentacoesVisiveis,
+  migrarAdaptadoBuscaLegado,
+  migrarSegmentacoesParaSlots,
+} from "@/lib/segmentacoes";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = [".pdf", ".md", ".txt", ".markdown"];
@@ -18,8 +27,29 @@ function tituloFromFile(name) {
 export async function GET() {
   try {
     migrarAdaptadoBuscaLegado();
-    const segmentacoes = listSegmentacoes();
-    return NextResponse.json({ segmentacoes });
+    migrarSegmentacoesParaSlots();
+
+    const busca = getBusca();
+    const catalogo = await getVagaCatalogo();
+
+    try {
+      await sincronizarSlotsSegmento(busca, catalogo);
+    } catch {
+      /* cv-base ausente — lista o que já existir */
+    }
+
+    const segmentacoes = listSegmentacoesVisiveis(busca.segmentos_ativos ?? []).map((seg) => {
+      if (!seg.hasMd) return seg;
+      const conteudo = getSegmentacaoConteudo(seg.id);
+      const sections =
+        conteudo?.formato === "markdown" ? parseCvBase(conteudo.content) : [];
+      return { ...seg, _sections: sections };
+    });
+
+    return NextResponse.json({
+      segmentacoes,
+      segmentos_ativos: busca.segmentos_ativos ?? [],
+    });
   } catch (err) {
     return NextResponse.json(
       { error: "Não foi possível listar segmentações", detail: err.message },

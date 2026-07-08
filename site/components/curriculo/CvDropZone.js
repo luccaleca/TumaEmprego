@@ -233,15 +233,20 @@ export default function CvDropZone({
                     Abrir na página
                   </button>
                 ) : pdfSrc && arquivo ? (
-                  <a
-                    href={`/api/curriculo/arquivo?v=${encodeURIComponent(arquivo.updatedAt)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(event) => event.stopPropagation()}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(
+                        `/api/curriculo/arquivo?v=${encodeURIComponent(arquivo.updatedAt)}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
                     className="mt-2 inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100"
                   >
-                    Abrir PDF
-                  </a>
+                    Ver PDF
+                  </button>
                 ) : null}
               </div>
             </div>
@@ -270,15 +275,20 @@ export default function CvDropZone({
                   {uploading ? "Aguarde…" : "Clique ou arraste para substituir"}
                 </p>
                 {pdfSrc && arquivo ? (
-                  <a
-                    href={`/api/curriculo/arquivo?v=${encodeURIComponent(arquivo.updatedAt)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(event) => event.stopPropagation()}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(
+                        `/api/curriculo/arquivo?v=${encodeURIComponent(arquivo.updatedAt)}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
                     className="mt-1 inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100"
                   >
-                    Abrir PDF
-                  </a>
+                    Ver PDF
+                  </button>
                 ) : null}
               </div>
             </div>

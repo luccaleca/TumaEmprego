@@ -45,6 +45,22 @@ npm run dev
 
 Também funciona de dentro de `site/` com `npm run dev`.
 
+## Banco (Postgres + Prisma)
+
+O schema Prisma fica em **`site/prisma/`**. Rode os comandos **da raiz** do repositório (não use `npx prisma` na raiz — isso baixa outra versão e não acha o schema):
+
+```bash
+npm run db:up        # sobe Postgres (Docker)
+npm run db:setup     # cria usuário/banco (Windows + psql local)
+npm run db:generate  # gera o client Prisma (site/)
+npm run db:push      # aplica o schema no banco
+npm run db:seed      # popula catálogo de vagas e tecnologias
+```
+
+Atalho após o banco estar no ar: `npm run db:prepare` (generate + push + seed).
+
+Equivalente dentro de `site/`: `npm run db:generate`, `npm run db:push`, `npm run db:seed`.
+
 ## Ordem sugerida
 
 1. `dados/` — na primeira execução o site copia os `*.example` para arquivos locais (gitignored); preencha com seus dados  

@@ -1,7 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { parse, stringify } from "yaml";
-import { normalizarModalidades, normalizarSenioridades } from "./preferenciasBusca";
+import { normalizarModalidades, normalizarSenioridades } from "./preferenciasBusca.js";
+import { filtrarChavesTituloPorSenioridade } from "./tituloSenioridade.js";
+import { normalizarTecnologias } from "./tecnologiasCampos.js";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 
@@ -42,7 +44,7 @@ export function getFormacao() {
 
 export function getTecnologias() {
   ensureDataFile("config/tecnologias.yml", "config/tecnologias.example.yml");
-  return readYaml("config/tecnologias.yml");
+  return normalizarTecnologias(readYaml("config/tecnologias.yml"));
 }
 
 export function getBusca() {
@@ -71,14 +73,16 @@ function inferirSegmentos(raw) {
 
 function normalizarBusca(raw, profileFallback = null) {
   const fonte = { ...profileFallback, ...raw };
-  const titulos = Array.isArray(raw?.titulos_ativos)
-    ? raw.titulos_ativos.filter(Boolean)
-    : [];
+  const senioridades = normalizarSenioridades(fonte);
+  const titulos = filtrarChavesTituloPorSenioridade(
+    Array.isArray(raw?.titulos_ativos) ? raw.titulos_ativos.filter(Boolean) : [],
+    senioridades,
+  );
 
   return {
-    segmentos_ativos: inferirSegmentos(raw),
+    segmentos_ativos: inferirSegmentos({ ...raw, titulos_ativos: titulos }),
     titulos_ativos: titulos,
-    senioridades: normalizarSenioridades(fonte),
+    senioridades,
     modalidades_trabalho: normalizarModalidades(fonte),
     modo_busca: fonte?.modo_busca ?? "focado",
     nota_minima: Number(fonte?.nota_minima ?? fonte?.nota_minima_candidatar ?? 4) || 4,
@@ -87,10 +91,14 @@ function normalizarBusca(raw, profileFallback = null) {
 
 export function saveBusca(busca) {
   const filePath = path.join(DADOS_ROOT, "config/busca.yml");
+  const senioridades = busca?.senioridades ?? ["estagio"];
   const payload = {
     segmentos_ativos: (busca?.segmentos_ativos ?? []).filter(Boolean),
-    titulos_ativos: (busca?.titulos_ativos ?? []).filter(Boolean),
-    senioridades: busca?.senioridades ?? ["estagio"],
+    titulos_ativos: filtrarChavesTituloPorSenioridade(
+      busca?.titulos_ativos ?? [],
+      senioridades,
+    ),
+    senioridades,
     modalidades_trabalho: busca?.modalidades_trabalho ?? ["remoto", "presencial", "hibrido"],
     modo_busca: busca?.modo_busca ?? "focado",
     nota_minima: Number(busca?.nota_minima ?? 4) || 4,
@@ -188,8 +196,8 @@ export function saveFormacao(formacao) {
 
 export function saveTecnologias(tecnologias) {
   const filePath = path.join(DADOS_ROOT, "config/tecnologias.yml");
-  const current = getTecnologias();
-  fs.writeFileSync(filePath, `${stringify({ ...current, ...tecnologias })}\n`, "utf8");
+  const payload = normalizarTecnologias(tecnologias);
+  fs.writeFileSync(filePath, `${stringify(payload)}\n`, "utf8");
 }
 
 export function saveCurriculoAtivo(ativo) {
@@ -260,4 +268,9 @@ export function saveConteudoBanco(data) {
   const dir = path.join(DADOS_ROOT, "conteudo");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "banco.yml"), `${stringify(data)}\n`, "utf8");
+}
+
+export function getPortalSolides() {
+  ensureDataFile("portais/solides.yml", "portais/solides.example.yml");
+  return readYaml("portais/solides.yml");
 }

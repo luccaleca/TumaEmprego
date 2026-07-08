@@ -1,6 +1,6 @@
 import CurriculoWorkspace from "@/components/curriculo/CurriculoWorkspace";
-import { parseCvBase } from "@/lib/cv";
-import { getBusca, getCurriculoArquivo } from "@/lib/dados";
+import { parseCvBase, parseCvDocument, sectionsForDisplay, cleanPreambleForExport } from "@/lib/cv";
+import { getBusca, getCvBase } from "@/lib/dados";
 import { sincronizarSlotsSegmento } from "@/lib/adaptarCvBusca";
 import { getVagaCatalogo } from "@/lib/vagaCatalogo";
 import {
@@ -27,8 +27,6 @@ export default async function CurriculoPage() {
     /* cv-base vazio ou erro de leitura — slots aparecem quando houver base */
   }
 
-  const arquivo = getCurriculoArquivo();
-
   const segmentacoes = listSegmentacoesVisiveis(busca.segmentos_ativos ?? []).map((seg) => {
     if (!seg.hasMd) return seg;
     const conteudo = getSegmentacaoConteudo(seg.id);
@@ -37,11 +35,17 @@ export default async function CurriculoPage() {
     return { ...seg, _sections: sections };
   });
 
+  const baseDoc = parseCvDocument(getCvBase());
+  const estruturaBase = {
+    preamble: cleanPreambleForExport(baseDoc.preamble),
+    sections: sectionsForDisplay(baseDoc.sections),
+    content: getCvBase(),
+  };
+
   return (
     <CurriculoWorkspace
-      initialArquivo={arquivo}
       initialSegmentacoes={segmentacoes}
-      segmentosAtivos={busca.segmentos_ativos ?? []}
+      estruturaBase={estruturaBase}
     />
   );
 }

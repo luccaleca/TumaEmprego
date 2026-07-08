@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require("@prisma/client");
+const { TECNOLOGIA_VERTENTES } = require("./tecnologiaCatalogoData");
 
 const prisma = new PrismaClient();
 
@@ -521,6 +522,37 @@ async function main() {
   console.log(
     `Resumo: ${areas} áreas, ${nichos} nichos, ${titulos} títulos, ${senioridades} senioridades, ${palavras} palavras-chave.`,
   );
+
+  await prisma.tecnologiaItem.deleteMany();
+  await prisma.tecnologiaVertente.deleteMany();
+
+  let totalItens = 0;
+  for (const vertente of TECNOLOGIA_VERTENTES) {
+    const row = await prisma.tecnologiaVertente.create({
+      data: {
+        slug: vertente.slug,
+        nome: vertente.nome,
+        ordem: vertente.ordem,
+        itens: {
+          create: vertente.itens.map((item, index) => ({
+            slug: item.slug,
+            nome: item.nome,
+            categoria: item.categoria ?? "",
+            ordem: item.ordem ?? index + 1,
+            segmentosCv: item.segmentosCv ?? [],
+          })),
+        },
+      },
+    });
+    totalItens += vertente.itens.length;
+    console.log(`Vertente "${row.nome}" — ${vertente.itens.length} tecnologias.`);
+  }
+
+  const [vertentes, itens] = await Promise.all([
+    prisma.tecnologiaVertente.count(),
+    prisma.tecnologiaItem.count(),
+  ]);
+  console.log(`Catálogo de tecnologias: ${vertentes} vertentes, ${itens} itens (${totalItens} no seed).`);
 }
 
 main()

@@ -74,6 +74,9 @@ dados/fotos/*
 dados/candidaturas/*
 !dados/candidaturas/.gitkeep
 
+dados/portais/solides.yml
+!dados/portais/solides.example.yml
+
 # Playwright
 playwright-report/
 test-results/

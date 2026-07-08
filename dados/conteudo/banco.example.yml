@@ -35,29 +35,54 @@ projetos:
     segmentos:
       - desenvolvimento
       - dados-bi-analytics
-    subtitulo_por_segmento:
-      desenvolvimento: App web full stack
-      dados-bi-analytics: Painel de métricas
-    stack_por_segmento:
-      desenvolvimento: Next.js, Node.js, PostgreSQL
-      dados-bi-analytics: SQL, Python, Power BI
-    bullets_por_segmento:
+    resumo_por_segmento:
+      desenvolvimento: App web full stack para demonstrar entregas de produto
+      dados-bi-analytics: Painel de métricas para acompanhar indicadores do projeto
+    stack_uso_por_segmento:
       desenvolvimento:
-        - API REST e front em **Next.js**
-        - Deploy e versionamento com **Git**
+        - Next.js — interface e rotas do app
+        - Node.js — API REST e regras de negócio
+        - PostgreSQL — persistência dos dados do sistema
+        - Git — versionamento e deploy
       dados-bi-analytics:
-        - Pipeline simples de **ETL** em Python
-        - Dashboard de KPIs para acompanhamento
+        - Python — pipeline simples de ETL dos dados
+        - SQL — consultas e modelagem para o painel
+        - Power BI — dashboard de KPIs para acompanhamento
 
 cursos:
   - id: curso-sql
     titulo: SQL para Análise de Dados
-    instrutor: Instrutor Exemplo
+    instrutor: Midori Ishizuka
     plataforma: Udemy
     segmentos:
       - dados-bi-analytics
     ordem: 1
     concluido: true
+  - id: curso-ga4
+    titulo: Google Analytics 4
+    instrutor: Google Skillshop
+    plataforma: Google
+    segmentos:
+      - dados-bi-analytics
+      - marketing-growth
+    ordem: 2
+    concluido: true
+  - id: curso-react-alura
+    titulo: Formação React
+    instrutor: Alura
+    plataforma: Alura
+    segmentos:
+      - desenvolvimento
+    ordem: 1
+    concluido: true
+  - id: curso-google-ads
+    titulo: Google Ads — Certificação de Pesquisa
+    instrutor: Google Skillshop
+    plataforma: Google
+    segmentos:
+      - marketing-growth
+    ordem: 1
+    concluido: false
 
 ferramentas:
   - id: python

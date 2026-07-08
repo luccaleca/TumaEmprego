@@ -31,11 +31,12 @@
 - [ ] `scripts/generate-pdf.mjs`
 - [ ] Salvar em `dados/pdfs/`
 
-## Fase 4 — Extensão Chrome
+## Fase 4 — Extensão Chrome (em andamento)
 
-- [ ] `extensao/` — Manifest V3, Gupy
-- [ ] Conectar `localhost:3737`
-- [ ] Autofill + textareas do pacote
+- [x] `extensao/` — Manifest V3, botão detectar vaga, popup
+- [x] `POST /api/curriculo/vaga/pacote` — classifica segmento + CV + PDF
+- [x] `GET /api/extensao/ping`
+- [ ] Autofill de formulários (Gupy, LinkedIn)
 
 ## Fase 5 — E-mail + polish
 

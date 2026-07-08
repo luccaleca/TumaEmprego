@@ -8,6 +8,7 @@ const navItems = [
   { href: "/conteudo", label: "Conteúdo" },
   { href: "/segmentos", label: "Segmentos" },
   { href: "/curriculo", label: "Currículo" },
+  { href: "/vaga", label: "Vaga" },
 ];
 
 export default function SiteHeader() {

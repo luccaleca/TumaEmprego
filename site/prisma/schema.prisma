@@ -63,6 +63,36 @@ model VagaPalavraChave {
   @@map("vaga_palavra_chave")
 }
 
+/// Vertente do catálogo de tecnologias (Dados, Desenvolvimento, Performance, IA, Automação).
+model TecnologiaVertente {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug   String @unique
+  nome   String
+  ordem  Int    @default(0)
+  criadoEm DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  itens TecnologiaItem[]
+
+  @@map("tecnologia_vertente")
+}
+
+/// Item do catálogo de tecnologias (stack de mercado — o usuário ativa no YAML local).
+model TecnologiaItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vertenteId  String   @map("vertente_id") @db.Uuid
+  slug        String
+  nome        String
+  categoria   String   @default("")
+  ordem       Int      @default(0)
+  segmentosCv String[] @default([]) @map("segmentos_cv")
+  criadoEm    DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  vertente TecnologiaVertente @relation(fields: [vertenteId], references: [id], onDelete: Cascade)
+
+  @@unique([vertenteId, slug])
+  @@map("tecnologia_item")
+}
+
 /// Nível de senioridade (combinado com o título na busca — não faz parte do nome do cargo).
 model VagaSenioridade {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

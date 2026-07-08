@@ -1,4 +1,5 @@
 import { normalizarTexto, tokenizarConsulta } from "@/lib/buscaBusca";
+import { tituloCompativelComSenioridades } from "@/lib/tituloSenioridade";
 
 function textoTitulo(titulo) {
   return normalizarTexto([titulo.titulo, ...(titulo.sinonimos ?? [])].join(" "));
@@ -27,7 +28,7 @@ export function flattenCatalogo(catalogo) {
   return itens;
 }
 
-export function buscarNoCatalogo(catalogo, query, chavesAtivas = []) {
+export function buscarNoCatalogo(catalogo, query, chavesAtivas = [], senioridades = ["estagio"]) {
   const tokens = tokenizarConsulta(query);
   const ativos = new Set(chavesAtivas);
   const itens = flattenCatalogo(catalogo);
@@ -40,6 +41,8 @@ export function buscarNoCatalogo(catalogo, query, chavesAtivas = []) {
   const resultados = [];
 
   for (const item of itens) {
+    if (!tituloCompativelComSenioridades(item.titulo, senioridades)) continue;
+
     const blob = normalizarTexto(
       [item.titulo, item.area, item.nicho, item.caminho].join(" "),
     );

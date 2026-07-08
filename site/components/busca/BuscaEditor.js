@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import BuscaAlvosResumo from "@/components/busca/BuscaAlvosResumo";
 import BuscaSegmentos from "@/components/busca/BuscaSegmentos";
 import SegmentosTopo from "@/components/busca/SegmentosTopo";
@@ -11,11 +12,25 @@ import { buscaIgual, preferenciasFromBusca } from "@/lib/preferenciasBusca";
 import {
   filtrarChavesTituloPorSenioridade,
   listarChavesTituloCompativeis,
+  tituloCompativelComSenioridades,
 } from "@/lib/tituloSenioridade";
 
+function buscaCompativelComSenioridade(busca) {
+  const prefs = preferenciasFromBusca(busca);
+  return {
+    ...busca,
+    titulos_ativos: filtrarChavesTituloPorSenioridade(
+      busca.titulos_ativos,
+      prefs.senioridades,
+    ),
+  };
+}
+
 export default function BuscaEditor({ initial, catalogo }) {
-  const [salvo, setSalvo] = useState(initial);
-  const [busca, setBusca] = useState(initial);
+  const router = useRouter();
+  const inicial = useMemo(() => buscaCompativelComSenioridade(initial), [initial]);
+  const [salvo, setSalvo] = useState(inicial);
+  const [busca, setBusca] = useState(inicial);
   const [consulta, setConsulta] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -31,8 +46,8 @@ export default function BuscaEditor({ initial, catalogo }) {
   const buscando = consulta.trim().length > 0;
 
   const { resultados, highlightChaves } = useMemo(
-    () => buscarNoCatalogo(catalogo, consulta, titulosAtivos),
-    [catalogo, consulta, titulosAtivos],
+    () => buscarNoCatalogo(catalogo, consulta, titulosAtivos, preferencias.senioridades),
+    [catalogo, consulta, titulosAtivos, preferencias.senioridades],
   );
 
   const totalAlvos = useMemo(
@@ -117,6 +132,7 @@ export default function BuscaEditor({ initial, catalogo }) {
       setSalvo(data.busca);
       setBusca(data.busca);
       setAdaptacao(data.adaptacao ?? null);
+      router.refresh();
 
       const n = data.adaptacao?.slots_total ?? data.adaptacao?.segmentacoes?.length ?? 0;
       const vis = data.adaptacao?.slots_visiveis ?? n;
@@ -204,6 +220,13 @@ export default function BuscaEditor({ initial, catalogo }) {
               {" "}
               <Link href="/curriculo" className="underline">
                 Ver currículo
+              </Link>
+            </>
+          ) : adaptacao?.status === "pendente" ? (
+            <>
+              {" "}
+              <Link href="/curriculo" className="underline">
+                Currículo
               </Link>
             </>
           ) : null}

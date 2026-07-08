@@ -51,6 +51,11 @@ export function tituloTextoFromChave(chave) {
   return String(chave).split("/").slice(2).join("/");
 }
 
+export function tituloCompativelComSenioridades(titulo, senioridades) {
+  const niveis = senioridades?.length ? senioridades : ["estagio"];
+  return niveis.some((s) => combinacaoSenioridadeTituloValida(s, titulo));
+}
+
 export function filtrarChavesTituloPorSenioridade(chaves, senioridades) {
   const niveis = senioridades?.length ? senioridades : ["estagio"];
   return (chaves ?? []).filter((chave) => {

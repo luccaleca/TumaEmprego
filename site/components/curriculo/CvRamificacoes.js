@@ -38,10 +38,33 @@ export default function CvRamificacoes({
 }) {
   const [segmentacoes, setSegmentacoes] = useState(initialSegmentacoes);
   const [painel, setPainel] = useState(null);
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
     setSegmentacoes(initialSegmentacoes);
   }, [initialSegmentacoes]);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    (async () => {
+      setCarregando(true);
+      try {
+        const res = await fetch("/api/curriculo/segmentacoes");
+        const data = await res.json();
+        if (!res.ok || cancelado) return;
+        setSegmentacoes(data.segmentacoes ?? []);
+      } catch {
+        /* mantém SSR */
+      } finally {
+        if (!cancelado) setCarregando(false);
+      }
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!sectionsUpdate?.id) return;
@@ -58,8 +81,6 @@ export default function CvRamificacoes({
       prev.map((seg) => (seg.id === metaUpdate.id ? { ...seg, ...metaUpdate.meta } : seg)),
     );
   }, [metaUpdate]);
-  const [vagaTitulo, setVagaTitulo] = useState("");
-  const [vagaDescricao, setVagaDescricao] = useState("");
   const [manualTitulo, setManualTitulo] = useState("");
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -103,40 +124,6 @@ export default function CvRamificacoes({
   function toggleAdd() {
     setPainel((atual) => (atual === "menu" ? null : "menu"));
     setMessage("");
-  }
-
-  async function gerarParaVaga(event) {
-    event.preventDefault();
-    if (vagaDescricao.trim().length < 20) {
-      setMessage("Cole a descrição completa da vaga.");
-      return;
-    }
-
-    setBusy(true);
-    setMessage("");
-
-    try {
-      const res = await fetch("/api/curriculo/vaga", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vaga_titulo: vagaTitulo.trim(),
-          vaga_descricao: vagaDescricao.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.detail);
-
-      adicionarSegmentacao(data.segmentacao, data.sections ?? []);
-      setVagaTitulo("");
-      setVagaDescricao("");
-      setPainel(null);
-      setMessage("Versão para vaga criada.");
-    } catch (err) {
-      setMessage(err.message || "Erro ao gerar");
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function enviarManual(event) {
@@ -186,7 +173,7 @@ export default function CvRamificacoes({
         >
           Variações
         </p>
-        {!segmentacoes.length && !addOpen ? (
+        {!segmentacoes.length && !addOpen && !carregando ? (
           <p className="text-[10px] text-zinc-400">
             Nenhum segmento ativo — marque áreas em{" "}
             <Link href="/segmentos" className="text-emerald-700 hover:underline">
@@ -213,13 +200,6 @@ export default function CvRamificacoes({
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setPainel("vaga")}
-                  className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-emerald-700"
-                >
-                  Para vaga
-                </button>
-                <button
-                  type="button"
                   onClick={() => setPainel("manual")}
                   className="rounded-md border border-zinc-200 px-2.5 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50"
                 >
@@ -231,43 +211,14 @@ export default function CvRamificacoes({
                 >
                   Segmentos
                 </Link>
+                <Link
+                  href="/vaga"
+                  className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-emerald-700"
+                >
+                  Vaga
+                </Link>
               </div>
             </div>
-          ) : null}
-
-          {painel === "vaga" ? (
-            <form onSubmit={gerarParaVaga} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-zinc-700">Gerar para vaga</p>
-                <button
-                  type="button"
-                  onClick={() => setPainel("menu")}
-                  className="text-[11px] text-zinc-400 hover:text-zinc-700"
-                >
-                  Voltar
-                </button>
-              </div>
-              <textarea
-                className={`${textareaClass} min-h-[3.5rem] text-sm`}
-                placeholder="Cole a descrição da vaga…"
-                value={vagaDescricao}
-                onChange={(e) => setVagaDescricao(e.target.value)}
-                required
-              />
-              <input
-                className={inputClass}
-                placeholder="Título (opcional)"
-                value={vagaTitulo}
-                onChange={(e) => setVagaTitulo(e.target.value)}
-              />
-              <button
-                type="submit"
-                disabled={busy}
-                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-              >
-                {busy ? "Gerando…" : "Gerar"}
-              </button>
-            </form>
           ) : null}
 
           {painel === "manual" ? (
@@ -327,6 +278,8 @@ export default function CvRamificacoes({
               />
             </li>
           ))
+        ) : carregando ? (
+          <li className="flex h-[168px] items-center px-1 text-xs text-zinc-400">…</li>
         ) : (
           <li className="flex h-[168px] items-center px-1 text-xs text-zinc-400">
             Nenhum segmento ativo na faixa

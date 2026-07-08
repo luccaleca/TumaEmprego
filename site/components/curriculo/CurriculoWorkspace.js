@@ -3,88 +3,56 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import CvDocumentViewer from "@/components/curriculo/CvDocumentViewer";
-import CvDropZone from "@/components/curriculo/CvDropZone";
+import CvEstruturaBaseCard from "@/components/curriculo/CvEstruturaBaseCard";
 import CvRamificacoes from "@/components/curriculo/CvRamificacoes";
 import { labelSegmento, resumoAlvos } from "@/lib/cvSegmentoTema";
 
-function estadoPdf(pdf = {}) {
-  return {
-    temPdf: Boolean(pdf.temPdf),
-    pdfDesatualizado: Boolean(pdf.desatualizado),
-    pdfUrl: pdf.pdfUrl ?? null,
-  };
-}
-
-export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes }) {
-  const [arquivo, setArquivo] = useState(initialArquivo);
+export default function CurriculoWorkspace({ initialSegmentacoes, estruturaBase = null }) {
   const [documentoAberto, setDocumentoAberto] = useState(null);
   const [sectionsUpdate, setSectionsUpdate] = useState(null);
   const [metaUpdate, setMetaUpdate] = useState(null);
+  const [estruturaPreview, setEstruturaPreview] = useState(estruturaBase);
 
-  const abrirPrincipal = useCallback(async () => {
-    const temPdfUpload = Boolean(arquivo);
+  const abrirEstruturaBase = useCallback(async () => {
+    const base = estruturaPreview ?? { preamble: "", sections: [], content: "" };
 
     setDocumentoAberto({
       tipo: "principal",
       id: "principal",
-      titulo: arquivo?.name ?? "Currículo principal",
-      subtitulo: temPdfUpload ? "PDF principal" : "Texto base (cv-base.md)",
-      preamble: null,
-      sections: null,
-      content: null,
-      editavel: false,
-      loading: true,
-      defaultViewMode: temPdfUpload ? "pdf" : "text",
-      ...estadoPdf(
-        temPdfUpload
-          ? {
-              temPdf: true,
-              pdfUrl: `/api/curriculo/arquivo?v=${encodeURIComponent(arquivo.updatedAt)}`,
-            }
-          : {},
-      ),
+      titulo: "Estrutura base",
+      subtitulo: "Modelo ATS — layout que a IA segue nas variações",
+      preamble: base.preamble ?? "",
+      sections: base.sections ?? [],
+      content: base.content ?? "",
+      editavel: true,
+      loading: false,
     });
 
     try {
-      const [baseRes, pdfRes] = await Promise.all([
-        fetch("/api/curriculo/base"),
-        fetch("/api/curriculo/pdf"),
-      ]);
-      const baseData = baseRes.ok ? await baseRes.json() : null;
-      const pdfData = pdfRes.ok ? await pdfRes.json() : null;
+      const res = await fetch("/api/curriculo/base");
+      if (!res.ok) return;
+      const data = await res.json();
 
       setDocumentoAberto((prev) =>
-        prev?.id === "principal"
-          ? {
+        prev?.id !== "principal"
+          ? prev
+          : {
               ...prev,
-              content: baseData?.content ?? "",
-              preamble: baseData?.preamble ?? "",
-              sections: baseData?.sections ?? [],
-              editavel: Boolean(baseData?.content),
-              loading: false,
-              subtitulo: temPdfUpload
-                ? pdfData?.desatualizado
-                  ? "PDF enviado · texto base mais recente"
-                  : "PDF principal"
-                : "Texto base (cv-base.md)",
-              ...estadoPdf({
-                temPdf: pdfData?.temPdf || temPdfUpload,
-                desatualizado: pdfData?.desatualizado,
-                pdfUrl:
-                  pdfData?.pdfUrl ??
-                  (temPdfUpload
-                    ? `/api/curriculo/arquivo?v=${encodeURIComponent(arquivo.updatedAt)}`
-                    : null),
-              }),
-            }
-          : prev,
+              content: data.content ?? prev.content,
+              preamble: data.preamble ?? prev.preamble,
+              sections: data.sections?.length ? data.sections : prev.sections,
+            },
       );
+
+      setEstruturaPreview({
+        preamble: data.preamble ?? base.preamble ?? "",
+        sections: data.sections?.length ? data.sections : base.sections ?? [],
+        content: data.content ?? base.content ?? "",
+      });
     } catch {
-      setDocumentoAberto((prev) =>
-        prev?.id === "principal" ? { ...prev, loading: false, sections: [], content: "" } : prev,
-      );
+      /* mantém dados já carregados na página */
     }
-  }, [arquivo]);
+  }, [estruturaPreview]);
 
   const abrirSegmentacao = useCallback(async (segmentacao, initialSections = null) => {
     const titulo =
@@ -106,10 +74,9 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
         content: null,
         editavel: false,
         loading: false,
-        ...estadoPdf({
-          temPdf: true,
-          pdfUrl: `/api/curriculo/segmentacoes/${segmentacao.id}/arquivo`,
-        }),
+        temPdf: true,
+        pdfUrl: `/api/curriculo/segmentacoes/${segmentacao.id}/arquivo`,
+        pdfDesatualizado: false,
       });
       return;
     }
@@ -123,7 +90,9 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
       content: null,
       editavel: true,
       loading: true,
-      ...estadoPdf({}),
+      temPdf: false,
+      pdfUrl: null,
+      pdfDesatualizado: false,
     });
 
     try {
@@ -140,13 +109,11 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
               sections: data.sections ?? initialSections ?? [],
               editavel: data.editavel !== false,
               loading: false,
-              ...estadoPdf({
-                temPdf: pdf.temPdf,
-                desatualizado: pdf.desatualizado,
-                pdfUrl: pdf.temPdf
-                  ? `/api/curriculo/segmentacoes/${segmentacao.id}/arquivo?v=${encodeURIComponent(pdf.pdfUpdatedAt)}`
-                  : null,
-              }),
+              temPdf: pdf.temPdf,
+              pdfDesatualizado: pdf.desatualizado,
+              pdfUrl: pdf.temPdf
+                ? `/api/curriculo/segmentacoes/${segmentacao.id}/arquivo?v=${encodeURIComponent(pdf.pdfUpdatedAt)}`
+                : null,
             }
           : prev,
       );
@@ -179,10 +146,14 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
                 content: data.content,
                 preamble: data.preamble ?? prev.preamble,
                 sections: data.sections ?? [],
-                pdfDesatualizado: prev.temPdf ? true : prev.pdfDesatualizado,
               }
             : prev,
         );
+        setEstruturaPreview({
+          preamble: data.preamble ?? "",
+          sections: data.sections ?? [],
+          content: data.content ?? "",
+        });
         return;
       }
 
@@ -203,7 +174,7 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
               ...prev,
               content: data.content,
               sections: data.sections ?? [],
-              pdfDesatualizado: prev.temPdf ? true : prev.pdfDesatualizado,
+              pdfDesatualizado: prev.temPdf ? true : false,
             }
           : prev,
       );
@@ -214,14 +185,11 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
   );
 
   const gerarPdf = useCallback(async () => {
-    if (!documentoAberto) return;
+    if (!documentoAberto || documentoAberto.tipo !== "segmentacao") return;
 
-    const url =
-      documentoAberto.tipo === "principal"
-        ? "/api/curriculo/pdf"
-        : `/api/curriculo/segmentacoes/${documentoAberto.id}/pdf`;
-
-    const res = await fetch(url, { method: "POST" });
+    const res = await fetch(`/api/curriculo/segmentacoes/${documentoAberto.id}/pdf`, {
+      method: "POST",
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error);
 
@@ -236,11 +204,7 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
         : prev,
     );
 
-    if (documentoAberto.tipo === "principal" && data.file) {
-      setArquivo(data.file);
-    }
-
-    if (documentoAberto.tipo === "segmentacao" && data.meta) {
+    if (data.meta) {
       setMetaUpdate({ id: documentoAberto.id, meta: data.meta });
     }
   }, [documentoAberto]);
@@ -249,12 +213,18 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
     setDocumentoAberto(null);
   }
 
+  const podeGerarPdf = documentoAberto?.tipo === "segmentacao" && documentoAberto.editavel;
+
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] flex-col bg-gradient-to-b from-zinc-100/40 via-white to-zinc-50/30">
       <header className="shrink-0 border-b border-zinc-200/60 bg-white/80 px-4 py-2.5 text-center backdrop-blur-sm sm:px-6">
         <h1 className="text-sm font-semibold tracking-tight text-zinc-900">Currículo</h1>
         <p className="text-[11px] text-zinc-500">
-          Principal e variações ·{" "}
+          Variações por segmento ·{" "}
+          <Link href="/vaga" className="text-emerald-700 hover:underline">
+            Adaptar para vaga
+          </Link>
+          {" · "}
           <Link href="/conteudo" className="text-emerald-700 hover:underline">
             Banco de conteúdo
           </Link>
@@ -267,33 +237,28 @@ export default function CurriculoWorkspace({ initialArquivo, initialSegmentacoes
             titulo={documentoAberto.titulo}
             subtitulo={documentoAberto.subtitulo}
             preamble={documentoAberto.preamble}
-            defaultViewMode={documentoAberto.defaultViewMode ?? "text"}
             sections={documentoAberto.sections}
             content={documentoAberto.content ?? ""}
             editavel={documentoAberto.editavel}
             loading={documentoAberto.loading}
+            modoEstrutura={documentoAberto.tipo === "principal"}
             pdfUrl={documentoAberto.pdfUrl}
             temPdf={documentoAberto.temPdf}
             pdfDesatualizado={documentoAberto.pdfDesatualizado}
             onFechar={fecharDocumento}
             onSalvar={documentoAberto.editavel ? salvarDocumento : undefined}
-            onGerarPdf={documentoAberto.editavel ? gerarPdf : undefined}
+            onGerarPdf={podeGerarPdf ? gerarPdf : undefined}
           />
         ) : (
-          <section aria-label="Currículo principal" className="flex w-full max-w-md flex-col items-center">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-              Principal
+          <section aria-label="Estrutura base" className="flex w-full flex-col items-center">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+              Base
             </p>
-            <div className="w-full rounded-xl border border-zinc-200/90 bg-white p-3 shadow-md ring-1 ring-zinc-200/40 sm:p-4">
-              <CvDropZone
-                initialArquivo={arquivo}
-                variant="stage"
-                onAbrirPreview={abrirPrincipal}
-                onUploaded={(data) => {
-                  if (data.file) setArquivo(data.file);
-                }}
-              />
-            </div>
+            <CvEstruturaBaseCard
+              preamble={estruturaPreview?.preamble ?? ""}
+              sections={estruturaPreview?.sections ?? []}
+              onAbrir={abrirEstruturaBase}
+            />
           </section>
         )}
       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cargoEhComplemento } from "@/lib/alvosSegmento";
-import { combinacaoSenioridadeTituloValida } from "@/lib/tituloSenioridade";
+import { tituloCompativelComSenioridades } from "@/lib/tituloSenioridade";
 
 const CORES_AREA = {
   "dados-bi-analytics": {
@@ -101,30 +101,20 @@ function expandidosIniciais(catalogo, segmentosCv, chavesAtivas) {
   return set;
 }
 
-function TituloChip({ titulo, ativo, complemento, bloqueado, destacado, tema, onToggle }) {
+function TituloChip({ titulo, ativo, complemento, destacado, tema, onToggle }) {
   return (
     <button
       type="button"
-      onClick={() => !bloqueado && onToggle(titulo.chave)}
-      disabled={bloqueado}
+      onClick={() => onToggle(titulo.chave)}
       aria-pressed={ativo}
-      title={
-        bloqueado
-          ? "Incompatível com as senioridades selecionadas (ex.: Estágio não combina com Especialista ou Coordenador)"
-          : complemento
-            ? "Entra como complemento nos CVs marcados"
-            : undefined
-      }
       className={[
         "rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition",
-        bloqueado
-          ? "cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-400"
-          : ativo
-            ? complemento
-              ? tema.chipComplemento
-              : tema.chipAtivo
-            : tema.chipInativo,
-        destacado && !bloqueado ? tema.chipDestaque : "",
+        ativo
+          ? complemento
+            ? tema.chipComplemento
+            : tema.chipAtivo
+          : tema.chipInativo,
+        destacado ? tema.chipDestaque : "",
       ].join(" ")}
     >
       {titulo.titulo}
@@ -195,14 +185,7 @@ export default function BuscaSegmentos({
   return (
     <section>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-sm font-semibold text-zinc-900">Segmentos</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            Checkbox gera CV do segmento. Cargos de outras áreas entram como complemento. Cargos
-            sênior (Especialista, Coordenador…) só aparecem se a senioridade compatível estiver
-            marcada.
-          </p>
-        </div>
+        <h2 className="text-sm font-semibold text-zinc-900">Segmentos</h2>
         <div className="flex flex-wrap gap-2 text-xs">
           <button
             type="button"
@@ -256,9 +239,10 @@ export default function BuscaSegmentos({
 
           const nichosVisiveis = (area.nichos ?? [])
             .map((nicho) => {
-              const titulos = (nicho.titulos ?? []).filter(
-                (t) => !buscando || highlightChaves?.has(t.chave),
-              );
+              const titulos = (nicho.titulos ?? []).filter((t) => {
+                if (buscando && !highlightChaves?.has(t.chave)) return false;
+                return tituloCompativelComSenioridades(t.titulo, senioridades);
+              });
               return titulos.length ? { ...nicho, titulos } : null;
             })
             .filter(Boolean);
@@ -311,10 +295,6 @@ export default function BuscaSegmentos({
                           const ativo = chavesAtivas.has(titulo.chave);
                           const complemento =
                             ativo && cargoEhComplemento(titulo.chave, segmentosAtivos);
-                          const compativel = (senioridades ?? ["estagio"]).some((s) =>
-                            combinacaoSenioridadeTituloValida(s, titulo.titulo),
-                          );
-                          const bloqueado = !compativel && !ativo;
 
                           return (
                             <li key={titulo.chave}>
@@ -322,7 +302,6 @@ export default function BuscaSegmentos({
                                 titulo={titulo}
                                 ativo={ativo}
                                 complemento={complemento}
-                                bloqueado={bloqueado}
                                 destacado={buscando && highlightChaves?.has(titulo.chave)}
                                 tema={tema}
                                 onToggle={onToggleTitulo}

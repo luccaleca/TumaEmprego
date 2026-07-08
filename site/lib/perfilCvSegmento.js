@@ -2,23 +2,12 @@
  * Perfis de currículo por segmento/vaga — o motor local monta um CV focado por área.
  */
 
+import { certificacoesFallbackSegmento } from "./certificacoesBr.js";
+import { LABELS_SEGMENTO } from "./conteudoConstants.js";
+import { slugsSegmentosAtivos } from "./segmentosAtivos.js";
 import { getFonteCandidato, termosParaSegmento, termosTecnologiaCandidato } from "./fonteCandidato.js";
 
-export const CERTS_UDEMY = {
-  python: "Python para Data Science e Machine Learning Bootcamp — José Portilla (Udemy)",
-  sql: "SQL para Análise de Dados: Do Básico ao Avançado — Midori Ishizuka (Udemy)",
-  postgresql: "PostgreSQL: Do Básico ao Avançado — Felipe Mafra (Udemy)",
-  powerbi: "Microsoft Power BI para Data Science — André Rosa (Udemy)",
-  pandas: "Manipulação e Análise de Dados com Python e Pandas — Clevison Santos (Udemy)",
-  react: "React - The Complete Guide — Maximilian Schwarzmüller (Udemy)",
-  node: "Node.js, Express, MongoDB & More: The Complete Bootcamp — Jonas Schmedtmann (Udemy)",
-  javascript: "The Complete JavaScript Course 2024 — Jonas Schmedtmann (Udemy)",
-  typescript: "Understanding TypeScript — Maximilian Schwarzmüller (Udemy)",
-  nextjs: "Next.js & React - The Complete Guide — Maximilian Schwarzmüller (Udemy)",
-  digitalMarketing: "The Complete Digital Marketing Guide — Rob Percival (Udemy)",
-  googleAds: "Google Ads (Adwords) Completo — Do Zero ao PRO (M2up)",
-  analytics: "Certificação de Analytics — Google Skillshop",
-};
+export { CERTIFICACOES_BR, CERTIFICACOES_POR_SEGMENTO } from "./certificacoesBr.js";
 
 export const PERFIS = {
   "dados-bi-analytics": {
@@ -31,22 +20,13 @@ export const PERFIS = {
       "sql", "python", "power bi", "dados", "analytics", "bi", "dashboard", "kpi",
       "postgresql", "supabase", "etl", "excel", "pandas", "modelagem",
     ],
-    certificacoes: [
-      CERTS_UDEMY.analytics,
-      CERTS_UDEMY.sql,
-      CERTS_UDEMY.python,
-      CERTS_UDEMY.postgresql,
-      CERTS_UDEMY.powerbi,
-      CERTS_UDEMY.pandas,
-    ],
+    certificacoes: certificacoesFallbackSegmento("dados-bi-analytics"),
     projetosOrdem: ["Projeto de Portfólio"],
     projetosOmitir: [],
     expTitulo: "Experiência profissional — Análise de Dados",
     expNota: "Foco em SQL, Python, Power BI e KPIs.",
-    resumoExtra:
-      "Destaque projetos de dados e BI do seu banco de conteúdo (`conteudo/banco.yml`).",
     resumoExp:
-      "Experiência com **SQL**, **Python** e **Power BI** — consultas, dashboards e análises que apoiaram decisões de negócio.",
+      "Tenho experiência com **SQL**, **Python** e **Power BI** — consultas, dashboards e análises que apoiaram decisões de negócio.",
   },
 
   desenvolvimento: {
@@ -60,22 +40,13 @@ export const PERFIS = {
       "full stack", "front-end", "frontend", "back-end", "backend", "git", "html", "css",
       "postgresql", "prisma",
     ],
-    certificacoes: [
-      CERTS_UDEMY.javascript,
-      CERTS_UDEMY.react,
-      CERTS_UDEMY.nextjs,
-      CERTS_UDEMY.node,
-      CERTS_UDEMY.typescript,
-      CERTS_UDEMY.python,
-    ],
+    certificacoes: certificacoesFallbackSegmento("desenvolvimento"),
     projetosOrdem: ["Projeto de Portfólio"],
     projetosOmitir: [],
     expTitulo: "Experiência profissional — Desenvolvimento de Software",
     expNota: "Foco em React, Next.js, Node.js e entregas web.",
-    resumoExtra:
-      "Inclua projetos full stack do seu `banco.yml` (front, API, banco).",
     resumoExp:
-      "Experiência com **React**, **Next.js**, **Node.js** e **SQL** — interfaces, APIs e automações em ambiente real.",
+      "Tenho experiência com **React**, **Next.js**, **Node.js** e **SQL** — interfaces, APIs e automações em ambiente real.",
   },
 
   "marketing-growth": {
@@ -88,21 +59,13 @@ export const PERFIS = {
       "marketing", "growth", "google ads", "meta ads", "analytics", "ga4", "gtm",
       "performance", "segmentação", "kpi", "power bi", "sql", "python", "shopify", "vtex",
     ],
-    certificacoes: [
-      CERTS_UDEMY.analytics,
-      CERTS_UDEMY.googleAds,
-      CERTS_UDEMY.digitalMarketing,
-      CERTS_UDEMY.powerbi,
-      CERTS_UDEMY.sql,
-    ],
+    certificacoes: certificacoesFallbackSegmento("marketing-growth"),
     projetosOrdem: ["Projeto de Portfólio"],
     projetosOmitir: [],
     expTitulo: "Experiência profissional — Marketing / Growth",
     expNota: "Foco em campanhas, analytics e KPIs.",
-    resumoExtra:
-      "Projetos com tráfego pago, GA4 ou growth vêm do seu conteúdo cadastrado.",
     resumoExp:
-      "Experiência com **Google Ads**, **Meta Ads**, **SQL** e **Power BI** — campanhas, segmentação e leitura de performance.",
+      "Tenho experiência com **Google Ads**, **Meta Ads**, **SQL** e **Power BI** — campanhas, segmentação e leitura de performance.",
   },
 
   "ia-ml": {
@@ -115,20 +78,13 @@ export const PERFIS = {
       "ia", "inteligência artificial", "machine learning", "llm", "rag", "python",
       "fastapi", "postgresql", "prompt", "gemini", "chroma",
     ],
-    certificacoes: [
-      CERTS_UDEMY.python,
-      CERTS_UDEMY.pandas,
-      CERTS_UDEMY.sql,
-      CERTS_UDEMY.postgresql,
-    ],
+    certificacoes: certificacoesFallbackSegmento("ia-ml"),
     projetosOrdem: ["Projeto de Portfólio"],
     projetosOmitir: [],
     expTitulo: "Experiência profissional — Dados para Produto",
     expNota: "Foco em base analítica e priorização com SQL/Python.",
-    resumoExtra:
-      "Projetos com LLM, RAG ou automação devem estar no `banco.yml`.",
     resumoExp:
-      "Experiência montando base analítica com **SQL**, **Python** e ferramentas de BI para apoiar produto e operação.",
+      "Montei base analítica com **SQL**, **Python** e ferramentas de BI para apoiar produto e operação.",
   },
 };
 
@@ -174,27 +130,61 @@ export function resolverPerfilSlug(slug) {
   return SLUG_ALIASES[slug] ?? slug;
 }
 
-export function inferirPerfilPorVaga(titulo, descricao, fonte = null) {
-  const f = fonte ?? getFonteCandidato();
-  const texto = `${titulo}\n${descricao}`;
+function scoreSegmentoSlug(slug, texto, fonte) {
+  const key = resolverPerfilSlug(slug);
+  const perfil = PERFIS[key];
+  if (!perfil) return 0;
 
-  const scores = {
-    "marketing-growth": scoreTermos(texto, TERMOS_MARKETING) * 2,
-    "ia-ml": scoreTermos(texto, TERMOS_IA) * 2,
-    desenvolvimento: scoreTermos(texto, TERMOS_DEV) * 2,
-    "dados-bi-analytics": scoreTermos(texto, TERMOS_DADOS) * 2,
-  };
+  let score = 0;
+  if (key === "marketing-growth") score += scoreTermos(texto, TERMOS_MARKETING) * 2;
+  if (key === "ia-ml") score += scoreTermos(texto, TERMOS_IA) * 2;
+  if (key === "desenvolvimento") score += scoreTermos(texto, TERMOS_DEV) * 2;
+  if (key === "dados-bi-analytics") score += scoreTermos(texto, TERMOS_DADOS) * 2;
 
-  for (const slug of Object.keys(scores)) {
-    for (const termo of termosParaSegmento(slug, f)) {
-      if (normalize(texto).includes(normalize(termo))) {
-        scores[slug] += 3;
-      }
+  for (const termo of termosParaSegmento(key, fonte)) {
+    if (normalize(texto).includes(normalize(termo))) {
+      score += 3;
     }
   }
 
-  const winner = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-  return winner[1] === 0 ? "dados-bi-analytics" : winner[0];
+  for (const termo of perfil.termos ?? []) {
+    if (normalize(texto).includes(normalize(termo))) {
+      score += 1;
+    }
+  }
+
+  return score;
+}
+
+function slugsParaClassificar() {
+  const ativos = slugsSegmentosAtivos().map(resolverPerfilSlug);
+  const unicos = [...new Set(ativos)];
+  if (unicos.length) return unicos;
+  return Object.keys(PERFIS);
+}
+
+/** Ranking de segmentos para uma vaga (só segmentos ativos, se houver). */
+export function scoreSegmentosPorVaga(titulo, descricao, fonte = null) {
+  const f = fonte ?? getFonteCandidato();
+  const texto = `${titulo}\n${descricao}`;
+  const slugs = slugsParaClassificar();
+
+  return slugs
+    .map((slug) => ({
+      slug,
+      label: PERFIS[slug]?.label ?? LABELS_SEGMENTO[slug] ?? slug,
+      score: scoreSegmentoSlug(slug, texto, f),
+    }))
+    .sort((a, b) => b.score - a.score);
+}
+
+export function inferirPerfilPorVaga(titulo, descricao, fonte = null) {
+  const ranked = scoreSegmentosPorVaga(titulo, descricao, fonte);
+  if (ranked[0]?.score > 0) return ranked[0].slug;
+
+  const ativos = slugsSegmentosAtivos().map(resolverPerfilSlug);
+  if (ativos.length) return resolverPerfilSlug(ativos[0]);
+  return "dados-bi-analytics";
 }
 
 /** Termos do candidato (tecnologias + perfil) para reordenação de bullets. */
@@ -208,6 +198,13 @@ export function getPerfil(slug) {
   return PERFIS[key] ?? PERFIS["dados-bi-analytics"];
 }
 
+function tituloVagaParaResumo(titulo) {
+  return String(titulo ?? "")
+    .replace(/^candidat[oa]\s+(a|ao|à)\s+/i, "")
+    .replace(/^vaga\s+(para|de)\s+/i, "")
+    .trim();
+}
+
 export function buildResumoPerfil(perfil, ctx) {
   const primarios = ctx.primarios ?? [];
   const cargos = [...new Set(primarios.map((a) => a.titulo))].slice(0, 3).join(", ");
@@ -216,13 +213,12 @@ export function buildResumoPerfil(perfil, ctx) {
 
   const objetivo =
     ctx.tipo === "vaga"
-      ? `Candidato a **${ctx.titulo}**`
+      ? `Busco **${tituloVagaParaResumo(ctx.titulo) || perfil.label}**`
       : `Busco **${senior}** como ${cargos || perfil.label}`;
 
-  const paragrafo = `${objetivo}. Com entregas em ${perfil.stack}. ${perfil.resumoExp ?? ""} ${perfil.resumoExtra}`.replace(
-    /\s{2,}/g,
-    " ",
-  ).trim();
+  const paragrafo = `${objetivo}. Com entregas em ${perfil.stack}. ${perfil.resumoExp ?? ""}`
+    .replace(/\s{2,}/g, " ")
+    .trim();
 
   return paragrafo;
 }

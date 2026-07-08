@@ -15,7 +15,6 @@ import {
   getRespostasPadrao,
   getTecnologias,
 } from "./dados.js";
-import { CAMPOS_NIVEL } from "./tecnologiasCampos.js";
 import { LABELS_SEGMENTO } from "./conteudoConstants.js";
 import { extrairTecnologiasPerfil } from "./tecnologiasUtils.js";
 
@@ -54,54 +53,21 @@ export function termosTecnologiaCandidato(fonte) {
   return lista.map((t) => t.toLowerCase());
 }
 
-const MAPA_TEC_SEGMENTO = {
-  excel: ["dados-bi-analytics", "marketing-growth"],
-  sql: ["dados-bi-analytics", "desenvolvimento", "ia-ml", "marketing-growth"],
-  power_bi: ["dados-bi-analytics", "marketing-growth"],
-  python: ["dados-bi-analytics", "desenvolvimento", "ia-ml"],
-  javascript: ["desenvolvimento"],
-  git: ["desenvolvimento"],
-  postgresql: ["dados-bi-analytics", "desenvolvimento", "ia-ml"],
-};
-
-const OUTRAS_POR_PALAVRA = {
-  n8n: ["desenvolvimento", "ia-ml", "marketing-growth"],
-  react: ["desenvolvimento"],
-  "next.js": ["desenvolvimento", "ia-ml"],
-  nextjs: ["desenvolvimento", "ia-ml"],
-  fastapi: ["desenvolvimento", "ia-ml"],
-  html: ["desenvolvimento"],
-  css: ["desenvolvimento"],
-  "google analytics": ["dados-bi-analytics", "marketing-growth"],
-  "google ads": ["marketing-growth"],
-  "meta ads": ["marketing-growth"],
-};
-
 export function termosParaSegmento(slug, fonte) {
   const f = fonte ?? getFonteCandidato();
   const termos = new Set();
 
-  for (const t of f.tecnologias?.todas ?? []) {
-    termos.add(t.toLowerCase());
+  for (const t of f.tecnologias?.comNivel ?? []) {
+    const segmentos = t.segmentosCv ?? [];
+    if (!segmentos.length || segmentos.includes(slug)) {
+      termos.add(String(t.nome).toLowerCase());
+    }
   }
 
   for (const item of f.banco?.ferramentas ?? []) {
     if ((item.segmentos ?? []).includes(slug) && item.nome) {
       termos.add(String(item.nome).toLowerCase());
     }
-  }
-
-  for (const [key, segmentos] of Object.entries(MAPA_TEC_SEGMENTO)) {
-    if (segmentos.includes(slug) && f.tecnologias?.comNivel?.some((t) => t.slug === key)) {
-      termos.add(CAMPOS_NIVEL.find((c) => c.key === key)?.label?.toLowerCase() ?? key);
-    }
-  }
-
-  for (const nome of f.tecnologias?.outras ?? []) {
-    const lower = nome.toLowerCase();
-    const segs = OUTRAS_POR_PALAVRA[lower];
-    if (segs?.includes(slug)) termos.add(lower);
-    if (!segs && slug === "desenvolvimento") termos.add(lower);
   }
 
   return [...termos];
@@ -175,18 +141,13 @@ export function blocoTecnologiasPerfil(tecnologias, slug) {
   const termos = termosParaSegmento(slug, { tecnologias, banco: {} });
   if (!termos.length) return "";
 
-  const comNivel = (tecnologias?.comNivel ?? [])
+  const lista = (tecnologias?.comNivel ?? [])
     .filter((t) => termos.includes(t.nome.toLowerCase()) || termos.includes(t.slug))
-    .map((t) => `${t.nome} (${t.nivel})`);
+    .map((t) => t.nome);
 
-  const outras = (tecnologias?.outras ?? []).filter((o) =>
-    termos.includes(o.toLowerCase()),
-  );
-
-  const lista = [...comNivel, ...outras];
   if (!lista.length) return "";
 
-  return `- **Perfil (níveis):** ${lista.join(", ")}`;
+  return `- **Stack (perfil):** ${lista.join(", ")}`;
 }
 
 /** Resumo em markdown para prompts de IA — não vai para o PDF. */
@@ -204,10 +165,7 @@ export function montarContextoFonteParaPrompt(fonte, { segmentoSlug, vagaTitulo,
   ];
 
   for (const t of f.tecnologias?.comNivel ?? []) {
-    linhas.push(`- ${t.nome}: ${t.nivel}`);
-  }
-  if (f.tecnologias?.outras?.length) {
-    linhas.push(`- Outras: ${f.tecnologias.outras.join(", ")}`);
+    linhas.push(`- ${t.nome}`);
   }
 
   linhas.push("", "### Formação acadêmica");
@@ -220,7 +178,15 @@ export function montarContextoFonteParaPrompt(fonte, { segmentoSlug, vagaTitulo,
     linhas.push(`- ${exp.empresa} (${exp.periodo ?? "—"})`);
   }
   for (const proj of f.banco?.projetos ?? []) {
-    linhas.push(`- Projeto: ${proj.nome}`);
+    const seg = segmentoSlug;
+    const resumo = seg
+      ? (proj.resumo_por_segmento?.[seg] ?? proj.subtitulo_por_segmento?.[seg])
+      : null;
+    const stack = seg ? (proj.stack_uso_por_segmento?.[seg] ?? []) : [];
+    linhas.push(`- Projeto: ${proj.nome}${resumo ? ` — ${resumo}` : ""}`);
+    for (const item of stack) {
+      linhas.push(`  - ${typeof item === "string" ? item : `${item.tech} — ${item.uso ?? ""}`}`);
+    }
   }
 
   if (f.resultados?.length) {

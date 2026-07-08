@@ -4,36 +4,33 @@ Cidade, UF · email@exemplo.com · (00) 00000-0000 · https://linkedin.com/in/se
 
 ## Resumo
 
-Estudante ou profissional em formação com experiência em **análise de dados** (SQL, Python, Power BI) e projetos de portfólio em desenvolvimento web. Adapte este parágrafo ao seu perfil real.
+Busco **cargo-alvo**. Formação · principais tecnologias · entregas em 1ª pessoa (2–4 linhas).
 
 ## Competências
 
-- **Linguagens:** Python, JavaScript, SQL
-- **Dados / BI:** Power BI, Excel, Pandas
-- **Web:** React, Next.js, Node.js
-- **Idiomas:** Português (nativo), Inglês (intermediário)
+- **Grupo técnico:** linguagens, ferramentas e áreas
+- **Idiomas:** Português (nativo), Inglês (nível)
 
 ## Experiência
 
-### Empresa Exemplo Ltda — Estagiário(a) em Análise de Dados
+### Cargo — Empresa
 
-**Período:** Jan/2024 – Dez/2024 · Cidade – UF
+**Período:** MM/AAAA – MM/AAAA · Cidade, UF
 
-- Descreva uma entrega real com **SQL** ou **Python**.
-- Mencione dashboard ou relatório que o time usou.
-- Inclua resultado mensurável quando possível.
+- Desenvolvi… · ferramenta · resultado quando houver
 
 ## Projetos
 
-### Projeto de Portfólio — Descrição curta
+### Nome do projeto — o que é em uma linha
 
-Stack: React, Next.js, PostgreSQL. O que o projeto resolve e o que você construiu.
+- **Tecnologia** — para que foi usada no projeto
 
 ## Formação
 
-**Universidade Exemplo** — Curso (período)  
-Disciplinas ou foco relevante para a vaga.
+### Curso
+
+Instituição · conclusão ou previsão (AAAA)
 
 ## Certificações
 
-- Curso ou certificação relevante — plataforma
+- Certificação — emissor ou plataforma

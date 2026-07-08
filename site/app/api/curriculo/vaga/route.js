@@ -1,7 +1,24 @@
 import { NextResponse } from "next/server";
 import { parseCvBase } from "@/lib/cv";
 import { executarAdaptacaoCvVaga } from "@/lib/adaptarCvVaga";
-import { getSegmentacaoConteudo } from "@/lib/segmentacoes";
+import { getSegmentacaoConteudo, listSegmentacoesVaga } from "@/lib/segmentacoes";
+
+export async function GET() {
+  try {
+    const adaptacoes = listSegmentacoesVaga().map((seg) => {
+      if (!seg.hasMd) return seg;
+      const md = getSegmentacaoConteudo(seg.id);
+      const sections = md?.formato === "markdown" ? parseCvBase(md.content) : [];
+      return { ...seg, sections };
+    });
+    return NextResponse.json({ adaptacoes });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err.message || "Erro ao listar adaptações" },
+      { status: 500 },
+    );
+  }
+}
 
 export async function POST(request) {
   try {

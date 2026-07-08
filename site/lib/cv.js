@@ -74,11 +74,13 @@ export function cleanResumoBody(body) {
 }
 
 export function sectionsForDisplay(sections) {
-  return sections.map((section) =>
-    section.title === "Resumo"
-      ? { ...section, body: cleanResumoBody(section.body) }
-      : section,
-  );
+  return sections
+    .map((section) =>
+      section.title === "Resumo"
+        ? { ...section, body: cleanResumoBody(section.body) }
+        : section,
+    )
+    .filter((section) => String(section.body ?? "").trim());
 }
 
 /** Remove metadados internos antes de gerar PDF. */

@@ -11,10 +11,10 @@ import {
   termosCandidatoParaPerfil,
 } from "./perfilCvSegmento.js";
 import {
-  cursosParaSegmento,
+  certificacoesParaSegmento,
+  competenciasDoBanco,
   experienciaParaSegmento,
   formatarBlocoProjeto,
-  competenciasDoBanco,
   loadBanco,
   projetosParaSegmento,
 } from "./conteudoBanco.js";
@@ -130,19 +130,6 @@ function montarExperiencia(perfil, banco, parsed, ctx, fonte) {
   return `### ${perfil.expTitulo}\n\n${periodo}\n\n${bullets.join("\n")}\n\n*${perfil.expNota}*`;
 }
 
-function montarDestaques(perfil, banco, parsed, ctx, fonte) {
-  const termos = termosEfetivos(perfil, ctx, fonte);
-  const expBullets = extractBullets(montarExperiencia(perfil, banco, parsed, ctx, fonte));
-  const projBullets = [];
-
-  for (const proj of projetosParaSegmento(banco, perfil.slug, perfil.projetosOrdem).slice(0, 2)) {
-    projBullets.push(...(proj.bullets ?? []).map((b) => `- ${b}`));
-  }
-
-  const all = reorderBullets([...projBullets, ...expBullets], termos, 5);
-  return all.length ? all.join("\n") : null;
-}
-
 function adaptarCabecalho(parsed, perfil, fonte) {
   const nome = fonte.profile?.nome?.trim()
     ? `# ${fonte.profile.nome.trim()}`
@@ -183,18 +170,10 @@ function adaptarInterno(cvBase, ctx) {
 
   const perfil = getPerfil(perfilSlug);
   const banco = fonte.banco ?? loadBanco();
-  const contextoLabel = ctx.tipo === "vaga" ? ctx.titulo : ctx.nome ?? perfil.label;
   const parsed = parseSections(cvBase);
-  const headerComment = `<!-- Adaptado em ${new Date().toISOString()} — ${contextoLabel} — ${perfil.slug} -->`;
-
-  const destaques = montarDestaques(perfil, banco, parsed, ctx, fonte);
   const sections = [
     { title: "Resumo", body: buildResumoPerfil(perfil, ctx) },
   ];
-
-  if (destaques) {
-    sections.push({ title: `Destaques — ${perfil.label}`, body: destaques });
-  }
 
   sections.push(
     { title: "Competências", body: competenciasDoBanco(banco, perfil.slug, fonte) },
@@ -210,22 +189,21 @@ function adaptarInterno(cvBase, ctx) {
     if (formacao) sections.push({ title: "Formação", body: formacao.body });
   }
 
-  const certs = cursosParaSegmento(banco, perfil.slug);
+  const certs = certificacoesParaSegmento(banco, perfil.slug);
   sections.push({
     title: "Certificações",
-    body: certs.length ? certs.join("\n") : perfil.certificacoes.map((c) => `- ${c}`).join("\n"),
+    body: certs.length ? certs.join("\n") : "- —",
   });
 
   return rebuildCv({
     preamble: adaptarCabecalho(parsed, perfil, fonte),
     sections,
-    headerComment,
   });
 }
 
-function rebuildCv({ preamble, sections, headerComment }) {
+function rebuildCv({ preamble, sections }) {
   const body = sections.map((s) => `## ${s.title}\n\n${s.body}`).join("\n\n");
-  return `${headerComment}\n\n${preamble}\n\n${body}`.trim() + "\n";
+  return `${preamble}\n\n${body}`.trim() + "\n";
 }
 
 export function adaptarCvParaBusca(cvBase, pedido) {
@@ -266,3 +244,5 @@ export function extrairMarkdownResposta(texto) {
   if (fence) t = fence[1].trim();
   return t;
 }
+
+export const MOTOR_CV_VERSAO = 6;

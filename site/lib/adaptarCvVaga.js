@@ -1,10 +1,18 @@
 import fs from "fs";
 import path from "path";
 import { getCvBase, getProfile } from "@/lib/dados";
-import { criarSegmentacao, getSegmentacaoConteudo, getSegmentacaoSlot } from "@/lib/segmentacoes";
+import { criarSegmentacao, getSegmentacaoConteudo, getSegmentacaoSlot, salvarSegmentacaoPdf, statusPdfSegmentacao } from "@/lib/segmentacoes";
 import { adaptarCvParaVaga } from "@/lib/adaptarCvLocal";
-import { inferirPerfilPorVaga } from "@/lib/perfilCvSegmento";
+import {
+  getPerfil,
+  inferirPerfilPorVaga,
+  resolverPerfilSlug,
+  scoreSegmentosPorVaga,
+} from "@/lib/perfilCvSegmento";
 import { getFonteCandidato, montarContextoFonteParaPrompt } from "@/lib/fonteCandidato";
+import { gerarPdfFromMarkdown } from "@/lib/gerarPdf";
+import { LABELS_SEGMENTO, SEGMENTOS_CV_SLOTS } from "@/lib/conteudoConstants";
+import { segmentoEstaAtivo } from "@/lib/segmentosAtivos";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 const PEDIDO_PATH = path.join(DADOS_ROOT, "curriculo", "pedido-vaga.json");
@@ -62,11 +70,11 @@ Montar um currículo **sob medida para esta vaga**, usando **apenas** os fatos l
 
 ## Regras
 - Não inventar experiência, ferramentas, certificações ou números.
+- Escrever em **1ª pessoa** — o candidato é o autor do CV; nunca \`Candidato a…\` nem 3ª pessoa.
+- **Nunca** colocar instruções internas no markdown (paths, \`banco.yml\`, “destaque projetos…”, comentários HTML).
 - Consultar perfil, tecnologias, conteúdo, formação e resultados antes de escrever.
-- Espelhar termos e prioridades da descrição da vaga (stack, responsabilidades, senioridade).
-- Reordenar e enfatizar o que mais aderir à vaga; omitir ou encurtar o irrelevante.
-- Manter markdown com as mesmas seções do cv-base.
-- Escrever o resultado completo em markdown na resposta (não em arquivo).
+- Espelhar termos da vaga; reordenar e enfatizar o que aderir — sem seção **Destaques** (usar Experiência e Projetos).
+- Manter markdown com as mesmas seções das variações (Resumo, Competências, Experiência, Projetos, Formação, Certificações).
 
 ${contexto}
 
@@ -75,14 +83,56 @@ Markdown completo do CV adaptado, pronto para revisão.
 `;
 }
 
+function resolverSegmentoEscolhido(input, pedido, fonte) {
+  const raw = String(input?.segmento_slug ?? "").trim();
+  if (raw && SEGMENTOS_CV_SLOTS.includes(raw)) {
+    return resolverPerfilSlug(raw);
+  }
+  return inferirPerfilPorVaga(pedido.vaga_titulo, pedido.vaga_descricao, fonte);
+}
+
+/** Classifica a vaga e lista os 5 segmentos com score — sem gerar CV. */
+export function classificarVaga(input) {
+  const fonte = getFonteCandidato();
+  const vaga_titulo = String(input?.vaga_titulo ?? "").trim();
+  const vaga_descricao = String(input?.vaga_descricao ?? "").trim();
+
+  if (vaga_descricao.length < 20) {
+    return { status: "erro", motivo: "descricao_curta" };
+  }
+
+  const titulo = tituloFromVaga(vaga_titulo, vaga_descricao);
+  const scoresRanked = scoreSegmentosPorVaga(titulo, vaga_descricao, fonte);
+  const scorePorSlug = new Map(scoresRanked.map((s) => [s.slug, s.score]));
+  const segmento_slug = inferirPerfilPorVaga(titulo, vaga_descricao, fonte);
+  const perfil = getPerfil(segmento_slug);
+
+  const segmentos = SEGMENTOS_CV_SLOTS.map((slug) => {
+    const canon = resolverPerfilSlug(slug);
+    const score = scorePorSlug.get(canon) ?? scorePorSlug.get(slug) ?? 0;
+    return {
+      slug,
+      label: LABELS_SEGMENTO[slug] ?? getPerfil(slug).label ?? slug,
+      ativo: segmentoEstaAtivo(slug),
+      score,
+      sugerido: slug === segmento_slug,
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  return {
+    status: "ok",
+    vaga_titulo: titulo,
+    segmento_slug,
+    segmento_label: perfil.label ?? LABELS_SEGMENTO[segmento_slug] ?? segmento_slug,
+    segmentos,
+    scores: scoresRanked,
+  };
+}
+
 export async function executarAdaptacaoCvVaga(input) {
   const fonte = getFonteCandidato();
   const pedido = montarPedidoVaga(input);
-  const segmento_slug = inferirPerfilPorVaga(
-    pedido.vaga_titulo,
-    pedido.vaga_descricao,
-    fonte,
-  );
+  const segmento_slug = resolverSegmentoEscolhido(input, pedido, fonte);
   pedido.segmento_slug = segmento_slug;
 
   fs.mkdirSync(path.dirname(PEDIDO_PATH), { recursive: true });
@@ -129,5 +179,57 @@ export async function executarAdaptacaoCvVaga(input) {
     segmento_slug,
     base: slot ? "slot" : "cv-base",
     motor: "local",
+  };
+}
+
+export async function gerarPdfParaSegmentacao(id) {
+  const conteudo = getSegmentacaoConteudo(id);
+  if (!conteudo || conteudo.formato !== "markdown") {
+    throw new Error("Variação sem markdown para gerar PDF");
+  }
+
+  const buffer = await gerarPdfFromMarkdown(conteudo.content);
+  salvarSegmentacaoPdf(id, buffer);
+  const pdfStatus = statusPdfSegmentacao(id);
+
+  return {
+    temPdf: pdfStatus.temPdf,
+    pdfUrl: `/api/curriculo/segmentacoes/${id}/arquivo?v=${encodeURIComponent(pdfStatus.pdfUpdatedAt)}`,
+    pdfUpdatedAt: pdfStatus.pdfUpdatedAt,
+  };
+}
+
+/** Adapta CV para a vaga, opcionalmente gera PDF — uso da extensão e da aba Vaga. */
+export async function executarPacoteCvVaga(input, { gerarPdf = true } = {}) {
+  const fonte = getFonteCandidato();
+  const descricao = String(input?.vaga_descricao ?? "").trim();
+
+  if (descricao.length < 20) {
+    return { status: "erro", motivo: "descricao_curta" };
+  }
+
+  const scores = scoreSegmentosPorVaga(input?.vaga_titulo, descricao, fonte);
+  const adaptacao = await executarAdaptacaoCvVaga(input);
+
+  if (adaptacao.status !== "concluido") {
+    return { ...adaptacao, scores };
+  }
+
+  const perfil = getPerfil(adaptacao.segmento_slug);
+  let pdf = null;
+
+  if (gerarPdf) {
+    try {
+      pdf = await gerarPdfParaSegmentacao(adaptacao.segmentacao.id);
+    } catch (err) {
+      pdf = { temPdf: false, erro: err.message ?? "Falha ao gerar PDF" };
+    }
+  }
+
+  return {
+    ...adaptacao,
+    scores,
+    segmento_label: perfil.label ?? LABELS_SEGMENTO[adaptacao.segmento_slug],
+    pdf,
   };
 }

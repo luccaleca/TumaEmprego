@@ -330,7 +330,7 @@ function FerramentasView({ items, escopo, temSóPerfil }) {
   for (const f of lista) {
     const cat = f.categoria || "Ferramentas";
     if (!byCat.has(cat)) byCat.set(cat, []);
-    const rotulo = f.nivel ? `${f.nome} (${f.nivel})` : f.nome;
+    const rotulo = f.nome;
     const sufixo = f.origem === "perfil" ? " · perfil" : "";
     byCat.get(cat).push(`${rotulo}${sufixo}`);
   }

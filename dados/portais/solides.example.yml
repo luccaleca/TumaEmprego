@@ -1,0 +1,18 @@
+# Copiar para solides.yml — habilidades e cargos no formato Sólides Profiler
+
+portal: solides
+atualizado_em: ""
+fonte: ""
+
+cargos_interesse: []
+
+# nivel: Básico | Intermediário | Avançado  (idiomas: também Domínio)
+habilidades: []
+#  - nome: Exemplo
+#    nome_solides: EXEMPLO
+#    nivel: Intermediário
+
+idiomas: []
+#  - idioma: Inglês
+#    nome_solides: INGLÊS
+#    nivel: Avançado

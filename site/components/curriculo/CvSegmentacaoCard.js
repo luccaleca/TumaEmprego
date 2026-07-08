@@ -100,14 +100,13 @@ export default function CvSegmentacaoCard({
         ) : segmentacao.hasPdf ? (
           <p className="text-sm text-zinc-600">
             Versão em PDF —{" "}
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}
               className="text-emerald-700 hover:underline"
             >
-              abrir arquivo
-            </a>
+              Ver PDF
+            </button>
           </p>
         ) : loading ? (
           <p className="text-sm text-zinc-500">Carregando…</p>
@@ -167,15 +166,16 @@ export default function CvSegmentacaoCard({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={`h-2 w-2 shrink-0 rounded-full ${origem.dot}`} title={origem.label} />
           {pdfUrl ? (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(pdfUrl, "_blank", "noopener,noreferrer");
+              }}
               className="truncate text-[11px] font-medium text-zinc-500 hover:text-zinc-800"
             >
-              PDF
-            </a>
+              Ver PDF
+            </button>
           ) : (
             <span className="truncate text-[11px] text-zinc-400">
               {formatDateTime(segmentacao.updatedAt ?? segmentacao.criado_em).split(" ")[0]}

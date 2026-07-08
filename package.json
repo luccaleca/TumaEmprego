@@ -11,8 +11,12 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-db.ps1",
+    "db:generate": "npm run db:generate --prefix site",
     "db:push": "npm run db:push --prefix site",
+    "db:migrate": "npm run db:migrate --prefix site",
+    "db:seed": "npm run db:seed --prefix site",
     "db:studio": "npm run db:studio --prefix site",
+    "db:prepare": "npm run db:generate && npm run db:push && npm run db:seed",
     "adaptar-cv": "node scripts/adaptar-cv-busca.mjs",
     "adaptar-cv-vaga": "node scripts/adaptar-cv-vaga.mjs",
     "pdf": "node scripts/generate-pdf.mjs"

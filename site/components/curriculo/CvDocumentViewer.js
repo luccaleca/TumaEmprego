@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { textareaClass } from "@/components/profile/FormField";
+import { CvEstruturaLista } from "@/components/curriculo/CvEstruturaSecoes";
 
 function CvSection({ title, body }) {
   return (
@@ -39,16 +40,15 @@ export default function CvDocumentViewer({
   temPdf = false,
   pdfDesatualizado = false,
   preamble = "",
-  defaultViewMode = "text",
   sections = null,
   content = "",
   editavel = false,
+  modoEstrutura = false,
   onSalvar,
   onGerarPdf,
   loading = false,
 }) {
   const [editing, setEditing] = useState(false);
-  const [viewMode, setViewMode] = useState("text");
   const [draft, setDraft] = useState(content);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -56,10 +56,9 @@ export default function CvDocumentViewer({
   const snapshotRef = useRef(null);
 
   useEffect(() => {
-    setViewMode(defaultViewMode);
     setEditing(false);
     setMessage("");
-  }, [titulo, pdfUrl, defaultViewMode]);
+  }, [titulo, pdfUrl]);
 
   useEffect(() => {
     if (!editing) {
@@ -67,9 +66,13 @@ export default function CvDocumentViewer({
     }
   }, [content, editing]);
 
+  function abrirPdf() {
+    if (!pdfUrl) return;
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
   function iniciarEdicao() {
     snapshotRef.current = draft;
-    setViewMode("text");
     setEditing(true);
     setMessage("");
   }
@@ -107,7 +110,6 @@ export default function CvDocumentViewer({
 
     try {
       await onGerarPdf();
-      setViewMode("pdf");
       setMessage("PDF gerado.");
     } catch (err) {
       setMessage(err.message || "Erro ao gerar PDF");
@@ -122,7 +124,6 @@ export default function CvDocumentViewer({
     !message.includes("PDF gerado");
 
   const labelPdf = temPdf ? (pdfDesatualizado ? "Atualizar PDF" : "Gerar PDF") : "Gerar PDF";
-  const mostrarPdf = viewMode === "pdf" && pdfUrl && !editing;
 
   return (
     <section aria-label={titulo} className="flex w-full max-w-2xl flex-col">
@@ -151,11 +152,11 @@ export default function CvDocumentViewer({
           {!editing && temPdf && pdfUrl ? (
             <button
               type="button"
-              onClick={() => setViewMode(mostrarPdf ? "text" : "pdf")}
+              onClick={abrirPdf}
               disabled={loading}
               className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
             >
-              {mostrarPdf ? "Ver texto" : "Ver PDF"}
+              Ver PDF
             </button>
           ) : null}
           {editavel && !editing ? (
@@ -221,17 +222,30 @@ export default function CvDocumentViewer({
               onChange={(e) => setDraft(e.target.value)}
               spellCheck={false}
             />
-          ) : mostrarPdf ? (
-            <iframe src={pdfUrl} title={titulo} className="h-full w-full border-0 bg-zinc-100" />
           ) : sections?.length || preamble ? (
-            <div className="h-full space-y-2 overflow-y-auto p-4">
-              {preamble ? <CvPreamble text={preamble} /> : null}
-              {sections?.map((sec) => (
-                <CvSection key={sec.title} title={sec.title} body={sec.body} />
-              ))}
+            <div className="h-full overflow-y-auto p-3">
+              {modoEstrutura ? (
+                <CvEstruturaLista preamble={preamble} sections={sections} />
+              ) : (
+                <div className="space-y-2">
+                  {preamble ? <CvPreamble text={preamble} /> : null}
+                  {sections?.map((sec) => (
+                    <CvSection key={sec.title} title={sec.title} body={sec.body} />
+                  ))}
+                </div>
+              )}
             </div>
           ) : pdfUrl && !editavel ? (
-            <iframe src={pdfUrl} title={titulo} className="h-full w-full border-0 bg-zinc-100" />
+            <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+              <p className="text-sm text-zinc-600">Currículo disponível em PDF</p>
+              <button
+                type="button"
+                onClick={abrirPdf}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              >
+                Abrir PDF
+              </button>
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-zinc-500">
               Sem conteúdo disponível.

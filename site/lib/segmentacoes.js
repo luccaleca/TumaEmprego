@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 
+import { MOTOR_CV_VERSAO } from "./adaptarCvLocal.js";
 import { SEGMENTOS_CV_SLOTS } from "./conteudoConstants.js";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
@@ -158,6 +159,8 @@ export function upsertSlotSegmentacao(pedido, conteudoMd, { regenerar = false } 
   const primarios = pedido.alvos_primarios ?? pedido.alvos ?? [];
   const segmentoNome = pedido.segmento?.nome ?? slug;
 
+  const motorDesatualizado = (prev?.motor_versao ?? 0) < MOTOR_CV_VERSAO;
+
   const meta = {
     id,
     vaga_titulo: tituloVagaFromSegmento(segmentoNome, primarios),
@@ -167,6 +170,7 @@ export function upsertSlotSegmentacao(pedido, conteudoMd, { regenerar = false } 
     slot: true,
     alvos: primarios,
     alvos_complementares: pedido.alvos_complementares ?? [],
+    motor_versao: MOTOR_CV_VERSAO,
     criado_em: prev?.criado_em ?? new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
     formato: "markdown",
@@ -175,7 +179,7 @@ export function upsertSlotSegmentacao(pedido, conteudoMd, { regenerar = false } 
   fs.mkdirSync(dir, { recursive: true });
 
   const semConteudo = !fs.existsSync(mdPath);
-  if (conteudoMd?.trim() && (regenerar || semConteudo || !exists)) {
+  if (conteudoMd?.trim() && (regenerar || semConteudo || !exists || motorDesatualizado)) {
     fs.writeFileSync(mdPath, conteudoMd.trim());
   }
 
@@ -252,12 +256,19 @@ export function listSegmentacoesVisiveis(segmentosAtivos = []) {
       if (isSlotSegmento(seg)) {
         return ativos.has(seg.segmento_slug);
       }
-      if (seg.origem === "vaga" || seg.origem === "manual") {
+      if (seg.origem === "manual") {
         return true;
       }
       return false;
     })
     .sort(ordemSegmentacao);
+}
+
+/** Currículos gerados para vagas específicas (origem `vaga`). */
+export function listSegmentacoesVaga() {
+  return listSegmentacoes()
+    .filter((seg) => seg.origem === "vaga")
+    .sort((a, b) => String(b.criado_em).localeCompare(String(a.criado_em)));
 }
 
 export function excluirSegmentacao(id) {
@@ -336,6 +347,56 @@ export function statusPdfSegmentacao(id) {
   return { temPdf: true, desatualizado, pdfUpdatedAt };
 }
 
+export function salvarPacoteSolides(id, pacote, previewMd = null) {
+  if (!idSegmentacaoValido(id)) {
+    throw new Error("ID inválido");
+  }
+  if (!fs.existsSync(metaPath(id))) {
+    throw new Error("Segmentação não encontrada");
+  }
+
+  const dir = dirPath(id);
+  fs.writeFileSync(path.join(dir, "solides-pacote.json"), `${JSON.stringify(pacote, null, 2)}\n`, "utf8");
+  if (previewMd?.trim()) {
+    fs.writeFileSync(path.join(dir, "solides-preview.md"), previewMd.trim(), "utf8");
+  }
+  return getPacoteSolides(id);
+}
+
+export function getPacoteSolides(id) {
+  if (!idSegmentacaoValido(id)) return null;
+
+  const dir = dirPath(id);
+  const jsonPath = path.join(dir, "solides-pacote.json");
+  if (!fs.existsSync(jsonPath)) return null;
+
+  const pacote = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+  const mdPath = path.join(dir, "solides-preview.md");
+  const preview = fs.existsSync(mdPath) ? fs.readFileSync(mdPath, "utf8") : null;
+
+  return { pacote, preview };
+}
+
+export function atualizarMetaSegmentacao(id, patch) {
+  if (!idSegmentacaoValido(id)) {
+    throw new Error("ID inválido");
+  }
+
+  const meta = readMeta(id);
+  if (!meta) {
+    throw new Error("Segmentação não encontrada");
+  }
+
+  const atualizado = {
+    ...meta,
+    ...patch,
+    atualizado_em: new Date().toISOString(),
+  };
+
+  fs.writeFileSync(metaPath(id), `${JSON.stringify(atualizado, null, 2)}\n`, "utf8");
+  return getSegmentacao(id);
+}
+
 export function criarSegmentacao({
   vaga_titulo,
   vaga_descricao = "",
@@ -345,6 +406,9 @@ export function criarSegmentacao({
   alvos_complementares = [],
   conteudoMd,
   pdfBuffer,
+  portal = null,
+  formato_cv = null,
+  motor_solides_versao = null,
 }) {
   if (!vaga_titulo?.trim()) {
     throw new Error("vaga_titulo obrigatório");
@@ -367,6 +431,9 @@ export function criarSegmentacao({
     alvos_complementares,
     criado_em: new Date().toISOString(),
     formato: pdfBuffer?.length ? "pdf" : "markdown",
+    ...(portal ? { portal } : {}),
+    ...(formato_cv ? { formato_cv } : {}),
+    ...(motor_solides_versao ? { motor_solides_versao } : {}),
   };
 
   if (pdfBuffer?.length) {

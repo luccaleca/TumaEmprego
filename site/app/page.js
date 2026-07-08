@@ -8,14 +8,32 @@ import {
   getProfilePhotoPath,
   getRespostasPadrao,
   getTecnologias,
+  saveTecnologias,
 } from "@/lib/dados";
+import {
+  getTecnologiaCatalogo,
+  resolverItensAtivos,
+} from "@/lib/tecnologiaCatalogo";
 
-export default function PerfilPage() {
+export default async function PerfilPage() {
   const profile = getProfile();
   const formacao = getFormacao();
   const candidatura = getRespostasPadrao();
-  const tecnologias = getTecnologias();
   const hasPhoto = Boolean(getProfilePhotoPath());
+
+  let catalogo = [];
+  let tecnologias = getTecnologias();
+
+  try {
+    catalogo = await getTecnologiaCatalogo();
+    if (tecnologias.ativas?.length && !tecnologias.itens?.length) {
+      const itens = resolverItensAtivos(catalogo, tecnologias.ativas);
+      saveTecnologias({ ...tecnologias, itens });
+      tecnologias = getTecnologias();
+    }
+  } catch {
+    catalogo = [];
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
@@ -27,7 +45,7 @@ export default function PerfilPage() {
         <ProfileEditor initial={profile} hasPhoto={hasPhoto} />
         <FormacaoEditor initial={formacao} />
         <CandidaturaEditor initial={candidatura} />
-        <TecnologiasEditor initial={tecnologias} />
+        <TecnologiasEditor initial={{ catalogo, tecnologias }} />
       </div>
     </main>
   );
