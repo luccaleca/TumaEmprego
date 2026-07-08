@@ -58,6 +58,9 @@ dados/curriculo/vagas/*
 dados/curriculo/adaptacao-prompt.md
 !dados/curriculo/adaptacao-prompt.example.md
 dados/curriculo/pedido-adaptacao.json
+dados/curriculo/pedido-vaga.json
+dados/curriculo/adaptacao-vaga-prompt.md
+dados/curriculo/adaptacao-vaga-fonte.md
 dados/curriculo/teste-variacoes/
 dados/curriculo/bancorbras*.md
 
@@ -94,3 +97,7 @@ Thumbs.db
 # Relatórios gerados pelo Agent
 agente/relatorios/*
 !agente/relatorios/.gitkeep
+
+# Extensão — chave de assinatura e pacote empacotado (local)
+extensao.pem
+extensao.crx

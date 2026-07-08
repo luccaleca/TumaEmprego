@@ -1,0 +1,3 @@
+literal:empresa-exemplo==>empresa-exemplo
+literal:Com entregas==>Com entregas
+literal:(formação, cursos formais, etc.)==>(formação, cursos formais, etc.)

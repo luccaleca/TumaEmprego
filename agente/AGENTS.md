@@ -20,6 +20,7 @@
 14. **Dados locais / Git** — ajustes em `dados/`, gitignore ou histórico: commits e mensagens **neutros** (`ajusta templates`, `separa arquivos locais`). Não narrar “dados sensíveis”, privacidade ou limpeza de PII em commits/PRs, salvo pedido explícito do usuário.
 15. **Mercado brasileiro** — vagas, cargos, certificações e exemplos em **pt-BR** e relevantes para o Brasil (Alura, DIO, Skillshop, Udemy BR, etc.). Regra Cursor: `.cursor/rules/mercado-brasil.mdc`. Cursos do candidato em `banco.yml` prevalecem; fallback em `site/lib/certificacoesBr.js`.
 16. **Projetos no CV** — título com resumo em uma linha + uma linha por tecnologia explicando o uso; ver `agente/AGENTS.md` → “Projetos no currículo”.
+17. **Nunca subir dados pessoais ao Git** — **proibido** commitar ou push de arquivos com dados reais do usuário ou que variem de pessoa para pessoa. Versionar **somente** templates `*.example.yml` / `*.example.md` genéricos. **Nunca** commitar: `profile.yml`, `banco.yml`, `cv-base.md`, `formacao.yml`, `tecnologias.yml`, `busca.yml`, `respostas/*.yml`, `portais/solides.yml`, `segmentacoes/`, PDFs, fotos, `pedido-*.json`, prompts/fontes de adaptação, `.env`, chaves (`*.pem`, `*.crx`). No **código** versionado, não hardcodar nome, e-mail, CPF, empresa real, formação real ou métricas pessoais — ler de `dados/` em runtime. Antes de `git add`, revisar o diff; se houver dado identificável, **não commitar**.
 
 **Comentários no código:** português, só onde não for óbvio — nunca como justificativa de tarefa.
 

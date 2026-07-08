@@ -216,7 +216,13 @@ export function buildResumoPerfil(perfil, ctx) {
       ? `Busco **${tituloVagaParaResumo(ctx.titulo) || perfil.label}**`
       : `Busco **${senior}** como ${cargos || perfil.label}`;
 
-  const paragrafo = `${objetivo}. Com entregas em ${perfil.stack}. ${perfil.resumoExp ?? ""}`
+  const formacao = ctx.fonte?.formacao ?? {};
+  const formacaoTxt =
+    formacao.instituicao && formacao.curso
+      ? `Estudante de ${[formacao.grau, formacao.curso].filter(Boolean).join(" em ")} (${formacao.instituicao}${formacao.semestre ? `, ${formacao.semestre}º sem.` : ""})`
+      : "";
+
+  const paragrafo = `${objetivo}. ${formacaoTxt ? `${formacaoTxt} com entregas` : "Com entregas"} em ${perfil.stack}. ${perfil.resumoExp ?? ""}`
     .replace(/\s{2,}/g, " ")
     .trim();
 

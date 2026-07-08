@@ -172,7 +172,7 @@ function adaptarInterno(cvBase, ctx) {
   const banco = fonte.banco ?? loadBanco();
   const parsed = parseSections(cvBase);
   const sections = [
-    { title: "Resumo", body: buildResumoPerfil(perfil, ctx) },
+    { title: "Resumo", body: buildResumoPerfil(perfil, { ...ctx, fonte }) },
   ];
 
   sections.push(
