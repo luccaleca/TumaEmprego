@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { ABAS_SOLIDES_VAGAS } from "@/lib/solidesVagasEstrutura";
 
 function parsePreviewSections(raw) {
   const cleaned = String(raw ?? "").trim();
@@ -33,71 +34,95 @@ function Secao({ title, body }) {
   );
 }
 
+function MoldeCampos() {
+  return (
+    <div className="flex-1 space-y-4 overflow-y-auto p-3">
+      {ABAS_SOLIDES_VAGAS.map((aba) => (
+        <section key={aba.id}>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-violet-800">
+            {aba.titulo}
+          </h3>
+          <ul className="mt-1.5 space-y-1 border-l-2 border-violet-100 pl-3">
+            {aba.campos.map((campo) => (
+              <li key={campo.id} className="text-sm text-zinc-700">
+                <span className="font-medium text-zinc-900">{campo.label}</span>
+                {campo.obrigatorio ? <span className="text-rose-600"> *</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export default function SolidesPacoteViewer({
   preview = "",
   loading = false,
   onGerar,
   gerando = false,
   desatualizado = false,
+  segmentacaoId = null,
 }) {
   const sections = useMemo(() => {
     if (!preview?.trim()) return [];
     return parsePreviewSections(preview);
   }, [preview]);
 
+  const formUrl =
+    preview?.trim() && segmentacaoId
+      ? `/api/curriculo/segmentacoes/${segmentacaoId}/solides/form`
+      : null;
+
   if (loading) {
     return (
       <div className="flex h-full min-h-[280px] items-center justify-center text-sm text-zinc-500">
-        Carregando pacote Sólides…
-      </div>
-    );
-  }
-
-  if (!preview?.trim()) {
-    return (
-      <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-center">
-        <p className="text-sm text-zinc-600">Pacote Sólides ainda não gerado para esta vaga.</p>
-        {onGerar ? (
-          <button
-            type="button"
-            onClick={onGerar}
-            disabled={gerando}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-          >
-            {gerando ? "Gerando…" : "Gerar pacote Sólides"}
-          </button>
-        ) : null}
+        Carregando…
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto p-3">
-      {desatualizado ? (
-        <p className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-          O CV ATS foi editado depois do pacote Sólides — regenere para alinhar os campos.
-        </p>
-      ) : null}
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-violet-600">
-        Formato Sólides Profiler
-      </p>
-      <div className="space-y-2">
-        {sections.map((sec) => (
-          <Secao key={sec.title} title={sec.title} body={sec.body} />
-        ))}
-      </div>
-      {onGerar ? (
-        <div className="mt-3 flex justify-end">
+    <div className="flex h-full min-h-[280px] flex-col">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-violet-100 px-3 py-2">
+        <div className="flex items-center gap-2">
+          {formUrl ? (
+            <a
+              href={formUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-violet-700 hover:underline"
+            >
+              Abrir formulário
+            </a>
+          ) : (
+            <span className="text-xs text-zinc-500">Campos do portal</span>
+          )}
+          {desatualizado ? (
+            <span className="text-[10px] font-medium text-amber-700">Desatualizado</span>
+          ) : null}
+        </div>
+        {onGerar ? (
           <button
             type="button"
             onClick={onGerar}
             disabled={gerando}
             className="rounded-lg border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-800 hover:bg-violet-50 disabled:opacity-50"
           >
-            {gerando ? "Gerando…" : "Regenerar Sólides"}
+            {gerando ? "Gerando…" : preview?.trim() ? "Regenerar" : "Gerar"}
           </button>
+        ) : null}
+      </div>
+
+      {preview?.trim() ? (
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
+          {sections.map((sec) => (
+            <Secao key={sec.title} title={sec.title} body={sec.body} />
+          ))}
         </div>
-      ) : null}
+      ) : (
+        <MoldeCampos />
+      )}
     </div>
   );
 }

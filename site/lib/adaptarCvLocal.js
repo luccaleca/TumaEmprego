@@ -18,11 +18,18 @@ import {
   loadBanco,
   projetosParaSegmento,
 } from "./conteudoBanco.js";
+import { bulletsAtividadesParaSegmento } from "./atividadesConteudo.js";
 import {
   formatarContatoCv,
   formatarFormacaoCv,
   getFonteCandidato,
 } from "./fonteCandidato.js";
+import {
+  bulletPareceMetadado,
+  cargoAlvoNeutroDaVaga,
+  jdEnfatizaProjetosIa,
+  termosDaVaga,
+} from "./termosVaga.js";
 
 function normalize(text) {
   return String(text ?? "")
@@ -82,38 +89,209 @@ function reorderBullets(bullets, termos, max = 5) {
     .slice(0, max);
 }
 
+/** Chave semântica — 1 tema forte por CV (evita 2× Power BI, 2× portal…). */
+function chaveSemanticaBullet(bullet) {
+  const n = normalize(String(bullet ?? "").replace(/\*\*/g, ""));
+  const unicos = [
+    "power bi",
+    "portal do vendedor",
+    "painel admin",
+    "estoque",
+    "sendflow",
+    "whatsapp",
+    "meta ads",
+    "google ads",
+    "python",
+    "pandas",
+    "excel",
+    "firebase",
+    "receita",
+    "csv",
+    "sql",
+  ];
+  for (const sig of unicos) {
+    if (n.includes(sig)) return sig;
+  }
+  return n.slice(0, 52);
+}
 
-function montarProjetos(perfil, banco) {
-  const projetos = projetosParaSegmento(banco, perfil.slug, perfil.projetosOrdem);
-  return projetos.map((p) => formatarBlocoProjeto(p)).join("\n\n");
+function dedupeBulletsNear(bullets) {
+  const vistos = new Set();
+  const out = [];
+  for (const b of bullets) {
+    const k = chaveSemanticaBullet(b);
+    if (!k || vistos.has(k)) continue;
+    vistos.add(k);
+    out.push(b);
+  }
+  return out;
+}
+
+/** Preferência: prova (ação + ferramenta + pra quê) + impacto; pool não perde por falta de **. */
+function scoreBulletExperiencia(bullet, termos, perfilTermos = [], perfilSlug = "", origem = "") {
+  const t = String(bullet ?? "");
+  const plain = t.replace(/\*\*/g, "");
+  let s = scoreTexto(plain, termos, 2);
+  s += scoreTexto(plain, perfilTermos, 3);
+
+  // Pool de estágio (atividades.yml) é a fonte preferida de prova
+  if (origem === "pool") s += 10;
+
+  // Ferramenta citada (com ou sem negrito)
+  if (
+    /\b(sql|python|pandas|power bi|excel|react|next\.?js|node|php|firebase|n8n|sendflow|meta ads|google ads|postgresql)\b/i.test(
+      plain,
+    )
+  ) {
+    s += 4;
+  } else if (/\*\*[^*]+\*\*/.test(t)) {
+    s += 2;
+  }
+
+  // Pra quê / consequência (problema → ferramenta → resultado)
+  if (
+    /para |pra |com o objetivo|facilit|permitiu|apoi|resolv|entreg|vis[ií]vel|prioriz|campanha|lan[cç]amento|m[ií]dia|dashboard|funil|sem |reduz|centraliz|confi[aá]ve/i.test(
+      plain,
+    )
+  ) {
+    s += 5;
+  }
+
+  // Genérico demais: várias tools sem entrega concreta (mata prova específica)
+  const toolsHit = (
+    plain.match(
+      /\b(sql|python|pandas|power bi|excel|react|next\.?js|node|php|firebase|postgresql)\b/gi,
+    ) ?? []
+  ).length;
+  if (
+    toolsHit >= 3 &&
+    !/\d|dashboard|4 times|lista|csv|cruz|estoque|portal do vendedor|receita|procv/i.test(plain)
+  ) {
+    s -= 12;
+  }
+
+  // Impacto confirmado (estilo CV feito à mão) sobe
+  if (/\d+\s*%|R\$\s*\d|receita|crescimento de/i.test(plain)) s += 9;
+  // Entrega concreta sobe
+  if (/4 times|dashboard|lista limpa|csv|cruz|sem planilha|procv|sendflow/i.test(plain)) s += 4;
+  if (/portal do vendedor|estoque de pe[cç]as/i.test(plain) && scoreTexto(plain, perfilTermos, 1) === 0) {
+    s -= 4;
+  }
+  // Só em IA: BI/ops da Ótica não compete com projetos produto
+  if (
+    perfilSlug === "ia-ml" &&
+    /power bi|estoque de pe[cç]as|4 times de vendas|portal do vendedor/i.test(plain)
+  ) {
+    s -= 5;
+  }
+  if (plain.replace(/^-\s*/, "").length < 40) s -= 6;
+  if (plain.replace(/^-\s*/, "").length > 200) s -= 2;
+  return s;
+}
+
+function escolherBulletsExperiencia(
+  candidatos,
+  termos,
+  max = 4,
+  perfilTermos = [],
+  perfilSlug = "",
+) {
+  // candidatos: string[] ou { texto, origem }[]
+  const items = candidatos.map((c) =>
+    typeof c === "string" ? { texto: c, origem: "" } : c,
+  );
+
+  return dedupeBulletsNear(
+    [...items]
+      .filter((b) => b.texto && !bulletPareceMetadado(b.texto))
+      .sort(
+        (a, b) =>
+          scoreBulletExperiencia(b.texto, termos, perfilTermos, perfilSlug, b.origem) -
+          scoreBulletExperiencia(a.texto, termos, perfilTermos, perfilSlug, a.origem),
+      )
+      .map((b) => b.texto),
+  )
+    .slice(0, max)
+    .map((b) => (String(b).startsWith("- ") ? b : `- ${b}`));
+}
+
+function montarProjetos(perfil, banco, ctx = null) {
+  const enfatizaProjetosIa =
+    perfil.slug === "ia-ml" ||
+    (ctx?.tipo === "vaga" &&
+      jdEnfatizaProjetosIa(ctx.titulo, ctx.descricao));
+  const maxProj = enfatizaProjetosIa || perfil.slug === "ia-ml" ? 2 : 1;
+  const projetos = projetosParaSegmento(banco, perfil.slug, perfil.projetosOrdem, {
+    termos: ctx?.termosVaga ?? [],
+    enfatizaProjetosIa,
+  }).slice(0, maxProj);
+  return projetos
+    .map((p) => {
+      if (Array.isArray(p.stackUso) && p.stackUso.length > 4) {
+        return formatarBlocoProjeto({ ...p, stackUso: p.stackUso.slice(0, 4) });
+      }
+      return formatarBlocoProjeto(p);
+    })
+    .join("\n\n");
 }
 
 function termosEfetivos(perfil, ctx, fonte) {
   const base = [...perfil.termos, ...termosCandidatoParaPerfil(perfil.slug, fonte)];
   if (ctx.tipo !== "vaga") return [...new Set(base)];
 
-  const extra = `${ctx.titulo ?? ""}\n${ctx.descricao ?? ""}`.toLowerCase();
-  const palavras = extra
-    .split(/[^\p{L}\p{N}+#.]+/u)
-    .map((w) => w.trim())
-    .filter((w) => w.length > 2);
-  return [...new Set([...base, ...palavras])];
+  const daVaga = ctx.termosVaga?.length
+    ? ctx.termosVaga
+    : termosDaVaga(ctx.titulo, ctx.descricao);
+  return [...new Set([...base, ...daVaga])];
 }
 
 function montarExperiencia(perfil, banco, parsed, ctx, fonte) {
   const termos = termosEfetivos(perfil, ctx, fonte);
+  const perfilTermos = perfil.termos ?? [];
   const exp = experienciaParaSegmento(banco, perfil.slug);
   if (exp) {
     const periodo = exp.periodo
       ? `**Período:** ${exp.periodo}${exp.local ? ` · ${exp.local}` : ""}`
       : "";
-    const bullets = reorderBullets(
-      exp.bullets.map((b) => `- ${b}`),
+    let baseBullets = [...(exp.bullets ?? [])];
+    if (perfil.slug === "ia-ml") {
+      const dadosExp = experienciaParaSegmento(banco, "dados-bi-analytics");
+      const vistos = new Set(baseBullets.map((t) => String(t).slice(0, 48).toLowerCase()));
+      for (const t of dadosExp?.bullets ?? []) {
+        const k = String(t).slice(0, 48).toLowerCase();
+        if (vistos.has(k)) continue;
+        baseBullets.push(t);
+        vistos.add(k);
+      }
+    }
+    // Pool (atividades.yml) = provas de estágio; banco = complemento / impacto
+    const doPool = bulletsAtividadesParaSegmento(perfil.slug, {
+      termos: [...termos, ...perfilTermos],
+      max: 12,
+      existentes: [],
+    });
+    const misturados = [
+      ...doPool.map((texto) => ({ texto, origem: "pool" })),
+      ...baseBullets.map((texto) => ({ texto, origem: "banco" })),
+    ];
+    // Vaga IA/agentes: Experiência enxuta — prova principal está nos projetos
+    const maxExp =
+      perfil.slug === "ia-ml" &&
+      ctx?.tipo === "vaga" &&
+      jdEnfatizaProjetosIa(ctx.titulo, ctx.descricao)
+        ? 2
+        : perfil.slug === "ia-ml"
+          ? 3
+          : 4;
+    const bullets = escolherBulletsExperiencia(
+      misturados,
       termos,
-      5,
+      maxExp,
+      perfilTermos,
+      perfil.slug,
     );
-    const nota = exp.nota ? `\n\n*${exp.nota}*` : "";
-    return `### ${exp.titulo}\n\n${periodo}\n\n${bullets.join("\n")}${nota}`;
+    if (!bullets.length) return "";
+    return `### ${exp.titulo}\n\n${periodo}\n\n${bullets.join("\n")}`;
   }
 
   const sec = parsed.sections.find((s) => /experi/i.test(s.title));
@@ -122,24 +300,34 @@ function montarExperiencia(perfil, banco, parsed, ctx, fonte) {
   const sub = splitSubsections(sec.body).find((s) => s.title);
   if (!sub) return sec.body;
 
-  const bullets = reorderBullets(extractBullets(sub.body), termos, 5);
+  const bullets = escolherBulletsExperiencia(
+    extractBullets(sub.body),
+    termos,
+    4,
+    perfilTermos,
+    perfil.slug,
+  );
   const periodo =
     sub.body.match(/\*\*Período:\*\*[^\n]+/)?.[0] ??
     "**Período:** Fev/2025 – Set/2025 · São Paulo – SP";
 
-  return `### ${perfil.expTitulo}\n\n${periodo}\n\n${bullets.join("\n")}\n\n*${perfil.expNota}*`;
+  return `### ${perfil.expTitulo}\n\n${periodo}\n\n${bullets.join("\n")}`;
 }
 
-function adaptarCabecalho(parsed, perfil, fonte) {
+function adaptarCabecalho(parsed, perfil, fonte, ctx = null) {
   const nome = fonte.profile?.nome?.trim()
     ? `# ${fonte.profile.nome.trim()}`
     : parsed.preamble.split("\n").find((l) => l.startsWith("# ")) ?? "# Candidato";
 
   const contato = formatarContatoCv(fonte.profile, parsed.preamble);
+  const cargo =
+    ctx?.tipo === "vaga"
+      ? cargoAlvoNeutroDaVaga(perfil, ctx.titulo, ctx.descricao)
+      : perfil.cargoAlvo;
 
   return `${nome}
 
-**Cargo-alvo:** ${perfil.cargoAlvo}  
+**Cargo-alvo:** ${cargo}  
 ${contato}`;
 }
 
@@ -171,15 +359,54 @@ function adaptarInterno(cvBase, ctx) {
   const perfil = getPerfil(perfilSlug);
   const banco = fonte.banco ?? loadBanco();
   const parsed = parseSections(cvBase);
-  const sections = [
-    { title: "Resumo", body: buildResumoPerfil(perfil, { ...ctx, fonte }) },
-  ];
+  const termosVaga =
+    ctx.tipo === "vaga" ? termosDaVaga(ctx.titulo, ctx.descricao) : [];
+  const ctxRico = { ...ctx, termosVaga, fonte };
 
-  sections.push(
-    { title: "Competências", body: competenciasDoBanco(banco, perfil.slug, fonte) },
-    { title: "Experiência", body: montarExperiencia(perfil, banco, parsed, ctx, fonte) },
-    { title: "Projetos", body: montarProjetos(perfil, banco) },
-  );
+  const experienciaBody = montarExperiencia(perfil, banco, parsed, ctxRico, fonte);
+  const projetosBody = montarProjetos(perfil, banco, ctxRico);
+  const certs = certificacoesParaSegmento(banco, perfil.slug, {
+    termosVaga,
+    max: 5,
+  });
+  const evidencia = [
+    experienciaBody,
+    projetosBody,
+    certs.join("\n"),
+    perfil.stack,
+    perfil.resumoExp,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  // Densidade estilo feito à mão: Experiência antes de Competências.
+  // IA: Projetos antes (prova principal).
+  const projetosAntesExp =
+    perfil.slug === "ia-ml" ||
+    (ctx.tipo === "vaga" && jdEnfatizaProjetosIa(ctx.titulo, ctx.descricao));
+
+  const blocoExpProj = projetosAntesExp
+    ? [
+        { title: "Projetos", body: projetosBody },
+        { title: "Experiência", body: experienciaBody },
+      ]
+    : [
+        { title: "Experiência", body: experienciaBody },
+        { title: "Projetos", body: projetosBody },
+      ];
+
+  const sections = [
+    { title: "Resumo", body: buildResumoPerfil(perfil, ctxRico) },
+    ...blocoExpProj.filter((s) => String(s.body ?? "").trim()),
+    {
+      title: "Competências",
+      body: competenciasDoBanco(banco, perfil.slug, fonte, {
+        termosVaga,
+        evidencia,
+        termosSegmento: perfil.termos ?? [],
+      }),
+    },
+  ];
 
   const formacaoMd = formatarFormacaoCv(fonte.formacao);
   if (formacaoMd) {
@@ -189,14 +416,13 @@ function adaptarInterno(cvBase, ctx) {
     if (formacao) sections.push({ title: "Formação", body: formacao.body });
   }
 
-  const certs = certificacoesParaSegmento(banco, perfil.slug);
   sections.push({
     title: "Certificações",
     body: certs.length ? certs.join("\n") : "- —",
   });
 
   return rebuildCv({
-    preamble: adaptarCabecalho(parsed, perfil, fonte),
+    preamble: adaptarCabecalho(parsed, perfil, fonte, ctxRico),
     sections,
   });
 }
@@ -233,16 +459,4 @@ export function adaptarCvParaVaga(cvBase, pedido) {
   });
 }
 
-export function markdownAdaptadoValido(texto) {
-  const t = String(texto ?? "").trim();
-  return t.length >= 400 && /## Resumo/m.test(t) && /## /m.test(t);
-}
-
-export function extrairMarkdownResposta(texto) {
-  let t = String(texto ?? "").trim();
-  const fence = t.match(/^```(?:markdown|md)?\s*\n([\s\S]*?)```$/i);
-  if (fence) t = fence[1].trim();
-  return t;
-}
-
-export const MOTOR_CV_VERSAO = 6;
+export const MOTOR_CV_VERSAO = 20;

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import BuscaAlvosResumo from "@/components/busca/BuscaAlvosResumo";
@@ -134,18 +133,17 @@ export default function BuscaEditor({ initial, catalogo }) {
       setAdaptacao(data.adaptacao ?? null);
       router.refresh();
 
-      const n = data.adaptacao?.slots_total ?? data.adaptacao?.segmentacoes?.length ?? 0;
-      const vis = data.adaptacao?.slots_visiveis ?? n;
+      const vis =
+        data.adaptacao?.slots_visiveis ??
+        data.adaptacao?.slots_total ??
+        data.adaptacao?.segmentacoes?.length ??
+        0;
       if (data.adaptacao?.status === "concluido") {
-        setMessage(
-          vis > 0
-            ? `Salvo. ${vis} variação${vis > 1 ? "ões" : ""} visível${vis > 1 ? "is" : ""} (${n} slots fixos no disco).`
-            : `Salvo. ${n} variações mantidas — ative segmentos para exibir.`,
-        );
+        setMessage(vis > 0 ? `Salvo. ${vis} variação${vis > 1 ? "ões" : ""}.` : "Salvo.");
       } else if (data.adaptacao?.status === "pendente") {
-        setMessage("Salvo. Adaptação pendente — veja Currículo.");
+        setMessage("Salvo. Pendente.");
       } else {
-        setMessage("Salvo. Revise Conteúdo se mudou as áreas ativas.");
+        setMessage("Salvo.");
       }
     } catch (err) {
       setMessage(err.message || "Erro ao salvar");
@@ -215,21 +213,6 @@ export default function BuscaEditor({ initial, catalogo }) {
           role="status"
         >
           {message}
-          {adaptacao?.status === "concluido" ? (
-            <>
-              {" "}
-              <Link href="/curriculo" className="underline">
-                Ver currículo
-              </Link>
-            </>
-          ) : adaptacao?.status === "pendente" ? (
-            <>
-              {" "}
-              <Link href="/curriculo" className="underline">
-                Currículo
-              </Link>
-            </>
-          ) : null}
         </p>
       ) : null}
     </div>

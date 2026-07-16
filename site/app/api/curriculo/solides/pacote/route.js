@@ -16,7 +16,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler dados/portais/solides.yml", detail: err.message },
+      { error: "Não foi possível ler o perfil Sólides", detail: err.message },
       { status: 500 },
     );
   }
@@ -48,7 +48,7 @@ export async function POST(request) {
         segmento_slug: resultado.segmento_slug,
         solides: resultado.solides,
         preview: resultado.preview,
-        revisarUrl: `${SITE_ORIGIN}/vaga`,
+        revisarUrl: `${SITE_ORIGIN}/curriculo?id=${encodeURIComponent(resultado.segmentacao_id)}`,
       });
     }
 

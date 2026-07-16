@@ -16,12 +16,6 @@ export const LABELS_SEGMENTO = {
   "engenharia-software": "Engenharia de Software",
 };
 
-/** @deprecated Use segmentosAtivos da API / busca.yml */
-export const SEGMENTOS = Object.entries(LABELS_SEGMENTO).map(([slug, label]) => ({
-  slug,
-  label,
-}));
-
 export function slugParaLabel(slug, segmentosAtivos) {
   const fromList = segmentosAtivos?.find((s) => s.slug === slug);
   if (fromList) return fromList.label;

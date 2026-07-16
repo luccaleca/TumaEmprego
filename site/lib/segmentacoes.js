@@ -120,11 +120,6 @@ export function getSegmentacaoConteudo(id) {
   return null;
 }
 
-export function getSegmentacaoPdfPath(id) {
-  const pdfPath = path.join(dirPath(id), "curriculo.pdf");
-  return fs.existsSync(pdfPath) ? pdfPath : null;
-}
-
 function idSegmentacaoValido(id) {
   return typeof id === "string" && /^seg-[a-z0-9-]+$/i.test(id);
 }
@@ -236,41 +231,6 @@ export function migrarSegmentacoesParaSlots() {
   }
 }
 
-function ordemSegmentacao(a, b) {
-  const ia = SEGMENTOS_CV_SLOTS.indexOf(a.segmento_slug);
-  const ib = SEGMENTOS_CV_SLOTS.indexOf(b.segmento_slug);
-  if (ia >= 0 && ib >= 0) return ia - ib;
-  if (ia >= 0) return -1;
-  if (ib >= 0) return 1;
-  return String(b.criado_em).localeCompare(String(a.criado_em));
-}
-
-/** Slots de segmento visíveis + variações extras (vaga / manual). */
-export function listSegmentacoesVisiveis(segmentosAtivos = []) {
-  migrarSegmentacoesParaSlots();
-  const ativos = new Set(segmentosAtivos ?? []);
-  const all = listSegmentacoes();
-
-  return all
-    .filter((seg) => {
-      if (isSlotSegmento(seg)) {
-        return ativos.has(seg.segmento_slug);
-      }
-      if (seg.origem === "manual") {
-        return true;
-      }
-      return false;
-    })
-    .sort(ordemSegmentacao);
-}
-
-/** Currículos gerados para vagas específicas (origem `vaga`). */
-export function listSegmentacoesVaga() {
-  return listSegmentacoes()
-    .filter((seg) => seg.origem === "vaga")
-    .sort((a, b) => String(b.criado_em).localeCompare(String(a.criado_em)));
-}
-
 export function excluirSegmentacao(id) {
   if (!idSegmentacaoValido(id)) {
     throw new Error("ID inválido");
@@ -278,9 +238,7 @@ export function excluirSegmentacao(id) {
 
   const meta = readMeta(id);
   if (isSlotSegmento(meta)) {
-    throw new Error(
-      "Variação fixa do segmento — desmarque a área em Segmentos para ocultar, em vez de excluir",
-    );
+    throw new Error("Variação fixa");
   }
 
   const dir = dirPath(id);
@@ -305,12 +263,13 @@ export function salvarSegmentacaoConteudo(id, content) {
     throw new Error("Segmentação não encontrada");
   }
 
-  const pdfPath = path.join(dirPath(id), "curriculo.pdf");
-  if (fs.existsSync(pdfPath)) {
-    throw new Error("Variação em PDF — substitua o arquivo para editar por texto");
+  // PDF antigo pode existir — editar .md é ok; UI marca PDF desatualizado.
+  const mdPath = path.join(dirPath(id), "curriculo.md");
+  if (!fs.existsSync(mdPath) && fs.existsSync(path.join(dirPath(id), "curriculo.pdf"))) {
+    throw new Error("Só há PDF nesta variação — não dá para editar texto");
   }
 
-  fs.writeFileSync(path.join(dirPath(id), "curriculo.md"), content.trim(), "utf8");
+  fs.writeFileSync(mdPath, content.trim(), "utf8");
   return getSegmentacao(id);
 }
 
@@ -399,7 +358,9 @@ export function atualizarMetaSegmentacao(id, patch) {
 
 export function criarSegmentacao({
   vaga_titulo,
+  vaga_empresa = null,
   vaga_descricao = "",
+  vaga_url = null,
   origem = "manual",
   segmento_slug = null,
   alvos = [],
@@ -431,6 +392,8 @@ export function criarSegmentacao({
     alvos_complementares,
     criado_em: new Date().toISOString(),
     formato: pdfBuffer?.length ? "pdf" : "markdown",
+    ...(vaga_empresa?.trim() ? { vaga_empresa: String(vaga_empresa).trim() } : {}),
+    ...(vaga_url ? { vaga_url: String(vaga_url).trim() } : {}),
     ...(portal ? { portal } : {}),
     ...(formato_cv ? { formato_cv } : {}),
     ...(motor_solides_versao ? { motor_solides_versao } : {}),
@@ -446,19 +409,110 @@ export function criarSegmentacao({
   return getSegmentacao(id);
 }
 
-export function criarSegmentacaoFromPedido(pedido, conteudoMd) {
-  const primarios = pedido.alvos_primarios ?? pedido.alvos ?? [];
-  const complementares = pedido.alvos_complementares ?? [];
-  const segmentoNome = pedido.segmento?.nome ?? "Segmento";
+function normalizeUrlVaga(url) {
+  return String(url ?? "")
+    .trim()
+    .replace(/\/+$/, "")
+    .toLowerCase();
+}
 
-  return criarSegmentacao({
-    vaga_titulo: tituloVagaFromSegmento(segmentoNome, primarios),
-    vaga_descricao: descricaoVagaFromPedido(pedido),
-    origem: "busca",
-    segmento_slug: pedido.segmento?.slug ?? null,
-    alvos: primarios,
-    alvos_complementares: complementares,
-    conteudoMd,
+function normalizeTituloVaga(titulo) {
+  return String(titulo ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Encontra CV de vaga já gerado (evita duplicar no clique duplo / retry).
+ * Prioriza URL; senão título+segmento nos últimos 10 min.
+ */
+export function encontrarSegmentacaoVagaExistente({
+  vaga_url,
+  vaga_titulo,
+  segmento_slug,
+  portal = null,
+  formato_cv = null,
+} = {}) {
+  const urlN = normalizeUrlVaga(vaga_url);
+  const tituloN = normalizeTituloVaga(vaga_titulo);
+  const slug = String(segmento_slug ?? "").trim() || null;
+  const portalN = portal ? String(portal).trim().toLowerCase() : null;
+  const formatoN = formato_cv ? String(formato_cv).trim().toLowerCase() : null;
+  const agora = Date.now();
+  const JANELA_MS = 10 * 60 * 1000;
+
+  const candidatas = listSegmentacoes().filter((s) => {
+    if (s.origem !== "vaga" || isSlotSegmento(s)) return false;
+    if (portalN && String(s.portal ?? "").toLowerCase() !== portalN) return false;
+    if (formatoN) {
+      const sFmt = String(
+        s.formato_cv ?? (s.portal === "solides" ? "solides" : "ats"),
+      ).toLowerCase();
+      if (sFmt !== formatoN) return false;
+    }
+    return true;
+  });
+
+  if (urlN) {
+    const porUrl = candidatas.find((s) => normalizeUrlVaga(s.vaga_url) === urlN);
+    if (porUrl) return porUrl;
+  }
+
+  if (!tituloN) return null;
+
+  return (
+    candidatas.find((s) => {
+      if (normalizeTituloVaga(s.vaga_titulo) !== tituloN) return false;
+      if (slug && s.segmento_slug && s.segmento_slug !== slug) return false;
+      const criado = Date.parse(s.atualizado_em || s.criado_em || 0);
+      if (!Number.isFinite(criado)) return false;
+      return agora - criado < JANELA_MS;
+    }) ?? null
+  );
+}
+
+/** Cria CV de vaga ou sobrescreve o existente (mesma URL / retry recente). */
+export function criarOuAtualizarSegmentacaoVaga(opts) {
+  const existente = encontrarSegmentacaoVagaExistente({
+    vaga_url: opts.vaga_url,
+    vaga_titulo: opts.vaga_titulo,
+    segmento_slug: opts.segmento_slug,
+    portal: opts.portal,
+    formato_cv: opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats"),
+  });
+
+  if (!existente) {
+    return criarSegmentacao({
+      ...opts,
+      origem: "vaga",
+      formato_cv: opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats"),
+    });
+  }
+
+  if (opts.conteudoMd?.trim()) {
+    salvarSegmentacaoConteudo(existente.id, opts.conteudoMd);
+  }
+
+  return atualizarMetaSegmentacao(existente.id, {
+    vaga_titulo: String(opts.vaga_titulo ?? existente.vaga_titulo).trim(),
+    vaga_descricao: String(opts.vaga_descricao ?? "").trim(),
+    origem: "vaga",
+    segmento_slug: opts.segmento_slug ?? existente.segmento_slug,
+    ...(opts.vaga_empresa?.trim()
+      ? { vaga_empresa: String(opts.vaga_empresa).trim() }
+      : {}),
+    ...(opts.vaga_url ? { vaga_url: String(opts.vaga_url).trim() } : {}),
+    ...(opts.portal ? { portal: opts.portal } : {}),
+    ...(opts.formato_cv || opts.portal === "solides"
+      ? { formato_cv: opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats") }
+      : { formato_cv: "ats" }),
+    ...(opts.motor_solides_versao
+      ? { motor_solides_versao: opts.motor_solides_versao }
+      : {}),
+    formato: "markdown",
   });
 }
 

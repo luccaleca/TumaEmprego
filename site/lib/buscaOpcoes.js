@@ -9,9 +9,9 @@ export const LABEL_MODO = {
 };
 
 export const HINT_MODO = {
-  focado: "Só os cargos que você marcar.",
-  amplo: "Inclui títulos parecidos no mesmo segmento.",
-  hibrido: "Prioriza os marcados, aceita variações óbvias.",
+  focado: "",
+  amplo: "",
+  hibrido: "",
 };
 
 export const LABEL_MODALIDADE = {

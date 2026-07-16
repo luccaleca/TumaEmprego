@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getCvBase, getProfile } from "@/lib/dados";
-import { criarSegmentacao, getSegmentacaoConteudo, getSegmentacaoSlot, salvarSegmentacaoPdf, statusPdfSegmentacao } from "@/lib/segmentacoes";
+import { criarOuAtualizarSegmentacaoVaga, getSegmentacaoConteudo, getSegmentacaoSlot, salvarSegmentacaoPdf, statusPdfSegmentacao } from "@/lib/segmentacoes";
 import { adaptarCvParaVaga } from "@/lib/adaptarCvLocal";
 import {
   getPerfil,
@@ -13,6 +13,10 @@ import { getFonteCandidato, montarContextoFonteParaPrompt } from "@/lib/fonteCan
 import { gerarPdfFromMarkdown } from "@/lib/gerarPdf";
 import { LABELS_SEGMENTO, SEGMENTOS_CV_SLOTS } from "@/lib/conteudoConstants";
 import { segmentoEstaAtivo } from "@/lib/segmentosAtivos";
+import {
+  metaPortalParaResposta,
+  resolverPortalVagaInput,
+} from "@/lib/portaisCatalogo";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 const PEDIDO_PATH = path.join(DADOS_ROOT, "curriculo", "pedido-vaga.json");
@@ -34,8 +38,9 @@ export function tituloFromVaga(vagaTitulo, vagaDescricao) {
   return `Vaga · ${new Date().toLocaleDateString("pt-BR")}`;
 }
 
-export function montarPedidoVaga({ vaga_titulo, vaga_descricao }) {
+export function montarPedidoVaga({ vaga_titulo, vaga_descricao, vaga_url }) {
   const descricao = String(vaga_descricao ?? "").trim();
+  const url = String(vaga_url ?? "").trim();
   let profile = {};
   try {
     profile = getProfile();
@@ -47,6 +52,7 @@ export function montarPedidoVaga({ vaga_titulo, vaga_descricao }) {
     criado_em: new Date().toISOString(),
     vaga_titulo: tituloFromVaga(vaga_titulo, descricao),
     vaga_descricao: descricao,
+    ...(url ? { vaga_url: url } : {}),
     candidato: {
       nome: profile.nome ?? "",
     },
@@ -96,6 +102,9 @@ export function classificarVaga(input) {
   const fonte = getFonteCandidato();
   const vaga_titulo = String(input?.vaga_titulo ?? "").trim();
   const vaga_descricao = String(input?.vaga_descricao ?? "").trim();
+  const vaga_url = String(input?.vaga_url ?? "").trim();
+  const portal = resolverPortalVagaInput({ ...input, vaga_url });
+  const portalMeta = metaPortalParaResposta(portal);
 
   if (vaga_descricao.length < 20) {
     return { status: "erro", motivo: "descricao_curta" };
@@ -122,6 +131,8 @@ export function classificarVaga(input) {
   return {
     status: "ok",
     vaga_titulo: titulo,
+    vaga_url: vaga_url || null,
+    ...portalMeta,
     segmento_slug,
     segmento_label: perfil.label ?? LABELS_SEGMENTO[segmento_slug] ?? segmento_slug,
     segmentos,
@@ -132,6 +143,8 @@ export function classificarVaga(input) {
 export async function executarAdaptacaoCvVaga(input) {
   const fonte = getFonteCandidato();
   const pedido = montarPedidoVaga(input);
+  const vaga_url = String(input?.vaga_url ?? pedido.vaga_url ?? "").trim();
+  const portal = resolverPortalVagaInput({ ...input, vaga_url });
   const segmento_slug = resolverSegmentoEscolhido(input, pedido, fonte);
   pedido.segmento_slug = segmento_slug;
 
@@ -164,11 +177,14 @@ export async function executarAdaptacaoCvVaga(input) {
 
   const conteudo = adaptarCvParaVaga(cvBase, { ...pedido, fonte, segmento_slug });
 
-  const segmentacao = criarSegmentacao({
+  const segmentacao = criarOuAtualizarSegmentacaoVaga({
     vaga_titulo: pedido.vaga_titulo,
+    vaga_empresa: String(input?.vaga_empresa ?? "").trim() || null,
     vaga_descricao: pedido.vaga_descricao,
-    origem: "vaga",
+    vaga_url: vaga_url || null,
     segmento_slug,
+    portal: portal || null,
+    formato_cv: "ats",
     conteudoMd: conteudo,
   });
 
@@ -177,6 +193,10 @@ export async function executarAdaptacaoCvVaga(input) {
     segmentacao,
     pedido,
     segmento_slug,
+    portal: portal || null,
+    vaga_url: vaga_url || null,
+    vaga_titulo: pedido.vaga_titulo,
+    vaga_empresa: String(input?.vaga_empresa ?? "").trim() || null,
     base: slot ? "slot" : "cv-base",
     motor: "local",
   };
@@ -222,7 +242,11 @@ export async function executarPacoteCvVaga(input, { gerarPdf = true } = {}) {
     try {
       pdf = await gerarPdfParaSegmentacao(adaptacao.segmentacao.id);
     } catch (err) {
-      pdf = { temPdf: false, erro: err.message ?? "Falha ao gerar PDF" };
+      pdf = {
+        temPdf: false,
+        erro: err.message ?? "Falha ao gerar PDF",
+        pdfUrl: null,
+      };
     }
   }
 
@@ -231,5 +255,7 @@ export async function executarPacoteCvVaga(input, { gerarPdf = true } = {}) {
     scores,
     segmento_label: perfil.label ?? LABELS_SEGMENTO[adaptacao.segmento_slug],
     pdf,
+    // md ok + pdf falhou ainda é concluído — UI deve avisar
+    aviso_pdf: pdf?.erro || null,
   };
 }

@@ -95,7 +95,7 @@ function SegmentoBuscaCard({ cv, senioridades }) {
         {foco.length ? (
           <div>
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-              Foco — o buscador prioriza
+              Foco
             </p>
             <ul className="space-y-2" role="list">
               {foco.map((cargo) => (
@@ -104,15 +104,13 @@ function SegmentoBuscaCard({ cv, senioridades }) {
             </ul>
           </div>
         ) : (
-          <p className="text-sm text-zinc-600">
-            Sem cargo específico marcado — a busca usa o segmento inteiro como referência.
-          </p>
+          <p className="text-sm text-zinc-600">Sem cargo específico</p>
         )}
 
         {complemento.length ? (
           <div>
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-              Complemento — aparece com menor peso
+              Complemento
             </p>
             <ul className="space-y-2" role="list">
               {complemento.map((cargo) => (
@@ -161,7 +159,7 @@ export default function BuscaAlvosResumo({ catalogo, busca, compact = false }) {
   if (!curriculos.length) {
     return (
       <section className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center">
-        <p className="text-sm text-zinc-600">Marque um segmento para ver a prévia da busca.</p>
+        <p className="text-sm text-zinc-600">Nenhum segmento</p>
       </section>
     );
   }
@@ -181,11 +179,9 @@ export default function BuscaAlvosResumo({ catalogo, busca, compact = false }) {
           Prévia da busca
         </h2>
         <p className="mt-0.5 text-xs text-zinc-500">
-          Cada cargo se multiplica pelas senioridades ativas —{" "}
           <span className="font-medium text-zinc-700">
-            {totalCombinacoes} {totalCombinacoes === 1 ? "combinação" : "combinações"} no total
+            {totalCombinacoes} {totalCombinacoes === 1 ? "combinação" : "combinações"}
           </span>
-          .
         </p>
       </div>
 

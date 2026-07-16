@@ -9,14 +9,22 @@ import {
   loadBanco,
   projetosParaSegmento,
 } from "./conteudoBanco.js";
+import { ESTRUTURA_SECOES_SOLIDES } from "./solidesVagasEstrutura.js";
+import { markdownSolidesVagasForm } from "./solidesVagasPdf.js";
+import {
+  camposPorAbaFromPacote,
+  getMoldeSolidesVagasJson,
+  MOLDE_SOLIDES_VAGAS_ID,
+} from "./solidesVagasMolde.js";
 import { getPortalSolides } from "./dados.js";
 import { getFonteCandidato } from "./fonteCandidato.js";
 import { getPerfil, inferirPerfilPorVaga, resolverPerfilSlug } from "./perfilCvSegmento.js";
+import { buildDescricaoParaVaga } from "./descricaoVaga.js";
 import { SEGMENTOS_CV_SLOTS } from "./conteudoConstants.js";
 import { classificarVaga, montarPedidoVaga, tituloFromVaga } from "./adaptarCvVaga.js";
 import {
   atualizarMetaSegmentacao,
-  criarSegmentacao,
+  criarOuAtualizarSegmentacaoVaga,
   getPacoteSolides,
   getSegmentacao,
   salvarPacoteSolides,
@@ -38,18 +46,7 @@ const MESES_ABREV = {
   dez: "12",
 };
 
-/** Seções do Profiler — não confundir com Resumo/Competências/Projetos do cv-base ATS. */
-export const SECOES_SOLIDES = [
-  "Resumo profissional",
-  "Cargo(s) de interesse",
-  "Experiência profissional",
-  "Formação acadêmica",
-  "Cursos e certificações",
-  "Habilidades",
-  "Idiomas",
-];
-
-const MOTOR_SOLIDES_VERSAO = 2;
+const MOTOR_SOLIDES_VERSAO = 3;
 
 function normalize(text) {
   return String(text ?? "")
@@ -74,16 +71,6 @@ function termosVaga(titulo, descricao) {
     .split(/[^\p{L}\p{N}+#.]+/u)
     .map((w) => w.trim())
     .filter((w) => w.length > 2);
-}
-
-function markdownParaTexto(md) {
-  return String(md ?? "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/^#+\s*/gm, "")
-    .replace(/^-\s+/gm, "• ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
 }
 
 function tituloVagaLimpo(titulo) {
@@ -148,64 +135,13 @@ function resolverSegmentoVaga(input, pedido, fonte) {
   return inferirPerfilPorVaga(pedido.vaga_titulo, pedido.vaga_descricao, fonte);
 }
 
-function textoFormacao(formacao) {
-  const f = formacao ?? {};
-  if (!f.instituicao && !f.curso) return "";
-
-  const curso = [f.grau, f.curso].filter(Boolean).join(" em ");
-  const sem = f.semestre ? `, ${f.semestre}º semestre` : "";
-  const status = f.status === "Cursando" ? "cursando" : f.status?.toLowerCase() ?? "";
-
-  return `Sou ${status ? `${status} ` : ""}${curso || "estudante"} no ${f.instituicao}${sem}.`.replace(
-    /\s{2,}/g,
-    " ",
-  );
-}
-
-function tecnologiasAderentesVaga(fonte, termos, max = 5) {
-  return (fonte.tecnologias?.comNivel ?? [])
-    .filter((t) => {
-      const nome = normalize(t.nome);
-      return termos.some(
-        (termo) => nome.includes(normalize(termo)) || normalize(termo).includes(nome),
-      );
-    })
-    .slice(0, max)
-    .map((t) => t.nome);
-}
-
 function montarResumoSolides(ctx, fonte, banco) {
-  const perfil = getPerfil(ctx.segmento_slug);
-  const cargo = tituloVagaLimpo(ctx.vaga_titulo) || perfil.label;
-  const termos = termosVaga(ctx.vaga_titulo, ctx.vaga_descricao);
-  const paragrafos = [];
-
-  paragrafos.push(
-    `Busco oportunidade como ${cargo}, com entregas em ${perfil.stack.replace(/ · /g, ", ")}.`,
-  );
-
-  const formacaoTxt = textoFormacao(fonte.formacao);
-  if (formacaoTxt) paragrafos.push(formacaoTxt);
-
-  const expResumo = markdownParaTexto(perfil.resumoExp ?? "");
-  if (expResumo) paragrafos.push(expResumo);
-
-  const techs = tecnologiasAderentesVaga(fonte, termos);
-  if (techs.length) {
-    paragrafos.push(
-      `Na prática, utilizo ${techs.join(", ")} — competências alinhadas ao que a vaga descreve.`,
-    );
-  }
-
-  const exp = experienciaParaSegmento(banco, ctx.segmento_slug);
-  if (exp?.bullets?.length) {
-    const destaque = reorderBullets(exp.bullets, termos, 1)[0];
-    if (destaque) {
-      paragrafos.push(markdownParaTexto(destaque));
-    }
-  }
-
-  return paragrafos.join("\n\n").trim();
+  return buildDescricaoParaVaga({
+    vaga_titulo: ctx.vaga_titulo,
+    vaga_descricao: ctx.vaga_descricao,
+    segmento_slug: ctx.segmento_slug,
+    fonte: { ...fonte, banco: banco ?? fonte?.banco },
+  });
 }
 
 function montarCargosInteresse(portal, vagaTitulo) {
@@ -378,9 +314,10 @@ export function montarPacoteSolides({
     idiomas: montarIdiomasSolides(p),
   };
 
-  return {
+  const pacote = {
     portal: "solides",
-    estrutura: SECOES_SOLIDES,
+    molde: MOLDE_SOLIDES_VAGAS_ID,
+    estrutura: ESTRUTURA_SECOES_SOLIDES,
     motor_versao: MOTOR_SOLIDES_VERSAO,
     gerado_em: new Date().toISOString(),
     portal_config_atualizado_em: p.atualizado_em ?? null,
@@ -393,85 +330,26 @@ export function montarPacoteSolides({
     candidato: {
       nome: f.profile?.nome ?? "",
     },
+    perfil_candidato: {
+      nome: f.profile?.nome ?? "",
+      email: f.profile?.email ?? "",
+      celular: f.profile?.celular ?? f.profile?.telefone ?? "",
+      cidade: f.profile?.cidade ?? "",
+      estado: f.profile?.estado ?? "",
+      data_nascimento: f.profile?.data_nascimento ?? "",
+    },
     campos,
+    abas: ["sobre", "experiencias", "habilidades", "outras-informacoes"],
   };
+
+  pacote.campos_por_aba = camposPorAbaFromPacote(pacote);
+  pacote.molde_json = getMoldeSolidesVagasJson();
+
+  return pacote;
 }
 
 export function formatarMarkdownSolides(pacote) {
-  const c = pacote.campos;
-  const linhas = [
-    `# Perfil Sólides — ${pacote.vaga?.titulo ?? "Vaga"}`,
-    "",
-    "## Resumo profissional",
-    "",
-    c.resumo_profissional,
-    "",
-    "## Cargo(s) de interesse",
-    "",
-    ...c.cargos_interesse.map((cargo) => `- ${cargo}`),
-    "",
-    "## Experiência profissional",
-    "",
-  ];
-
-  if (!c.experiencias.length) {
-    linhas.push("_Sem experiência cadastrada no banco para este segmento._", "");
-  }
-
-  for (const exp of c.experiencias) {
-    linhas.push(`### ${exp.cargo}${exp.empresa ? ` — ${exp.empresa}` : ""}`);
-    if (exp.periodo) linhas.push("", `**Período:** ${exp.periodo}`);
-    if (exp.local) linhas.push(`**Local:** ${exp.local}`);
-    linhas.push("");
-    for (const atv of exp.atividades ?? []) {
-      linhas.push(`- ${markdownParaTexto(atv)}`);
-    }
-    if (exp.nota) linhas.push("", `*${exp.nota}*`);
-    linhas.push("");
-  }
-
-  linhas.push("## Formação acadêmica", "");
-  if (!c.formacao.length) {
-    linhas.push("_Sem formação cadastrada._", "");
-  }
-  for (const form of c.formacao) {
-    const titulo = [form.instituicao, form.curso].filter(Boolean).join(" — ");
-    linhas.push(`### ${titulo}`);
-    const extras = [form.ano_conclusao && `Conclusão: ${form.ano_conclusao}`, form.situacao]
-      .filter(Boolean)
-      .join(" · ");
-    if (extras) linhas.push("", extras);
-    linhas.push("");
-  }
-
-  linhas.push("## Cursos e certificações", "");
-  if (!c.cursos_certificacoes.length) {
-    linhas.push("_Sem cursos cadastrados._", "");
-  } else {
-    linhas.push(...c.cursos_certificacoes.map((curso) => `- ${curso}`), "");
-  }
-
-  linhas.push("## Habilidades", "");
-  for (const h of c.habilidades) {
-    const destaque = h.score_vaga > 0 ? " ★" : "";
-    linhas.push(`- ${h.nome_solides} — ${h.nivel}${destaque}`);
-  }
-  linhas.push("");
-
-  linhas.push("## Idiomas", "");
-  for (const i of c.idiomas) {
-    linhas.push(`- ${i.nome_solides} — ${i.nivel}`);
-  }
-  linhas.push("");
-
-  if (c.habilidades.some((h) => h.score_vaga > 0)) {
-    linhas.push(
-      "> ★ Habilidades marcadas têm maior aderência ao texto da vaga (ordem priorizada para o Profiler).",
-      "",
-    );
-  }
-
-  return linhas.join("\n").trim() + "\n";
+  return markdownSolidesVagasForm(pacote);
 }
 
 export async function executarPacoteSolidesVaga(input) {
@@ -516,13 +394,14 @@ export async function executarPacoteSolidesVaga(input) {
   const pacote = montarPacoteSolides({
     vaga_titulo,
     vaga_descricao,
-    vaga_url: String(input?.vaga_url ?? "").trim(),
+    vaga_url: String(input?.vaga_url ?? segmentacao?.vaga_url ?? "").trim(),
     segmento_slug,
     fonte,
   });
 
   const preview = formatarMarkdownSolides(pacote);
   const classificacao = classificarVaga({ vaga_titulo, vaga_descricao });
+  const vaga_url = String(input?.vaga_url ?? segmentacao?.vaga_url ?? pacote.vaga?.url ?? "").trim();
 
   if (segmentacaoId) {
     salvarSegmentacaoConteudo(segmentacaoId, preview);
@@ -531,12 +410,17 @@ export async function executarPacoteSolidesVaga(input) {
       segmento_slug,
       formato_cv: "solides",
       motor_solides_versao: MOTOR_SOLIDES_VERSAO,
+      ...(vaga_url ? { vaga_url } : {}),
+      ...(String(input?.vaga_empresa ?? "").trim()
+        ? { vaga_empresa: String(input.vaga_empresa).trim() }
+        : {}),
     });
   } else {
-    segmentacao = criarSegmentacao({
+    segmentacao = criarOuAtualizarSegmentacaoVaga({
       vaga_titulo,
+      vaga_empresa: String(input?.vaga_empresa ?? "").trim() || null,
       vaga_descricao,
-      origem: "vaga",
+      vaga_url: vaga_url || null,
       segmento_slug,
       conteudoMd: preview,
       portal: "solides",
@@ -550,7 +434,7 @@ export async function executarPacoteSolidesVaga(input) {
   return {
     status: "concluido",
     portal: "solides",
-    estrutura: SECOES_SOLIDES,
+    estrutura: ESTRUTURA_SECOES_SOLIDES,
     segmentacao,
     segmentacao_id: segmentacao.id,
     segmento_slug,
@@ -558,8 +442,8 @@ export async function executarPacoteSolidesVaga(input) {
     scores: classificacao.scores,
     solides: pacote,
     preview,
+    vaga_titulo,
+    vaga_empresa: String(input?.vaga_empresa ?? "").trim() || segmentacao?.vaga_empresa || null,
     pacote_salvo: getPacoteSolides(segmentacao.id),
   };
 }
-
-export { MOTOR_SOLIDES_VERSAO };

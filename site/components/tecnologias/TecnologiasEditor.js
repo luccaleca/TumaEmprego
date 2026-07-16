@@ -1,10 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SegmentChips } from "@/components/conteudo/SegmentChips";
+import { FormField, inputClass } from "@/components/profile/FormField";
 import { FormSubsection } from "@/components/profile/FormSubsection";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { DataTags } from "@/components/profile/ViewData";
 import { filtrarItensPorModo } from "@/lib/tecnologiasPopulares";
+import { slugId } from "@/lib/tecnologiasStack";
+
+const CATEGORIAS_EXTRA = [
+  "Dados / back-end",
+  "BI",
+  "Front-end",
+  "Back-end",
+  "IA",
+  "DevOps",
+  "Marketing",
+  "Ferramentas",
+];
 
 function VertenteTabs({ vertentes, ativas, onToggle }) {
   const set = new Set(ativas ?? []);
@@ -117,7 +131,24 @@ function TecnologiaChips({ itens, ativas, onToggle }) {
   );
 }
 
-function BarraSelecionadas({ catalogo, ativas, onToggle }) {
+function resumirSegmentos(segmentos, todosSegmentos) {
+  const labels = (segmentos ?? [])
+    .map((slug) => todosSegmentos.find((s) => s.slug === slug)?.label ?? slug)
+    .map((l) => l.split(/[,&]/)[0].trim());
+  return labels.length ? labels.join(" · ") : "—";
+}
+
+function BarraSelecionadas({
+  catalogo,
+  ativas,
+  extras,
+  segmentos,
+  todosSegmentos,
+  editing,
+  onToggle,
+  onSegmentos,
+  onRemoveExtra,
+}) {
   const mapa = useMemo(() => {
     const m = new Map();
     for (const v of catalogo ?? []) {
@@ -128,49 +159,149 @@ function BarraSelecionadas({ catalogo, ativas, onToggle }) {
     return m;
   }, [catalogo]);
 
-  const selecionadas = (ativas ?? [])
-    .map((slug) => mapa.get(slug))
-    .filter(Boolean);
+  const selecionadas = (ativas ?? []).map((slug) => mapa.get(slug)).filter(Boolean);
 
-  if (!selecionadas.length) {
+  if (!selecionadas.length && !extras?.length) {
     return <p className="text-sm italic text-zinc-400">—</p>;
-  }
-
-  const porVertente = new Map();
-  for (const item of selecionadas) {
-    const chave = item.vertenteNome || item.vertenteSlug || "—";
-    if (!porVertente.has(chave)) porVertente.set(chave, []);
-    porVertente.get(chave).push(item);
   }
 
   return (
     <div className="space-y-3 rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
-      {[...porVertente.entries()].map(([vertente, lista]) => (
-        <div key={vertente}>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-            {vertente}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {lista.map((item) => (
-              <ChipButton
-                key={item.slug}
-                on
-                label={`${item.nome} ×`}
+      {selecionadas.map((item) => {
+        const seg = segmentos[item.slug] ?? item.segmentosCv ?? [];
+        return (
+          <div key={item.slug} className="rounded-lg border border-white/80 bg-white/70 p-2.5">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-sm font-medium text-zinc-900">{item.nome}</p>
+              <button
+                type="button"
                 onClick={() => onToggle(item.slug)}
+                className="text-[11px] font-medium text-zinc-500 hover:text-red-600"
+              >
+                Remover
+              </button>
+            </div>
+            {editing ? (
+              <SegmentChips
+                value={seg}
+                onChange={(next) => onSegmentos(item.slug, next)}
+                label="Áreas no CV"
+                segmentos={todosSegmentos}
               />
-            ))}
+            ) : (
+              <p className="text-[11px] text-zinc-500">{resumirSegmentos(seg, todosSegmentos)}</p>
+            )}
           </div>
+        );
+      })}
+
+      {(extras ?? []).map((extra) => (
+        <div key={extra.id} className="rounded-lg border border-sky-100 bg-sky-50/50 p-2.5">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-zinc-900">
+              {extra.nome}
+              <span className="ml-1.5 text-[10px] font-semibold uppercase text-sky-700">extra</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => onRemoveExtra(extra.id)}
+              className="text-[11px] font-medium text-zinc-500 hover:text-red-600"
+            >
+              Remover
+            </button>
+          </div>
+          {editing ? (
+            <SegmentChips
+              value={extra.segmentos ?? []}
+              onChange={(next) => onRemoveExtra(extra.id, { ...extra, segmentos: next })}
+              label="Áreas no CV"
+              segmentos={todosSegmentos}
+            />
+          ) : (
+            <p className="text-[11px] text-zinc-500">
+              {resumirSegmentos(extra.segmentos, todosSegmentos)}
+            </p>
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-export default function TecnologiasEditor({ initial }) {
+function ExtrasEditor({ extras, todosSegmentos, onChange }) {
+  const [nome, setNome] = useState("");
+  const [categoria, setCategoria] = useState("Ferramentas");
+
+  function adicionar(event) {
+    event.preventDefault();
+    const trimmed = nome.trim();
+    if (!trimmed) return;
+    const id = `extra-${slugId(trimmed)}`;
+    if (extras.some((e) => e.id === id || e.nome.toLowerCase() === trimmed.toLowerCase())) return;
+
+    onChange([
+      ...extras,
+      {
+        id,
+        nome: trimmed,
+        categoria: categoria.trim() || "Ferramentas",
+        segmentos: todosSegmentos[0]?.slug ? [todosSegmentos[0].slug] : [],
+      },
+    ]);
+    setNome("");
+  }
+
+  return (
+    <form onSubmit={adicionar} className="space-y-2 rounded-lg border border-dashed border-zinc-200 p-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <FormField label="Nome">
+          <input
+            className={inputClass}
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Ferramenta fora do catálogo"
+          />
+        </FormField>
+        <FormField label="Categoria">
+          <input
+            className={inputClass}
+            list="categorias-stack-extra"
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+          />
+          <datalist id="categorias-stack-extra">
+            {CATEGORIAS_EXTRA.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </FormField>
+      </div>
+      <button
+        type="submit"
+        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100"
+      >
+        + Adicionar
+      </button>
+    </form>
+  );
+}
+
+function buildSegmentosMap(tecnologias) {
+  const map = { ...(tecnologias?.segmentos ?? {}) };
+  for (const item of tecnologias?.itens ?? []) {
+    if (!map[item.slug]?.length) {
+      map[item.slug] = item.segmentosCv ?? [];
+    }
+  }
+  return map;
+}
+
+export default function TecnologiasEditor({ initial, todosSegmentos = [] }) {
   const [catalogo, setCatalogo] = useState(initial?.catalogo ?? []);
   const [tecnologias, setTecnologias] = useState(
-    initial?.tecnologias ?? { ativas: [], itens: [] },
+    initial?.tecnologias ?? { ativas: [], itens: [], extras: [] },
   );
+  const [segmentos, setSegmentos] = useState(() => buildSegmentosMap(initial?.tecnologias));
   const [vertentesVisiveis, setVertentesVisiveis] = useState(
     initial?.catalogo?.[0]?.slug ? [initial.catalogo[0].slug] : ["dados"],
   );
@@ -180,6 +311,14 @@ export default function TecnologiasEditor({ initial }) {
   const [loading, setLoading] = useState(!initial?.catalogo?.length);
   const [message, setMessage] = useState("");
   const snapshotRef = useRef(null);
+
+  const mapaCatalogo = useMemo(() => {
+    const m = new Map();
+    for (const v of catalogo ?? []) {
+      for (const item of v.itens ?? []) m.set(item.slug, item);
+    }
+    return m;
+  }, [catalogo]);
 
   useEffect(() => {
     if (initial?.catalogo?.length) return;
@@ -192,7 +331,8 @@ export default function TecnologiasEditor({ initial }) {
         if (!res.ok) throw new Error(data.detail || data.error);
         if (cancelado) return;
         setCatalogo(data.catalogo ?? []);
-        setTecnologias(data.tecnologias ?? { ativas: [], itens: [] });
+        setTecnologias(data.tecnologias ?? { ativas: [], itens: [], extras: [] });
+        setSegmentos(buildSegmentosMap(data.tecnologias));
         if (data.catalogo?.[0]?.slug) setVertentesVisiveis([data.catalogo[0].slug]);
       } catch (err) {
         if (!cancelado) setMessage(err.message || "Erro ao carregar catálogo");
@@ -207,9 +347,10 @@ export default function TecnologiasEditor({ initial }) {
   }, [initial?.catalogo]);
 
   const ativasSet = new Set(tecnologias.ativas ?? []);
-  const marcadas = (tecnologias.itens ?? [])
-    .filter((i) => ativasSet.has(i.slug))
-    .map((i) => i.nome);
+  const marcadas = [
+    ...(tecnologias.itens ?? []).filter((i) => ativasSet.has(i.slug)).map((i) => i.nome),
+    ...(tecnologias.extras ?? []).map((e) => e.nome),
+  ];
 
   const vertentesEmTela = catalogo.filter((v) => vertentesVisiveis.includes(v.slug));
 
@@ -229,15 +370,39 @@ export default function TecnologiasEditor({ initial }) {
   function toggleAtiva(slug) {
     setTecnologias((prev) => {
       const set = new Set(prev.ativas ?? []);
-      if (set.has(slug)) set.delete(slug);
-      else set.add(slug);
+      if (set.has(slug)) {
+        set.delete(slug);
+      } else {
+        set.add(slug);
+        const item = mapaCatalogo.get(slug);
+        if (item?.segmentosCv?.length) {
+          setSegmentos((s) => ({ ...s, [slug]: s[slug]?.length ? s[slug] : [...item.segmentosCv] }));
+        }
+      }
       return { ...prev, ativas: [...set] };
     });
   }
 
+  function updateSegmentos(slug, next) {
+    setSegmentos((prev) => ({ ...prev, [slug]: next }));
+  }
+
+  function updateExtras(next) {
+    setTecnologias((prev) => ({ ...prev, extras: next }));
+  }
+
+  function removeExtra(id, patch) {
+    if (patch) {
+      updateExtras((tecnologias.extras ?? []).map((e) => (e.id === id ? patch : e)));
+      return;
+    }
+    updateExtras((tecnologias.extras ?? []).filter((e) => e.id !== id));
+  }
+
   function startEdit() {
     snapshotRef.current = {
-      tecnologias: { ...tecnologias, ativas: [...(tecnologias.ativas ?? [])] },
+      tecnologias: structuredClone(tecnologias),
+      segmentos: { ...segmentos },
       vertentesVisiveis: [...vertentesVisiveis],
       modoLista,
     };
@@ -248,6 +413,7 @@ export default function TecnologiasEditor({ initial }) {
   function cancelEdit() {
     if (snapshotRef.current) {
       setTecnologias(snapshotRef.current.tecnologias);
+      setSegmentos(snapshotRef.current.segmentos);
       setVertentesVisiveis(snapshotRef.current.vertentesVisiveis);
       setModoLista(snapshotRef.current.modoLista);
     }
@@ -265,6 +431,8 @@ export default function TecnologiasEditor({ initial }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ativas: tecnologias.ativas ?? [],
+          extras: tecnologias.extras ?? [],
+          segmentos,
         }),
       });
       const data = await res.json();
@@ -273,6 +441,7 @@ export default function TecnologiasEditor({ initial }) {
 
       setCatalogo(data.catalogo ?? catalogo);
       setTecnologias(data.tecnologias);
+      setSegmentos(buildSegmentosMap(data.tecnologias));
       snapshotRef.current = null;
       setEditing(false);
       setMessage("Alterações salvas.");
@@ -285,11 +454,7 @@ export default function TecnologiasEditor({ initial }) {
 
   if (loading) {
     return (
-      <ProfileSection
-        title="Tecnologias"
-        isEditing={false}
-        view={<p className="text-sm text-zinc-400">…</p>}
-      />
+      <ProfileSection title="Tecnologias" isEditing={false} view={<p className="text-sm text-zinc-400">…</p>} />
     );
   }
 
@@ -324,19 +489,32 @@ export default function TecnologiasEditor({ initial }) {
               <BarraSelecionadas
                 catalogo={catalogo}
                 ativas={tecnologias.ativas}
+                extras={tecnologias.extras}
+                segmentos={segmentos}
+                todosSegmentos={todosSegmentos}
+                editing
                 onToggle={toggleAtiva}
+                onSegmentos={updateSegmentos}
+                onRemoveExtra={removeExtra}
               />
             </FormSubsection>
 
-            <FormSubsection title="Áreas">
-              <VertenteTabs
-                vertentes={catalogo}
-                ativas={vertentesVisiveis}
-                onToggle={toggleVertenteVisivel}
+            <FormSubsection title="Fora do catálogo">
+              <ExtrasEditor
+                extras={tecnologias.extras ?? []}
+                todosSegmentos={todosSegmentos}
+                onChange={updateExtras}
               />
             </FormSubsection>
 
             <FormSubsection title="Catálogo">
+              <div className="mb-3">
+                <VertenteTabs
+                  vertentes={catalogo}
+                  ativas={vertentesVisiveis}
+                  onToggle={toggleVertenteVisivel}
+                />
+              </div>
               <div className="mb-3">
                 <ModoListaToggle
                   modo={modoLista}

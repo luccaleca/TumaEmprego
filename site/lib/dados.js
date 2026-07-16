@@ -106,34 +106,9 @@ export function saveBusca(busca) {
   fs.writeFileSync(filePath, `${stringify(payload)}\n`, "utf8");
 }
 
-export function getCurriculoAtivo() {
-  ensureDataFile("curriculo/ativo.yml", "curriculo/ativo.example.yml");
-  return readYaml("curriculo/ativo.yml");
-}
-
 export function getRespostasPadrao() {
   ensureDataFile("respostas/padrao.yml", "respostas/padrao.example.yml");
   return readYaml("respostas/padrao.yml");
-}
-
-export function getComportamental() {
-  ensureDataFile("respostas/comportamental.yml", "respostas/comportamental.example.yml");
-  return readYaml("respostas/comportamental.yml");
-}
-
-export function getCvResumo() {
-  ensureDataFile("cv-base.md", "cv-base.example.md");
-  const raw = readText("cv-base.md");
-  const match = raw.match(/## Resumo\s*\n+([\s\S]*?)(?=\n## )/);
-  if (!match) return "";
-
-  return match[1]
-    .replace(/\*\*Áreas:\*\*[^\n]*/g, "")
-    .replace(/\*\*Stack(\s*\([^)]*\))?:\*\*[^\n]*/g, "")
-    .replace(/\*\*Ramificações:\*\*[^\n]*/g, "")
-    .replace(/\*\*Foco:\*\*[^\n]*/g, "")
-    .replace(/[^\n]*(?:fonte; versões por segmento|este arquivo é a fonte)[^\n]*/gi, "")
-    .trim();
 }
 
 export function getCvBase() {
@@ -144,31 +119,6 @@ export function getCvBase() {
 export function saveCvBase(content) {
   const filePath = path.join(DADOS_ROOT, "cv-base.md");
   fs.writeFileSync(filePath, String(content), "utf8");
-}
-
-const CURRICULO_PDF = "curriculo/principal.pdf";
-
-export function getCurriculoPdfPath() {
-  const filePath = path.join(DADOS_ROOT, CURRICULO_PDF);
-  return fs.existsSync(filePath) ? filePath : null;
-}
-
-export function getCurriculoArquivo() {
-  const filePath = getCurriculoPdfPath();
-  if (!filePath) return null;
-
-  const stat = fs.statSync(filePath);
-  return {
-    name: path.basename(filePath),
-    size: stat.size,
-    updatedAt: stat.mtime.toISOString(),
-  };
-}
-
-export function saveCurriculoPdf(buffer) {
-  const dir = path.join(DADOS_ROOT, "curriculo");
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, "principal.pdf"), buffer);
 }
 
 export function getProfilePhotoPath() {
@@ -200,68 +150,25 @@ export function saveTecnologias(tecnologias) {
   fs.writeFileSync(filePath, `${stringify(payload)}\n`, "utf8");
 }
 
-export function saveCurriculoAtivo(ativo) {
-  const filePath = path.join(DADOS_ROOT, "curriculo/ativo.yml");
-  const current = getCurriculoAtivo();
-  fs.writeFileSync(filePath, `${stringify({ ...current, ...ativo })}\n`, "utf8");
-}
-
 export function saveRespostasPadrao(respostas) {
   const filePath = path.join(DADOS_ROOT, "respostas/padrao.yml");
   const current = getRespostasPadrao();
   fs.writeFileSync(filePath, `${stringify({ ...current, ...respostas })}\n`, "utf8");
 }
 
-export function saveComportamental(data) {
-  const filePath = path.join(DADOS_ROOT, "respostas/comportamental.yml");
-  fs.writeFileSync(filePath, `${stringify(data)}\n`, "utf8");
-}
-
-export function saveCvResumo(resumo) {
-  const filePath = path.join(DADOS_ROOT, "cv-base.md");
-  const raw = readText("cv-base.md");
-  const areasMatch = raw.match(/\*\*Áreas:\*\*([^\n]+)/);
-  const stackMatch = raw.match(/\*\*Stack:\*\*([^\n]+)/);
-  const focoMatch = raw.match(/\*\*Foco:\*\*([^\n]+)/);
-  const areasLine = areasMatch ? `\n\n**Áreas:**${areasMatch[1]}` : "";
-  const stackLine = stackMatch ? `\n\n**Stack:**${stackMatch[1]}` : "";
-  const focoLine = focoMatch ? `\n\n**Foco:**${focoMatch[1]}` : "";
-  const block = `## Resumo\n\n${String(resumo).trim()}${stackLine}${focoLine}${areasLine}\n\n`;
-  const updated = raw.replace(/## Resumo\s*\n+[\s\S]*?(?=\n## )/, block);
-
-  if (updated === raw) {
-    throw new Error("Não foi possível atualizar a seção Resumo em cv-base.md");
-  }
-
-  fs.writeFileSync(filePath, updated, "utf8");
-}
-
-export function getPerfilCompleto() {
-  return {
-    profile: getProfile(),
-    respostas: getRespostasPadrao(),
-    resumo: getCvResumo(),
-  };
-}
-
-export function savePerfilCompleto({ profile, respostas, resumo }) {
-  if (profile) saveProfile(profile);
-  if (respostas) saveRespostasPadrao(respostas);
-  if (resumo !== undefined) saveCvResumo(resumo);
-}
-
 const CONTEUDO_BANCO = "conteudo/banco.yml";
 const CONTEUDO_BANCO_EXAMPLE = "conteudo/banco.example.yml";
+const CONTEUDO_ATIVIDADES = "conteudo/atividades.yml";
+const CONTEUDO_ATIVIDADES_EXAMPLE = "conteudo/atividades.example.yml";
 
 export function getConteudoBanco() {
   ensureDataFile(CONTEUDO_BANCO, CONTEUDO_BANCO_EXAMPLE);
   return readYaml(CONTEUDO_BANCO);
 }
 
-export function getCurriculoModelo() {
-  const filePath = path.join(DADOS_ROOT, "curriculo/modelo.md");
-  if (!fs.existsSync(filePath)) return "";
-  return fs.readFileSync(filePath, "utf8");
+export function getConteudoAtividades() {
+  ensureDataFile(CONTEUDO_ATIVIDADES, CONTEUDO_ATIVIDADES_EXAMPLE);
+  return readYaml(CONTEUDO_ATIVIDADES);
 }
 
 export function saveConteudoBanco(data) {
@@ -273,4 +180,86 @@ export function saveConteudoBanco(data) {
 export function getPortalSolides() {
   ensureDataFile("portais/solides.yml", "portais/solides.example.yml");
   return readYaml("portais/solides.yml");
+}
+
+export function getPortalGupy() {
+  ensureDataFile("portais/gupy.yml", "portais/gupy.example.yml");
+  return readYaml("portais/gupy.yml");
+}
+
+/** Overrides de campos do molde (Sólides / Gupy) editados no Currículo. */
+export function getPortalCampos(portalId) {
+  const id = String(portalId ?? "").toLowerCase();
+  let data = null;
+  try {
+    if (id === "solides") data = getPortalSolides();
+    else if (id === "gupy") data = getPortalGupy();
+  } catch {
+    return {};
+  }
+  const campos = data?.campos;
+  if (!campos || typeof campos !== "object" || Array.isArray(campos)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(campos)) {
+    if (v == null || typeof v === "object") continue;
+    out[k] = String(v);
+  }
+  return out;
+}
+
+function textoCampoBase(v) {
+  if (v == null) return "";
+  if (Array.isArray(v)) {
+    return v
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item?.nome && item?.nivel) return `${item.nome} (${item.nivel})`;
+        if (item?.idioma && item?.nivel) return `${item.idioma} (${item.nivel})`;
+        return "";
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return String(v);
+}
+
+/**
+ * Salva só campos que diferem da base automática (evita gravar tudo vazio).
+ * @param {string} portalId
+ * @param {Record<string, string>} campos
+ * @param {Record<string, unknown>} [baseValores]
+ */
+export function savePortalCampos(portalId, campos, baseValores = null) {
+  const id = String(portalId ?? "").toLowerCase();
+  const clean = {};
+  for (const [k, v] of Object.entries(campos ?? {})) {
+    if (v == null || typeof v === "object") continue;
+    const str = String(v);
+    if (baseValores) {
+      if (str === textoCampoBase(baseValores[k])) continue;
+    } else if (!str.trim()) {
+      continue;
+    }
+    clean[k] = str;
+  }
+
+  if (id === "solides") {
+    const filePath = path.join(DADOS_ROOT, "portais/solides.yml");
+    const current = getPortalSolides() ?? {};
+    fs.writeFileSync(filePath, `${stringify({ ...current, campos: clean })}\n`, "utf8");
+    return getPortalCampos("solides");
+  }
+
+  if (id === "gupy") {
+    const filePath = path.join(DADOS_ROOT, "portais/gupy.yml");
+    const current = getPortalGupy() ?? {};
+    fs.writeFileSync(
+      filePath,
+      `${stringify({ ...current, portal: "gupy", campos: clean })}\n`,
+      "utf8",
+    );
+    return getPortalCampos("gupy");
+  }
+
+  throw new Error(`Portal sem edição de campos: ${portalId}`);
 }

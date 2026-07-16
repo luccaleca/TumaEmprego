@@ -37,18 +37,43 @@ export function normalizarTecnologias(raw) {
 
   ativas = [...new Set(ativas.map((s) => String(s).trim()).filter(Boolean))];
 
+  const overrides = entrada.segmentos && typeof entrada.segmentos === "object" ? entrada.segmentos : {};
+
   const itens = Array.isArray(entrada.itens)
     ? entrada.itens
         .filter((i) => i?.slug && ativas.includes(i.slug))
-        .map((i) => ({
-          slug: i.slug,
-          nome: i.nome,
-          categoria: i.categoria ?? "",
-          vertenteSlug: i.vertenteSlug ?? i.vertente ?? "",
-          vertenteNome: i.vertenteNome ?? "",
-          segmentosCv: Array.isArray(i.segmentosCv) ? i.segmentosCv : [],
-        }))
+        .map((i) => {
+          const segmentosOverride = overrides[i.slug];
+          const segmentosCv = Array.isArray(segmentosOverride) && segmentosOverride.length
+            ? segmentosOverride.filter(Boolean)
+            : Array.isArray(i.segmentosCv)
+              ? i.segmentosCv.filter(Boolean)
+              : [];
+          return {
+            slug: i.slug,
+            nome: i.nome,
+            categoria: i.categoria ?? "",
+            vertenteSlug: i.vertenteSlug ?? i.vertente ?? "",
+            vertenteNome: i.vertenteNome ?? "",
+            segmentosCv,
+          };
+        })
     : [];
 
-  return { ativas, itens };
+  const extras = Array.isArray(entrada.extras)
+    ? entrada.extras
+        .map((e) => {
+          const nome = String(e?.nome ?? "").trim();
+          if (!nome) return null;
+          return {
+            id: String(e?.id ?? `extra-${nome}`).trim(),
+            nome,
+            categoria: String(e?.categoria ?? "Ferramentas").trim() || "Ferramentas",
+            segmentos: Array.isArray(e?.segmentos) ? e.segmentos.filter(Boolean) : [],
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  return { ativas, itens, extras, segmentos: overrides };
 }

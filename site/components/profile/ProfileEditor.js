@@ -462,11 +462,6 @@ export default function ProfileEditor({ initial, hasPhoto = false }) {
             </FormSubsection>
 
             <FormSubsection title="Foto">
-              <p className="text-xs text-zinc-500">
-                Coloque um jpg ou png em{" "}
-                <code className="rounded bg-zinc-100 px-1">dados/fotos/</code>.
-                {hasPhoto ? " Foto atual será exibida ao salvar." : ""}
-              </p>
               {hasPhoto ? (
                 <img
                   src="/api/photo"

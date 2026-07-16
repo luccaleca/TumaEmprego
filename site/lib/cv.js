@@ -16,7 +16,11 @@ export function isPlatformOnlyCvLine(line) {
   if (!trimmed) return false;
   if (trimmed.startsWith("<!--") || trimmed.endsWith("-->")) return true;
   if (/^\*\*Cargo-alvo\s*\(base\):\*\*/i.test(trimmed)) return true;
-  if (/^\*\*(Ramificações|Stack\s*\(visão geral\)|Áreas|Foco)(\s|\()/i.test(trimmed)) return true;
+  if (/^\*\*(Ramificações|Stack\s*\(visão geral\)|Stack\s*\(perfil\)|Áreas|Foco)(\s|\()/i.test(trimmed)) {
+    return true;
+  }
+  // lista genérica **Stack:** A, B, C — ATS fraco; motor usa tech — uso
+  if (/^\*\*Stack:\*\*/i.test(trimmed)) return true;
   if (
     /^> /.test(trimmed) &&
     /fonte única|versão adaptada|estrutura ATS|derivada do cv-base|reúne todos os fatos|motor monta/i.test(
@@ -92,12 +96,19 @@ export function sanitizarMarkdownCvParaExport(raw) {
     const nl = part.indexOf("\n");
     const title = part.slice(0, nl).trim();
     let body = part.slice(nl + 1).trim();
+    if (/destaques/i.test(title)) return null;
     if (title === "Resumo") body = cleanResumoBody(body);
+    body = body
+      .split("\n")
+      .filter((line) => !isPlatformOnlyCvLine(line))
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
     return { title, body };
   });
 
   const body = sections
-    .filter((section) => section.title)
+    .filter((section) => section?.title && String(section.body ?? "").trim())
     .map((section) => `## ${section.title}\n\n${section.body}`)
     .join("\n\n");
 
@@ -106,9 +117,4 @@ export function sanitizarMarkdownCvParaExport(raw) {
 
 export function parseCvBase(raw) {
   return parseCvDocument(raw).sections;
-}
-
-export function getCvBaseRaw() {
-  const filePath = path.join(DADOS_ROOT, "cv-base.md");
-  return fs.readFileSync(filePath, "utf8");
 }

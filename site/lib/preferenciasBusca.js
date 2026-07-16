@@ -38,11 +38,6 @@ export function preferenciasFromBusca(busca) {
   };
 }
 
-/** @deprecated use preferenciasFromBusca */
-export function preferenciasBuscaFromProfile(profile) {
-  return preferenciasFromBusca(profile);
-}
-
 export function labelsSenioridades(slugs) {
   const lista = slugs ?? [];
   if (!lista.length) return "—";
@@ -66,12 +61,6 @@ export function expandirAlvosCandidatura(alvos, senioridades) {
   }
 
   return expandidos;
-}
-
-export function contarAlvosExpandidos(totalCargos, senioridades) {
-  const n = senioridades?.length ?? 0;
-  if (!totalCargos || !n) return 0;
-  return totalCargos * n;
 }
 
 export function buscaIgual(a, b) {

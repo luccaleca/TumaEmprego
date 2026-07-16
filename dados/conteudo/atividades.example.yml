@@ -1,0 +1,13 @@
+# Pool de atividades — template (copie para atividades.yml).
+# Preferir situação concreta + reframe em texto_por_segmento.
+
+experiencia_id: sua-experiencia-id
+empresa: Nome da Empresa
+
+atividades:
+  - id: exemplo-lista-whatsapp
+    segmentos: [dados-bi-analytics, marketing-growth]
+    texto: Organizei CSV da base de clientes para disparo no WhatsApp em lançamento.
+    texto_por_segmento:
+      dados-bi-analytics: Tratei CSV da base (duplicatas, telefone) e estruturei lista para disparo no WhatsApp.
+      marketing-growth: Organizei lista de contatos no CSV para disparo no WhatsApp em lançamento.

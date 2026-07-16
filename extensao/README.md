@@ -11,16 +11,18 @@ Detecta vaga na página aberta, classifica o melhor segmento de currículo e ger
 
 ## Uso
 
-1. Abra a página de uma vaga (Gupy, LinkedIn, etc.)
+1. Abra a página de uma vaga (Gupy, LinkedIn, Red Bull, etc.)
 2. Clique no botão **TE** (canto inferior direito) **ou** no ícone da extensão → **Detectar vaga**
-3. Painel mostra segmento escolhido + link do **PDF**
-4. Revise em [localhost:3737/vaga](http://localhost:3737/vaga)
+3. Painel: escolha segmento → **Gerar currículo** e/ou **Preencher formulário**
+4. Autofill usa `profile`, `formacao` e `respostas/padrao` (Excel, LinkedIn, etc.)
+5. Revise os campos e **envie você mesmo** — a extensão não clica em Enviar
 
 ## API usada
 
 | Endpoint | Função |
 |----------|--------|
 | `GET /api/extensao/ping` | Site online |
+| `GET /api/extensao/autofill` | Dados para preencher formulário |
 | `POST /api/curriculo/vaga/pacote` | Classifica + adapta CV + PDF |
 
 Corpo do pacote:

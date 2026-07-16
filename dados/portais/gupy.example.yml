@@ -1,0 +1,8 @@
+# Copiar para gupy.yml — overrides dos campos do Meu currículo Gupy
+
+portal: gupy
+
+# Campos editados no site (Currículo → Gupy). Chave = id do campo na estrutura.
+campos: {}
+#  institution: Instituto Mauá de Tecnologia
+#  course: Sistemas de Informação

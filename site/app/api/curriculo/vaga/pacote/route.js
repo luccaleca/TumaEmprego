@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseCvBase } from "@/lib/cv";
-import { executarPacoteCvVaga } from "@/lib/adaptarCvVaga";
+import { executarPacoteVaga } from "@/lib/adaptarVagaPacote";
 import { getSegmentacaoConteudo } from "@/lib/segmentacoes";
 
 const SITE_ORIGIN = process.env.TUMA_SITE_ORIGIN ?? "http://localhost:3737";
@@ -16,9 +16,13 @@ export async function POST(request) {
     const body = await request.json();
     const vaga_descricao = String(body?.vaga_descricao ?? "").trim();
     const vaga_titulo = String(body?.vaga_titulo ?? "").trim();
+    const vaga_empresa = String(body?.vaga_empresa ?? "").trim();
     const vaga_url = String(body?.vaga_url ?? "").trim();
     const segmento_slug = String(body?.segmento_slug ?? "").trim() || undefined;
     const gerar_pdf = body?.gerar_pdf !== false;
+    const formato = String(body?.formato ?? "auto").trim() || "auto";
+    const portal = String(body?.portal ?? "").trim() || undefined;
+    const via_extensao = Boolean(body?.via_extensao);
 
     if (vaga_descricao.length < 20) {
       return NextResponse.json(
@@ -27,10 +31,57 @@ export async function POST(request) {
       );
     }
 
-    const pacote = await executarPacoteCvVaga(
-      { vaga_titulo, vaga_descricao, vaga_url, segmento_slug },
+    const pacote = await executarPacoteVaga(
+      {
+        vaga_titulo,
+        vaga_empresa,
+        vaga_descricao,
+        vaga_url,
+        segmento_slug,
+        formato,
+        portal,
+        via_extensao,
+      },
       { gerarPdf: gerar_pdf },
     );
+
+    if (pacote.status === "concluido" && (pacote.so_estrutura || pacote.portal === "gupy") && pacote.formato_gerado == null) {
+      return NextResponse.json({
+        ok: true,
+        so_estrutura: true,
+        portal: pacote.portal ?? "gupy",
+        portal_nome: pacote.portal_nome ?? "Gupy",
+        portal_status: pacote.portal_status ?? "ativo",
+        portal_motor_ativo: Boolean(pacote.portal_motor_ativo),
+        formato_gerado: null,
+        segmento_slug: pacote.segmento_slug ?? segmento_slug ?? null,
+        pedido: pacote.pedido ?? null,
+        vaga_url: vaga_url || pacote.pedido?.vaga_url || null,
+        revisarUrl: `${SITE_ORIGIN}/curriculo`,
+        mensagem: "Gupy usa estrutura do portal — preencha com a extensão.",
+      });
+    }
+
+    if (pacote.status === "concluido" && pacote.formato_gerado === "solides") {
+      return NextResponse.json({
+        ok: true,
+        portal: pacote.portal ?? "solides",
+        portal_nome: pacote.portal_nome ?? "Sólides",
+        portal_status: pacote.portal_status ?? "ativo",
+        portal_motor_ativo: true,
+        formato_gerado: "solides",
+        segmentacao: pacote.segmentacao,
+        segmentacao_id: pacote.segmentacao_id,
+        segmento_slug: pacote.segmento_slug,
+        segmento_label: pacote.segmento_label,
+        scores: pacote.scores,
+        solides: pacote.solides,
+        preview: pacote.preview,
+        candidatura: pacote.candidatura ?? null,
+        vaga_url: vaga_url || pacote.segmentacao?.vaga_url || null,
+        revisarUrl: `${SITE_ORIGIN}/curriculo?id=${encodeURIComponent(pacote.segmentacao_id)}`,
+      });
+    }
 
     if (pacote.status === "concluido") {
       let sections = [];
@@ -43,6 +94,11 @@ export async function POST(request) {
 
       return NextResponse.json({
         ok: true,
+        portal: pacote.portal ?? null,
+        portal_nome: pacote.portal_nome ?? null,
+        portal_status: pacote.portal_status ?? null,
+        portal_motor_ativo: pacote.portal_motor_ativo ?? false,
+        formato_gerado: "ats",
         pacote: {
           ...pacote,
           pdf: pacote.pdf ? { ...pacote.pdf, pdfUrl } : null,
@@ -53,7 +109,9 @@ export async function POST(request) {
         scores: pacote.scores,
         sections,
         pdfUrl,
-        revisarUrl: `${SITE_ORIGIN}/vaga`,
+        candidatura: pacote.candidatura ?? null,
+        vaga_url: vaga_url || pacote.segmentacao?.vaga_url || null,
+        revisarUrl: `${SITE_ORIGIN}/curriculo?id=${encodeURIComponent(pacote.segmentacao.id)}`,
       });
     }
 

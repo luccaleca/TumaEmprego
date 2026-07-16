@@ -20,12 +20,6 @@ export function montarPreviewExperiencia(exp, slug) {
   };
 }
 
-export function montarPreviewExperienciasSecao(experiencias, slug) {
-  return (experiencias ?? [])
-    .map((exp) => montarPreviewExperiencia(exp, slug))
-    .filter(Boolean);
-}
-
 /** Inventário completo — empresa + entregas de todas as áreas marcadas. */
 export function montarPreviewExperienciaTudo(exp) {
   if (!exp) return null;
@@ -52,24 +46,4 @@ export function montarPreviewExperienciaTudo(exp) {
     segmentos,
     bullets,
   };
-}
-
-export function formatarPreviewMarkdown(blocos) {
-  if (!blocos?.length) {
-    return "Nenhuma experiência para esta área. Marque os segmentos na edição.";
-  }
-
-  return blocos
-    .map((b) => {
-      const periodo = [b.periodo, b.local].filter(Boolean).join(" · ");
-      const lines = [`### ${b.titulo}`, "", periodo ? `**Período:** ${periodo}` : "", ""];
-      if (b.bullets.length) {
-        lines.push(...b.bullets.map((t) => `- ${t}`));
-      } else {
-        lines.push("- (sem entregas marcadas para esta área)");
-      }
-      if (b.nota) lines.push("", `*${b.nota}*`);
-      return lines.filter((l) => l !== "").join("\n");
-    })
-    .join("\n\n");
 }

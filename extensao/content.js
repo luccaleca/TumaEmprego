@@ -1,4 +1,5 @@
 const PAINEL_ID = "tuma-emprego-painel";
+let gerandoCurriculo = false;
 
 const PAINEL_STYLES = `
   .card {
@@ -71,6 +72,21 @@ const PAINEL_STYLES = `
     color: #047857;
     font-size: 10px;
     font-weight: 600;
+  }
+  .badge-portal {
+    display: inline-block;
+    margin-top: 4px;
+    margin-right: 4px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: #f5f3ff;
+    color: #6d28d9;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .badge-portal.planejado {
+    background: #f4f4f5;
+    color: #71717a;
   }
 `;
 
@@ -192,37 +208,88 @@ function opcoesSegmento(segmentos, selecionado) {
     .join("");
 }
 
+function badgePortal(classificacao, vaga) {
+  const portal = classificacao.portal ?? detectarPortalPorUrl(vaga?.url);
+  if (!portal) return "";
+
+  const nome = classificacao.portal_nome ?? PORTAIS_NOMES?.[portal] ?? portal;
+  const ativo =
+    classificacao.portal_motor_ativo === true ||
+    portal === "solides" ||
+    portal === "gupy";
+  const cls = ativo ? "badge-portal" : "badge-portal planejado";
+
+  return `<span class="${cls}">${esc(nome)}</span>`;
+}
+
+/** Gupy = estrutura do portal; não gera CV ATS. */
+function portalSoEstrutura(portal) {
+  return String(portal || "").toLowerCase() === "gupy";
+}
+
+function painelAcoesManuais({ primaryPreencher = true } = {}) {
+  if (primaryPreencher) {
+    return `
+    <div class="actions">
+      <button type="button" class="primary" id="tuma-preencher">Completar formulário</button>
+      <button type="button" class="link" id="tuma-gerar">Fazer currículo</button>
+    </div>`;
+  }
+  return `
+    <div class="actions">
+      <button type="button" class="primary" id="tuma-gerar">Fazer currículo</button>
+      <button type="button" class="link" id="tuma-preencher">Completar formulário</button>
+    </div>`;
+}
+
+function ligarAcoesPainel(shadow, { segmento_slug, vaga, classificacao, portal }) {
+  shadow.getElementById("tuma-gerar")?.addEventListener("click", () => {
+    const slug =
+      shadow.getElementById("tuma-segmento")?.value ?? segmento_slug ?? "";
+    gerarCurriculo(vaga, slug, classificacao);
+  });
+
+  shadow.getElementById("tuma-preencher")?.addEventListener("click", () => {
+    const slug =
+      shadow.getElementById("tuma-segmento")?.value ?? segmento_slug ?? "";
+    preencherFormularioPagina(slug, portal || classificacao?.portal || "");
+  });
+}
+
 function painelPrevia(classificacao, vaga) {
   const titulo = classificacao.vaga_titulo || vaga.titulo || "Vaga detectada";
   const slotInicial = slotSegmentoInicial(classificacao);
+  const portalBadge = badgePortal(classificacao, vaga);
+  const portal = classificacao.portal ?? detectarPortalPorUrl(vaga?.url) ?? "";
+  // Gupy: completar formulário em 1º; outros portais: currículo em 1º
+  const priorizarPreencher = portalSoEstrutura(portal);
 
   montarPainel(
     `
     <div class="head">
       <div>
         <p class="title">${esc(titulo)}</p>
-        <p class="meta">Base sugerida: <strong>${esc(classificacao.segmento_label)}</strong></p>
-        <span class="badge">Revise o segmento antes de gerar</span>
+        <p class="meta">${esc(classificacao.segmento_label)}</p>
+        ${portalBadge}
       </div>
       <button type="button" class="close">Fechar</button>
     </div>
     <div class="field">
-      <label for="tuma-segmento">Segmento do currículo</label>
-      <select id="tuma-segmento" aria-label="Segmento do currículo">
+      <label for="tuma-segmento">Segmento</label>
+      <select id="tuma-segmento" aria-label="Segmento">
         ${opcoesSegmento(classificacao.segmentos, slotInicial)}
       </select>
     </div>
-    <div class="actions">
-      <button type="button" class="primary" id="tuma-gerar">Gerar currículo</button>
-    </div>
+    ${painelAcoesManuais({ primaryPreencher: priorizarPreencher })}
   `,
     (shadow, host) => {
       host._tumaVaga = vaga;
       host._tumaClassificacao = classificacao;
-
-      shadow.getElementById("tuma-gerar")?.addEventListener("click", () => {
-        const segmento_slug = shadow.getElementById("tuma-segmento")?.value ?? slotInicial;
-        gerarCurriculo(vaga, segmento_slug);
+      ligarAcoesPainel(shadow, {
+        segmento_slug: slotInicial,
+        vaga,
+        classificacao,
+        portal,
       });
     },
   );
@@ -232,12 +299,21 @@ function painelSucesso(data) {
   const segmento = data.segmento_label ?? data.segmento_slug ?? "—";
   const titulo = data.pacote?.pedido?.vaga_titulo ?? data.segmentacao?.vaga_titulo ?? "Vaga";
   const siteUrl = data.revisarUrl ?? "";
+  const formato =
+    data.formato_gerado === "solides"
+      ? "Sólides"
+      : data.formato_gerado === "ats"
+        ? "ATS"
+        : data.so_estrutura
+          ? "Estrutura"
+          : data.portal_nome ?? "—";
 
-  montarPainel(`
+  montarPainel(
+    `
     <div class="head">
       <div>
         <p class="title">${esc(titulo)}</p>
-        <p class="meta">Segmento: ${esc(segmento)} · currículo gerado</p>
+        <p class="meta">Segmento: ${esc(segmento)} · ${esc(formato)}</p>
       </div>
       <button type="button" class="close">Fechar</button>
     </div>
@@ -245,15 +321,23 @@ function painelSucesso(data) {
       ${
         siteUrl
           ? `<a class="primary" href="${esc(siteUrl)}" target="_blank" rel="noopener">Abrir no site</a>`
-          : `<span class="meta">Abra localhost:3737/vaga</span>`
+          : ""
       }
+      <button type="button" class="link" id="tuma-preencher">Completar formulário</button>
     </div>
-  `);
+  `,
+    (shadow) => {
+      shadow.getElementById("tuma-preencher")?.addEventListener("click", () => {
+        const slug = data.segmento_slug ?? "";
+        preencherFormularioPagina(slug, data.portal || "");
+      });
+    },
+  );
 }
 
 function enviarMensagem(tipo, payload) {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type, payload }, (res) => {
+    chrome.runtime.sendMessage({ type: tipo, payload }, (res) => {
       if (chrome.runtime.lastError) {
         resolve({ ok: false, error: chrome.runtime.lastError.message });
         return;
@@ -263,14 +347,90 @@ function enviarMensagem(tipo, payload) {
   });
 }
 
-async function gerarCurriculo(vaga, segmento_slug) {
-  painelCarregando("Gerando currículo…");
+async function preencherFormularioPagina(segmento_slug, portal = "") {
+  painelCarregando("Buscando seus dados…");
+
+  const portalDetectado = portal || detectarPortalPorUrl(location.href) || "";
+  const res = await enviarMensagem("TUMA_AUTOFILL_DADOS", {
+    segmento_slug,
+    portal: portalDetectado,
+  });
+  if (!res.ok) {
+    painelErro(res.error ?? "Não consegui carregar os dados de preenchimento.");
+    return;
+  }
+
+  const resultado = await preencherFormularioComMapa(res);
+  const n = resultado.preenchidos;
+
+  montarPainel(`
+    <div class="head">
+      <div>
+        <p class="title">Formulário</p>
+        <p class="meta">${n} campo(s) com dados do Tuma. Revise e salve no portal.</p>
+        ${
+          n === 0
+            ? `<p class="err">Nenhum campo casou com os rótulos desta página. Tente rolar até o formulário e clicar de novo.</p>`
+            : ""
+        }
+      </div>
+      <button type="button" class="close">Fechar</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="link" id="tuma-preencher-de-novo">Preencher de novo</button>
+    </div>
+  `, (shadow) => {
+    shadow.getElementById("tuma-preencher-de-novo")?.addEventListener("click", () => {
+      preencherFormularioPagina(segmento_slug);
+    });
+  });
+}
+
+async function gerarCurriculo(vaga, segmento_slug, classificacao = null) {
+  if (gerandoCurriculo) return { ok: false, error: "ja_gerando" };
+  gerandoCurriculo = true;
+
+  try {
+  // Sempre relê a página atual — JD fresca + dados do candidato no motor.
+  const fresca = typeof extrairVagaDaPagina === "function" ? extrairVagaDaPagina() : null;
+  const usarFresca =
+    fresca?.descricao &&
+    (!vaga?.descricao || fresca.descricao.length >= (vaga.descricao?.length ?? 0));
+  const vagaEfetiva = usarFresca
+    ? {
+        titulo: fresca.titulo || vaga?.titulo || "",
+        empresa: fresca.empresa || vaga?.empresa || "",
+        descricao: fresca.descricao,
+        url: fresca.url || vaga?.url || location.href,
+      }
+    : {
+        titulo: vaga?.titulo || fresca?.titulo || "",
+        empresa: vaga?.empresa || fresca?.empresa || "",
+        descricao: vaga?.descricao || fresca?.descricao || "",
+        url: vaga?.url || fresca?.url || location.href,
+      };
+
+  const portal =
+    classificacao?.portal ?? detectarPortalPorUrl(vagaEfetiva?.url || location.href) ?? "";
+
+  if (!vagaEfetiva.descricao || vagaEfetiva.descricao.length < 20) {
+    painelErro("Não li a descrição da vaga nesta página.");
+    return { ok: false, error: "descricao_curta" };
+  }
+
+  painelCarregando("Lendo a vaga e gerando currículo…");
+
+  // Manual: sempre gera CV (ATS ou Sólides). Gupy + formato ats = CV para baixar.
+  const formato = portal === "solides" ? "solides" : "ats";
 
   const res = await enviarMensagem("TUMA_GERAR_PACOTE", {
-    vaga_titulo: vaga.titulo,
-    vaga_descricao: vaga.descricao,
-    vaga_url: vaga.url,
+    vaga_titulo: vagaEfetiva.titulo,
+    vaga_empresa: vagaEfetiva.empresa ?? "",
+    vaga_descricao: vagaEfetiva.descricao,
+    vaga_url: vagaEfetiva.url,
     segmento_slug,
+    portal,
+    formato,
   });
 
   if (!res.ok) {
@@ -278,16 +438,45 @@ async function gerarCurriculo(vaga, segmento_slug) {
     return res;
   }
 
+  if (res.so_estrutura && !res.formato_gerado) {
+    painelErro("Este portal usa formulário próprio. Use Completar formulário.");
+    return res;
+  }
+
   painelSucesso(res);
   return res;
+  } finally {
+    gerandoCurriculo = false;
+  }
 }
 
 async function detectarVagaNaPagina() {
   const vaga = extrairVagaDaPagina();
+  const portalPagina = detectarPortalPorUrl(vaga?.url || location.href) || "";
 
+  // Curriculum / apply sem JD longa: painel manual com as duas ações
   if (!vaga.descricao || vaga.descricao.length < 20) {
-    painelErro("Não achei descrição suficiente nesta página.");
-    return { ok: false, error: "sem_descricao", etapa: "extrair" };
+    montarPainel(
+      `
+      <div class="head">
+        <div>
+          <p class="title">${esc(vaga.titulo || "Página")}</p>
+          <p class="meta">${esc(portalPagina || "Formulário")}</p>
+        </div>
+        <button type="button" class="close">Fechar</button>
+      </div>
+      ${painelAcoesManuais({ primaryPreencher: true })}
+    `,
+      (shadow) => {
+        ligarAcoesPainel(shadow, {
+          segmento_slug: "",
+          vaga,
+          classificacao: { portal: portalPagina },
+          portal: portalPagina,
+        });
+      },
+    );
+    return { ok: true, etapa: "so_preencher", portal: portalPagina };
   }
 
   painelCarregando("Lendo vaga…");
@@ -295,6 +484,8 @@ async function detectarVagaNaPagina() {
   const classificacao = await enviarMensagem("TUMA_CLASSIFICAR_VAGA", {
     vaga_titulo: vaga.titulo,
     vaga_descricao: vaga.descricao,
+    vaga_url: vaga.url,
+    portal: portalPagina,
   });
 
   if (!classificacao.ok) {
@@ -309,6 +500,59 @@ async function detectarVagaNaPagina() {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type === "TUMA_DETECTAR_PAGINA") {
     detectarVagaNaPagina().then(sendResponse);
+    return true;
+  }
+
+  if (msg?.type === "TUMA_ACAO_PREENCHER") {
+    (async () => {
+      const det = await detectarVagaNaPagina();
+      // painel aberto — usuário escolhe; se force, completa já
+      if (msg.payload?.executar) {
+        const slug =
+          det?.classificacao?.segmento_slug ||
+          slotSegmentoInicial(det?.classificacao || {}) ||
+          "";
+        const portal =
+          det?.classificacao?.portal ||
+          det?.portal ||
+          detectarPortalPorUrl(location.href) ||
+          "";
+        await preencherFormularioPagina(slug, portal);
+      }
+      sendResponse(det);
+    })();
+    return true;
+  }
+
+  if (msg?.type === "TUMA_ACAO_CURRICULO") {
+    (async () => {
+      const vaga = extrairVagaDaPagina();
+      const portal = detectarPortalPorUrl(vaga?.url || location.href) || "";
+      let slug = "";
+      let classificacao = { portal };
+
+      if (vaga.descricao && vaga.descricao.length >= 20) {
+        classificacao = await enviarMensagem("TUMA_CLASSIFICAR_VAGA", {
+          vaga_titulo: vaga.titulo,
+          vaga_descricao: vaga.descricao,
+          vaga_url: vaga.url,
+          portal,
+        });
+        if (!classificacao.ok) {
+          sendResponse(classificacao);
+          return;
+        }
+        slug = slotSegmentoInicial(classificacao);
+        if (msg.payload?.executar) {
+          await gerarCurriculo(vaga, slug, classificacao);
+        } else {
+          painelPrevia(classificacao, vaga);
+        }
+      } else {
+        painelErro("Cole ou abra a vaga com descrição para gerar currículo.");
+      }
+      sendResponse({ ok: true, etapa: "curriculo" });
+    })();
     return true;
   }
 

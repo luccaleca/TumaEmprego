@@ -4,7 +4,7 @@ Cidade, UF · email@exemplo.com · (00) 00000-0000 · https://linkedin.com/in/se
 
 ## Resumo
 
-Busco **cargo-alvo**. Formação · principais tecnologias · entregas em 1ª pessoa (2–4 linhas).
+O que faço bem (até 5 ferramentas + entregas) · uma prova (projeto ou experiência) · Busco **cargo-alvo** (só no final, sem nome de empresa). Sem “Sou estudante…” no Resumo.
 
 ## Competências
 

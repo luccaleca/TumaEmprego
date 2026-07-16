@@ -42,6 +42,9 @@ dados/config/tecnologias.yml
 dados/conteudo/banco.yml
 !dados/conteudo/banco.example.yml
 
+dados/conteudo/atividades.yml
+!dados/conteudo/atividades.example.yml
+
 dados/respostas/padrao.yml
 !dados/respostas/padrao.example.yml
 
@@ -79,6 +82,8 @@ dados/candidaturas/*
 
 dados/portais/solides.yml
 !dados/portais/solides.example.yml
+dados/portais/gupy.yml
+!dados/portais/gupy.example.yml
 
 # Playwright
 playwright-report/

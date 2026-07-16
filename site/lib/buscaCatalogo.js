@@ -1,25 +1,55 @@
 import { normalizarTexto, tokenizarConsulta } from "@/lib/buscaBusca";
 import { tituloCompativelComSenioridades } from "@/lib/tituloSenioridade";
 
-function textoTitulo(titulo) {
-  return normalizarTexto([titulo.titulo, ...(titulo.sinonimos ?? [])].join(" "));
+/** Texto de busca: título canônico + sinônimos de portal. */
+function textoBuscaTitulo(titulo) {
+  return [titulo?.titulo, ...(titulo?.sinonimos ?? [])].filter(Boolean).join(" ");
 }
 
-export function flattenCatalogo(catalogo) {
+/** Match AND: cada token como palavra (ou junção tipo fullstack = full stack). */
+function tokensBatam(texto, tokens) {
+  if (!tokens?.length) return false;
+  const blob = normalizarTexto(texto);
+  const padded = ` ${blob} `;
+  const words = blob.split(/\s+/).filter(Boolean);
+
+  return tokens.every((token) => {
+    if (padded.includes(` ${token} `)) return true;
+
+    const compactToken = token.replace(/\s+/g, "");
+    if (compactToken.length < 4) return false;
+
+    for (let i = 0; i < words.length; i++) {
+      let joined = "";
+      for (let j = i; j < words.length; j++) {
+        joined += words[j];
+        if (joined === compactToken) return true;
+        if (joined.length > compactToken.length) break;
+      }
+    }
+    return false;
+  });
+}
+
+function flattenCatalogo(catalogo) {
   const itens = [];
 
   for (const area of catalogo ?? []) {
     for (const nicho of area.nichos ?? []) {
       for (const titulo of nicho.titulos ?? []) {
+        const textoTitulo = textoBuscaTitulo(titulo);
         itens.push({
           chave: titulo.chave,
           id: titulo.chave,
           titulo: titulo.titulo,
+          sinonimos: titulo.sinonimos ?? [],
           area: area.nome,
           areaSlug: area.slug,
           nicho: nicho.nome,
           nichoSlug: nicho.slug,
           caminho: `${area.nome} → ${nicho.nome} → ${titulo.titulo}`,
+          // Só título + sinônimos + nicho — área/titulosRaiz poluem (ex.: "BI" em todos de dados)
+          textoBusca: [textoTitulo, nicho.nome].join(" "),
         });
       }
     }
@@ -43,11 +73,7 @@ export function buscarNoCatalogo(catalogo, query, chavesAtivas = [], senioridade
   for (const item of itens) {
     if (!tituloCompativelComSenioridades(item.titulo, senioridades)) continue;
 
-    const blob = normalizarTexto(
-      [item.titulo, item.area, item.nicho, item.caminho].join(" "),
-    );
-    const match = tokens.every((token) => blob.includes(token));
-    if (!match) continue;
+    if (!tokensBatam(item.textoBusca, tokens)) continue;
 
     highlightChaves.add(item.chave);
     resultados.push({
@@ -55,6 +81,10 @@ export function buscarNoCatalogo(catalogo, query, chavesAtivas = [], senioridade
       nome: item.titulo,
       caminho: `${item.area} → ${item.nicho}`,
       ativo: ativos.has(item.chave),
+      matchViaSinonimo:
+        item.sinonimos?.length > 0 &&
+        tokensBatam(item.sinonimos.join(" "), tokens) &&
+        !tokensBatam(item.titulo, tokens),
     });
   }
 
@@ -71,9 +101,4 @@ export function buscarNoCatalogo(catalogo, query, chavesAtivas = [], senioridade
     .filter(Boolean);
 
   return { resultados, highlightChaves, catalogoFiltrado };
-}
-
-export function filtrarCatalogoPorArea(catalogo, areaSlug) {
-  if (!areaSlug) return catalogo;
-  return catalogo.filter((a) => a.slug === areaSlug);
 }

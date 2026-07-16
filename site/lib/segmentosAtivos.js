@@ -36,39 +36,3 @@ export function listarTodosSegmentosCatalogo(catalogo) {
     };
   });
 }
-
-export function filtrarSegmentosItem(segmentos, ativos = slugsSegmentosAtivos()) {
-  const set = new Set(ativos);
-  return (segmentos ?? []).filter((s) => set.has(s));
-}
-
-export function podarBancoPorSegmentosAtivos(banco) {
-  const ativos = slugsSegmentosAtivos();
-  if (!ativos.length) return banco;
-
-  const podar = (segmentos) => filtrarSegmentosItem(segmentos, ativos);
-
-  return {
-    ...banco,
-    experiencias: (banco.experiencias ?? []).map((exp) => ({
-      ...exp,
-      segmentos: podar(exp.segmentos),
-      bullets: (exp.bullets ?? []).map((b) => ({
-        ...b,
-        segmentos: podar(b.segmentos),
-      })),
-    })),
-    projetos: (banco.projetos ?? []).map((p) => ({
-      ...p,
-      segmentos: podar(p.segmentos),
-    })),
-    cursos: (banco.cursos ?? []).map((c) => ({
-      ...c,
-      segmentos: podar(c.segmentos),
-    })),
-    ferramentas: (banco.ferramentas ?? []).map((f) => ({
-      ...f,
-      segmentos: podar(f.segmentos),
-    })),
-  };
-}

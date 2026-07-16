@@ -1,5 +1,10 @@
 function limparTexto(texto) {
   return String(texto ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
     .replace(/\u00a0/g, " ")
     .replace(/\s+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -31,6 +36,13 @@ function lerJsonLdJobPosting() {
   return null;
 }
 
+function empresaDeJobLd(item) {
+  const org = item.hiringOrganization;
+  if (!org) return "";
+  if (typeof org === "string") return limparTexto(org);
+  return limparTexto(org.name ?? "");
+}
+
 function normalizarJobLd(item) {
   if (!item || typeof item !== "object") return null;
   const tipo = item["@type"];
@@ -44,6 +56,7 @@ function normalizarJobLd(item) {
   return {
     titulo: limparTexto(titulo),
     descricao: limparTexto(descricao),
+    empresa: empresaDeJobLd(item),
     fonte: "json-ld",
   };
 }
@@ -55,6 +68,26 @@ function textoDeSeletores(seletores) {
     if (txt.length >= 20) return txt;
   }
   return "";
+}
+
+/** Junta vários blocos da página (descrição + requisitos + atribuições). */
+function textoCombinado(seletores, { min = 80 } = {}) {
+  const partes = [];
+  const vistos = new Set();
+
+  for (const sel of seletores) {
+    for (const el of document.querySelectorAll(sel)) {
+      const txt = limparTexto(el?.innerText ?? el?.textContent ?? "");
+      if (txt.length < 40) continue;
+      const chave = txt.slice(0, 80);
+      if (vistos.has(chave)) continue;
+      vistos.add(chave);
+      partes.push(txt);
+    }
+  }
+
+  const junto = limparTexto(partes.join("\n\n"));
+  return junto.length >= min ? junto : "";
 }
 
 function tituloDeSeletores(seletores) {
@@ -78,6 +111,14 @@ function extrairLinkedIn() {
       "h1",
     ]) || document.title.replace(/\s*\|\s*LinkedIn.*$/i, "").trim();
 
+  const empresa = tituloDeSeletores([
+    ".job-details-jobs-unified-top-card__company-name a",
+    ".job-details-jobs-unified-top-card__company-name",
+    ".jobs-unified-top-card__company-name a",
+    ".jobs-unified-top-card__company-name",
+    "a.jobs-company__box",
+  ]);
+
   const descricao = textoDeSeletores([
     "#job-details",
     ".jobs-description__content",
@@ -87,7 +128,7 @@ function extrairLinkedIn() {
   ]);
 
   if (descricao.length < 20) return null;
-  return { titulo, descricao, fonte: "linkedin" };
+  return { titulo, empresa, descricao, fonte: "linkedin" };
 }
 
 function extrairGupy() {
@@ -100,22 +141,77 @@ function extrairGupy() {
     "h1",
   ]);
 
+  const empresa = tituloDeSeletores([
+    "[data-testid=\"company-name\"]",
+    ".job-header__company",
+    "a[href*=\"/companies/\"]",
+    "[class*=\"company-name\"]",
+  ]);
+
+  const descricao =
+    textoCombinado([
+      "[data-testid=\"job-description\"]",
+      ".job-description",
+      ".job-description__content",
+      "[data-testid=\"job-responsibilities\"]",
+      "[data-testid=\"job-requirements\"]",
+      "section[class*='description']",
+      "section[class*='responsabilit']",
+      "section[class*='requirement']",
+      "#job-description",
+      "main",
+    ]) ||
+    textoDeSeletores([
+      "[data-testid=\"job-description\"]",
+      ".job-description",
+      ".job-description__content",
+      "section",
+      "main",
+    ]);
+
+  if (descricao.length < 20) return null;
+  return { titulo, empresa, descricao, fonte: "gupy" };
+}
+
+function extrairSolides() {
+  const host = location.hostname.replace(/^www\./, "");
+  if (!host.includes("solides.com.br") && !host.includes("profiler.solides")) return null;
+
+  const titulo = tituloDeSeletores([
+    "h1",
+    "[class*='job-title']",
+    "[class*='vaga'] h2",
+    ".page-title",
+  ]);
+
+  const empresa = tituloDeSeletores([
+    "[class*='company']",
+    "[class*='empresa']",
+    "[class*='Company']",
+  ]);
+
   const descricao = textoDeSeletores([
-    "[data-testid=\"job-description\"]",
-    ".job-description",
-    ".job-description__content",
-    "section",
+    "[class*='job-description']",
+    "[class*='descricao']",
+    "[class*='description']",
     "main",
+    "article",
   ]);
 
   if (descricao.length < 20) return null;
-  return { titulo, descricao, fonte: "gupy" };
+  return { titulo, empresa, descricao, fonte: "solides" };
 }
 
 function extrairGenerico() {
   const titulo =
     tituloDeSeletores(["h1", "[role=\"heading\"]", "header h2"]) ||
     document.title.split("|")[0].split("-")[0].trim();
+
+  const empresa = tituloDeSeletores([
+    "[itemprop=\"hiringOrganization\"]",
+    "[class*='company']",
+    "[class*='empresa']",
+  ]);
 
   const descricao = textoDeSeletores([
     "main",
@@ -127,7 +223,7 @@ function extrairGenerico() {
   ]);
 
   if (descricao.length < 80) return null;
-  return { titulo, descricao, fonte: "generico" };
+  return { titulo, empresa, descricao, fonte: "generico" };
 }
 
 function extrairVagaDaPagina() {
@@ -139,6 +235,9 @@ function extrairVagaDaPagina() {
 
   const gupy = extrairGupy();
   if (gupy) return { ...gupy, url: location.href };
+
+  const solides = extrairSolides();
+  if (solides) return { ...solides, url: location.href };
 
   const generico = extrairGenerico();
   if (generico) return { ...generico, url: location.href };

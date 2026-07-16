@@ -6,15 +6,7 @@
 import fs from "fs";
 import path from "path";
 import { parse } from "yaml";
-import {
-  getBusca,
-  getConteudoBanco,
-  getCvBase,
-  getFormacao,
-  getProfile,
-  getRespostasPadrao,
-  getTecnologias,
-} from "./dados.js";
+import { getBusca, getConteudoAtividades, getConteudoBanco, getCvBase, getFormacao, getProfile, getRespostasPadrao, getTecnologias } from "./dados.js";
 import { LABELS_SEGMENTO } from "./conteudoConstants.js";
 import { extrairTecnologiasPerfil } from "./tecnologiasUtils.js";
 
@@ -59,14 +51,8 @@ export function termosParaSegmento(slug, fonte) {
 
   for (const t of f.tecnologias?.comNivel ?? []) {
     const segmentos = t.segmentosCv ?? [];
-    if (!segmentos.length || segmentos.includes(slug)) {
+    if (segmentos.length && segmentos.includes(slug)) {
       termos.add(String(t.nome).toLowerCase());
-    }
-  }
-
-  for (const item of f.banco?.ferramentas ?? []) {
-    if ((item.segmentos ?? []).includes(slug) && item.nome) {
-      termos.add(String(item.nome).toLowerCase());
     }
   }
 
@@ -80,6 +66,7 @@ export function getFonteCandidato() {
   const tecnologias = extrairTecnologiasPerfil(tecnologiasRaw);
   const busca = safe(() => getBusca(), {});
   const banco = safe(() => getConteudoBanco(), {});
+  const atividades = safe(() => getConteudoAtividades(), { atividades: [] });
   const cvBase = safe(() => getCvBase(), "");
   const respostas = safe(() => getRespostasPadrao(), {});
   const resultados = listarResultados();
@@ -89,8 +76,10 @@ export function getFonteCandidato() {
     profile,
     formacao,
     tecnologias,
+    tecnologiasRaw,
     busca,
     banco,
+    atividades,
     cv_base: cvBase,
     respostas,
     resultados,
@@ -135,19 +124,6 @@ export function formatarFormacaoCv(formacao) {
   const linhaPeriodo = [periodo, local, ...extras].filter(Boolean).join(" · ");
 
   return `### ${titulo}\n\n**Período:** ${linhaPeriodo || "—"}`;
-}
-
-export function blocoTecnologiasPerfil(tecnologias, slug) {
-  const termos = termosParaSegmento(slug, { tecnologias, banco: {} });
-  if (!termos.length) return "";
-
-  const lista = (tecnologias?.comNivel ?? [])
-    .filter((t) => termos.includes(t.nome.toLowerCase()) || termos.includes(t.slug))
-    .map((t) => t.nome);
-
-  if (!lista.length) return "";
-
-  return `- **Stack (perfil):** ${lista.join(", ")}`;
 }
 
 /** Resumo em markdown para prompts de IA — não vai para o PDF. */
@@ -215,6 +191,7 @@ export function montarContextoFonteParaPrompt(fonte, { segmentoSlug, vagaTitulo,
     "### Arquivos de referência",
     "- dados/cv-base.md",
     "- dados/conteudo/banco.yml",
+    "- dados/conteudo/atividades.yml",
     "- dados/config/tecnologias.yml",
     "- dados/config/formacao.yml",
     "- dados/config/profile.yml",
@@ -223,5 +200,3 @@ export function montarContextoFonteParaPrompt(fonte, { segmentoSlug, vagaTitulo,
 
   return linhas.join("\n");
 }
-
-export { extrairTecnologiasPerfil } from "./tecnologiasUtils.js";

@@ -89,20 +89,80 @@ const CATALOGO = [
         nome: "Análise",
         ordem: 1,
         titulos: [
-          { titulo: "Analista de Dados" },
-          { titulo: "Analista de BI", sinonimos: ["Business Intelligence"] },
-          { titulo: "Analista de Data Analytics" },
-          { titulo: "Analista de Inteligência de Dados" },
+          {
+            titulo: "Analista de Dados",
+            sinonimos: [
+              "Data Analyst",
+              "Analista de Análise de Dados",
+              "Assistente de Dados",
+              "Assistente de Análise de Dados",
+              "Estagiário de Dados",
+              "Estagiária de Dados",
+              "Estágio em Dados",
+              "Estágio em Análise de Dados",
+              "Estagiário em Análise de Dados",
+              "MIS",
+              "Analista MIS",
+              "Assistente de Informações Gerenciais",
+              "Analista de Informações Gerenciais",
+            ],
+          },
+          {
+            titulo: "Analista de BI",
+            sinonimos: [
+              "Business Intelligence",
+              "Analista de Business Intelligence",
+              "BI Analyst",
+              "Analista BI",
+              "Estágio em BI",
+              "Estagiário de BI",
+            ],
+          },
+          {
+            titulo: "Analista de Data Analytics",
+            sinonimos: ["Data Analytics", "Analytics Analyst", "Analista de Analytics"],
+          },
+          {
+            titulo: "Analista de Inteligência de Dados",
+            sinonimos: ["Inteligência de Dados", "Data Intelligence"],
+          },
           {
             titulo: "Analista de Inteligência de Negócios",
-            sinonimos: ["Inteligência de Negócios"],
+            sinonimos: [
+              "Inteligência de Negócios",
+              "Business Intelligence Analyst",
+              "Analista de Inteligência Comercial",
+            ],
           },
-          { titulo: "Analista de Performance" },
-          { titulo: "Analista de Planejamento de Dados" },
-          { titulo: "Analista ETL" },
-          { titulo: "Analista de Banco de Dados" },
-          { titulo: "Analista Estatístico de Dados" },
-          { titulo: "Analista de TI e Dados" },
+          {
+            titulo: "Analista de Performance",
+            sinonimos: ["Performance Analyst", "Analista de Performance de Dados"],
+          },
+          {
+            titulo: "Analista de Planejamento de Dados",
+            sinonimos: [
+              "Planejamento",
+              "Analista de Planejamento",
+              "Assistente de Planejamento",
+              "Estágio em Planejamento",
+            ],
+          },
+          {
+            titulo: "Analista ETL",
+            sinonimos: ["ETL Developer", "Analista de Integração de Dados"],
+          },
+          {
+            titulo: "Analista de Banco de Dados",
+            sinonimos: ["Database Analyst", "Analista de BD"],
+          },
+          {
+            titulo: "Analista Estatístico de Dados",
+            sinonimos: ["Analista Estatístico", "Statistical Analyst"],
+          },
+          {
+            titulo: "Analista de TI e Dados",
+            sinonimos: ["Analista de TI", "Analista de Sistemas e Dados"],
+          },
         ],
       },
       {
@@ -110,32 +170,74 @@ const CATALOGO = [
         nome: "Ciência e Engenharia de Dados",
         ordem: 2,
         titulos: [
-          { titulo: "Especialista em Dados" },
-          { titulo: "Cientista de Dados" },
-          { titulo: "Engenheiro de Dados" },
-          { titulo: "Engenheiro de Analytics" },
+          {
+            titulo: "Especialista em Dados",
+            sinonimos: ["Data Specialist", "Especialista de Dados"],
+          },
+          {
+            titulo: "Cientista de Dados",
+            sinonimos: ["Data Scientist", "Cientista de Data"],
+          },
+          {
+            titulo: "Engenheiro de Dados",
+            sinonimos: [
+              "Data Engineer",
+              "Engenheira de Dados",
+              "Estágio em Engenharia de Dados",
+              "Programa de Estágio - Engenharia de Dados",
+            ],
+          },
+          {
+            titulo: "Engenheiro de Analytics",
+            sinonimos: ["Analytics Engineer", "Engenheira de Analytics"],
+          },
         ],
       },
       {
         slug: "banco-dados",
         nome: "Banco de Dados",
         ordem: 3,
-        titulos: [{ titulo: "DBA", sinonimos: ["Administrador de Banco de Dados"] }],
+        titulos: [
+          {
+            titulo: "DBA",
+            sinonimos: [
+              "Administrador de Banco de Dados",
+              "Administradora de Banco de Dados",
+              "Database Administrator",
+            ],
+          },
+        ],
       },
       {
         slug: "people-rh",
         nome: "People Analytics",
         ordem: 4,
         titulos: [
-          { titulo: "People Analytics" },
-          { titulo: "Data Analyst", sinonimos: ["Analista de Dados (RH)"] },
+          {
+            titulo: "People Analytics",
+            sinonimos: [
+              "Analista de People Analytics",
+              "Estágio People Analytics",
+              "HR Analytics",
+              "Analista de RH e Dados",
+            ],
+          },
+          {
+            titulo: "Data Analyst",
+            sinonimos: ["Analista de Dados (RH)", "People Data Analyst"],
+          },
         ],
       },
       {
         slug: "estatistica",
         nome: "Estatística",
         ordem: 5,
-        titulos: [{ titulo: "Estatístico" }],
+        titulos: [
+          {
+            titulo: "Estatístico",
+            sinonimos: ["Estatística", "Statistician", "Analista Estatístico"],
+          },
+        ],
       },
     ],
   },
@@ -151,12 +253,37 @@ const CATALOGO = [
         nome: "Cargo geral",
         ordem: 1,
         titulos: [
-          { titulo: "Desenvolvedor", sinonimos: ["Desenvolvedora"] },
-          { titulo: "Programador", sinonimos: ["Programadora"] },
-          { titulo: "Pessoa Desenvolvedora" },
-          { titulo: "Analista Programador" },
-          { titulo: "Analista Desenvolvedor" },
-          { titulo: "Engenheiro de Software", sinonimos: ["Engenheira de Software"] },
+          {
+            titulo: "Desenvolvedor",
+            sinonimos: [
+              "Desenvolvedora",
+              "Developer",
+              "Dev",
+              "Estágio em Desenvolvimento",
+              "Estagiário de Desenvolvimento",
+              "Estagiário de TI",
+            ],
+          },
+          {
+            titulo: "Programador",
+            sinonimos: ["Programadora", "Programmer", "Estágio em Programação"],
+          },
+          {
+            titulo: "Pessoa Desenvolvedora",
+            sinonimos: ["Pessoa Desenvolvedor", "Pessoa Dev"],
+          },
+          {
+            titulo: "Analista Programador",
+            sinonimos: ["Analista Programadora", "Analista de Sistemas Programador"],
+          },
+          {
+            titulo: "Analista Desenvolvedor",
+            sinonimos: ["Analista Desenvolvedora", "Analista de Desenvolvimento"],
+          },
+          {
+            titulo: "Engenheiro de Software",
+            sinonimos: ["Engenheira de Software", "Software Engineer", "SWE"],
+          },
         ],
       },
       {
@@ -164,7 +291,16 @@ const CATALOGO = [
         nome: "Front-end",
         ordem: 2,
         titulos: [
-          { titulo: "Desenvolvedor Front-end", sinonimos: ["Front-end Developer"] },
+          {
+            titulo: "Desenvolvedor Front-end",
+            sinonimos: [
+              "Front-end Developer",
+              "Frontend Developer",
+              "Frontend",
+              "Front end",
+              "Desenvolvedor Frontend",
+            ],
+          },
         ],
       },
       {
@@ -172,7 +308,16 @@ const CATALOGO = [
         nome: "Back-end",
         ordem: 3,
         titulos: [
-          { titulo: "Desenvolvedor Back-end", sinonimos: ["Backend Developer"] },
+          {
+            titulo: "Desenvolvedor Back-end",
+            sinonimos: [
+              "Backend Developer",
+              "Back-end Developer",
+              "Backend",
+              "Back end",
+              "Desenvolvedor Backend",
+            ],
+          },
         ],
       },
       {
@@ -180,7 +325,16 @@ const CATALOGO = [
         nome: "Full Stack",
         ordem: 4,
         titulos: [
-          { titulo: "Desenvolvedor Full Stack", sinonimos: ["Fullstack"] },
+          {
+            titulo: "Desenvolvedor Full Stack",
+            sinonimos: [
+              "Fullstack",
+              "Full-stack",
+              "Full Stack Developer",
+              "Fullstack Developer",
+              "Desenvolvedor Fullstack",
+            ],
+          },
         ],
       },
       {
@@ -188,9 +342,18 @@ const CATALOGO = [
         nome: "Mobile",
         ordem: 5,
         titulos: [
-          { titulo: "Desenvolvedor Mobile" },
-          { titulo: "Desenvolvedor React Native" },
-          { titulo: "Desenvolvedor Flutter" },
+          {
+            titulo: "Desenvolvedor Mobile",
+            sinonimos: ["Mobile Developer", "Desenvolvedor de Aplicativos"],
+          },
+          {
+            titulo: "Desenvolvedor React Native",
+            sinonimos: ["React Native Developer"],
+          },
+          {
+            titulo: "Desenvolvedor Flutter",
+            sinonimos: ["Flutter Developer"],
+          },
         ],
       },
       {
@@ -198,11 +361,11 @@ const CATALOGO = [
         nome: "Por linguagem / stack",
         ordem: 6,
         titulos: [
-          { titulo: "Desenvolvedor Python" },
-          { titulo: "Desenvolvedor Java" },
-          { titulo: "Desenvolvedor .NET" },
-          { titulo: "Desenvolvedor Node.js" },
-          { titulo: "Desenvolvedor PHP" },
+          { titulo: "Desenvolvedor Python", sinonimos: ["Python Developer", "Dev Python"] },
+          { titulo: "Desenvolvedor Java", sinonimos: ["Java Developer", "Dev Java"] },
+          { titulo: "Desenvolvedor .NET", sinonimos: [".NET Developer", "C# Developer", "Dev .NET"] },
+          { titulo: "Desenvolvedor Node.js", sinonimos: ["Node.js Developer", "Node Developer"] },
+          { titulo: "Desenvolvedor PHP", sinonimos: ["PHP Developer"] },
         ],
       },
       {
@@ -210,10 +373,10 @@ const CATALOGO = [
         nome: "Web e frameworks",
         ordem: 7,
         titulos: [
-          { titulo: "Desenvolvedor Web" },
-          { titulo: "Desenvolvedor React" },
-          { titulo: "Desenvolvedor Angular" },
-          { titulo: "Desenvolvedor Vue" },
+          { titulo: "Desenvolvedor Web", sinonimos: ["Web Developer"] },
+          { titulo: "Desenvolvedor React", sinonimos: ["React Developer", "Dev React"] },
+          { titulo: "Desenvolvedor Angular", sinonimos: ["Angular Developer"] },
+          { titulo: "Desenvolvedor Vue", sinonimos: ["Vue Developer", "Vue.js Developer"] },
         ],
       },
     ],
@@ -230,9 +393,18 @@ const CATALOGO = [
         nome: "Engenharia",
         ordem: 1,
         titulos: [
-          { titulo: "Engenheiro de Software", sinonimos: ["Engenheira de Software"] },
-          { titulo: "Engenheiro de Sistemas", sinonimos: ["Engenheira de Sistemas"] },
-          { titulo: "Engenheiro de Aplicação", sinonimos: ["Engenheira de Aplicação"] },
+          {
+            titulo: "Engenheiro de Software",
+            sinonimos: ["Engenheira de Software", "Software Engineer"],
+          },
+          {
+            titulo: "Engenheiro de Sistemas",
+            sinonimos: ["Engenheira de Sistemas", "Systems Engineer"],
+          },
+          {
+            titulo: "Engenheiro de Aplicação",
+            sinonimos: ["Engenheira de Aplicação", "Application Engineer"],
+          },
         ],
       },
       {
@@ -240,10 +412,13 @@ const CATALOGO = [
         nome: "Arquitetura",
         ordem: 2,
         titulos: [
-          { titulo: "Arquiteto de Software", sinonimos: ["Arquiteta de Software"] },
+          {
+            titulo: "Arquiteto de Software",
+            sinonimos: ["Arquiteta de Software", "Software Architect"],
+          },
           {
             titulo: "Arquiteto de Soluções",
-            sinonimos: ["Arquiteta de Soluções"],
+            sinonimos: ["Arquiteta de Soluções", "Solutions Architect"],
           },
         ],
       },
@@ -254,7 +429,13 @@ const CATALOGO = [
         titulos: [
           {
             titulo: "Engenheiro de Qualidade de Software",
-            sinonimos: ["Engenheira de Qualidade de Software"],
+            sinonimos: [
+              "Engenheira de Qualidade de Software",
+              "QA Engineer",
+              "Analista de QA",
+              "Analista de Qualidade",
+              "Quality Assurance",
+            ],
           },
         ],
       },
@@ -263,8 +444,14 @@ const CATALOGO = [
         nome: "Embarcados e Firmware",
         ordem: 4,
         titulos: [
-          { titulo: "Engenheiro de Firmware", sinonimos: ["Engenheira de Firmware"] },
-          { titulo: "Engenheiro Embarcado", sinonimos: ["Engenheira Embarcada"] },
+          {
+            titulo: "Engenheiro de Firmware",
+            sinonimos: ["Engenheira de Firmware", "Firmware Engineer"],
+          },
+          {
+            titulo: "Engenheiro Embarcado",
+            sinonimos: ["Engenheira Embarcada", "Embedded Engineer"],
+          },
         ],
       },
       {
@@ -272,8 +459,14 @@ const CATALOGO = [
         nome: "Liderança técnica",
         ordem: 5,
         titulos: [
-          { titulo: "Tech Lead" },
-          { titulo: "Líder Técnico", sinonimos: ["Líder Técnica"] },
+          {
+            titulo: "Tech Lead",
+            sinonimos: ["Technical Lead", "Líder de Tecnologia"],
+          },
+          {
+            titulo: "Líder Técnico",
+            sinonimos: ["Líder Técnica", "Team Lead"],
+          },
         ],
       },
     ],
@@ -310,13 +503,34 @@ const CATALOGO = [
         nome: "Cargo geral",
         ordem: 1,
         titulos: [
-          { titulo: "Analista de Marketing" },
-          { titulo: "Assistente de Marketing", sinonimos: ["Assistente de Marketing Digital"] },
-          { titulo: "Profissional de Marketing" },
-          { titulo: "Especialista em Marketing" },
-          { titulo: "Coordenador de Marketing", sinonimos: ["Coordenadora de Marketing"] },
-          { titulo: "Gerente de Marketing", sinonimos: ["Gerente de Marketing Digital"] },
-          { titulo: "Consultor de Marketing", sinonimos: ["Consultora de Marketing"] },
+          {
+            titulo: "Analista de Marketing",
+            sinonimos: ["Marketing Analyst", "Estágio em Marketing", "Estagiário de Marketing"],
+          },
+          {
+            titulo: "Assistente de Marketing",
+            sinonimos: ["Assistente de Marketing Digital", "Auxiliar de Marketing"],
+          },
+          {
+            titulo: "Profissional de Marketing",
+            sinonimos: ["Marketing Professional"],
+          },
+          {
+            titulo: "Especialista em Marketing",
+            sinonimos: ["Marketing Specialist"],
+          },
+          {
+            titulo: "Coordenador de Marketing",
+            sinonimos: ["Coordenadora de Marketing", "Marketing Coordinator"],
+          },
+          {
+            titulo: "Gerente de Marketing",
+            sinonimos: ["Gerente de Marketing Digital", "Marketing Manager"],
+          },
+          {
+            titulo: "Consultor de Marketing",
+            sinonimos: ["Consultora de Marketing", "Marketing Consultant"],
+          },
         ],
       },
       {
@@ -324,9 +538,22 @@ const CATALOGO = [
         nome: "Marketing digital",
         ordem: 2,
         titulos: [
-          { titulo: "Analista de Marketing Digital" },
-          { titulo: "Especialista em Marketing Digital" },
-          { titulo: "Coordenador de Marketing Digital", sinonimos: ["Coordenadora de Marketing Digital"] },
+          {
+            titulo: "Analista de Marketing Digital",
+            sinonimos: [
+              "Digital Marketing Analyst",
+              "Estágio em Marketing Digital",
+              "Estagiário de Marketing Digital",
+            ],
+          },
+          {
+            titulo: "Especialista em Marketing Digital",
+            sinonimos: ["Digital Marketing Specialist"],
+          },
+          {
+            titulo: "Coordenador de Marketing Digital",
+            sinonimos: ["Coordenadora de Marketing Digital", "Digital Marketing Coordinator"],
+          },
         ],
       },
       {
@@ -334,12 +561,30 @@ const CATALOGO = [
         nome: "Performance / mídia paga",
         ordem: 3,
         titulos: [
-          { titulo: "Analista de Performance" },
-          { titulo: "Analista de Mídia" },
-          { titulo: "Gestor de Tráfego", sinonimos: ["Gestora de Tráfego"] },
-          { titulo: "Especialista em Mídia Paga" },
-          { titulo: "Especialista em Tráfego Pago" },
-          { titulo: "Media Buyer" },
+          {
+            titulo: "Analista de Performance",
+            sinonimos: ["Performance Marketing", "Analista de Performance Digital"],
+          },
+          {
+            titulo: "Analista de Mídia",
+            sinonimos: ["Media Analyst", "Analista de Mídia Paga"],
+          },
+          {
+            titulo: "Gestor de Tráfego",
+            sinonimos: ["Gestora de Tráfego", "Traffic Manager", "Gestor de Tráfego Pago"],
+          },
+          {
+            titulo: "Especialista em Mídia Paga",
+            sinonimos: ["Paid Media Specialist", "Especialista em Ads"],
+          },
+          {
+            titulo: "Especialista em Tráfego Pago",
+            sinonimos: ["Paid Traffic Specialist"],
+          },
+          {
+            titulo: "Media Buyer",
+            sinonimos: ["Comprador de Mídia", "Media Buyer Google Ads", "Meta Ads Buyer"],
+          },
         ],
       },
       {
@@ -347,10 +592,22 @@ const CATALOGO = [
         nome: "Growth",
         ordem: 4,
         titulos: [
-          { titulo: "Analista de Growth" },
-          { titulo: "Growth Marketing Manager" },
-          { titulo: "Especialista em Growth" },
-          { titulo: "Growth Hacker" },
+          {
+            titulo: "Analista de Growth",
+            sinonimos: ["Growth Analyst", "Estágio em Growth"],
+          },
+          {
+            titulo: "Growth Marketing Manager",
+            sinonimos: ["Gerente de Growth", "Growth Manager"],
+          },
+          {
+            titulo: "Especialista em Growth",
+            sinonimos: ["Growth Specialist"],
+          },
+          {
+            titulo: "Growth Hacker",
+            sinonimos: ["Growth Hacking"],
+          },
         ],
       },
       {
@@ -358,10 +615,22 @@ const CATALOGO = [
         nome: "Social media",
         ordem: 5,
         titulos: [
-          { titulo: "Analista de Social Media" },
-          { titulo: "Social Media" },
-          { titulo: "Community Manager" },
-          { titulo: "Especialista em Redes Sociais" },
+          {
+            titulo: "Analista de Social Media",
+            sinonimos: ["Social Media Analyst", "Estágio em Social Media"],
+          },
+          {
+            titulo: "Social Media",
+            sinonimos: ["Social Media Manager", "Assistente de Social Media"],
+          },
+          {
+            titulo: "Community Manager",
+            sinonimos: ["Gestor de Comunidade", "Gestora de Comunidade"],
+          },
+          {
+            titulo: "Especialista em Redes Sociais",
+            sinonimos: ["Specialist Social Media"],
+          },
         ],
       },
       {
@@ -369,10 +638,22 @@ const CATALOGO = [
         nome: "Conteúdo",
         ordem: 6,
         titulos: [
-          { titulo: "Analista de Conteúdo" },
-          { titulo: "Redator de Marketing", sinonimos: ["Redatora de Marketing"] },
-          { titulo: "Content Marketing" },
-          { titulo: "Especialista em Conteúdo Digital" },
+          {
+            titulo: "Analista de Conteúdo",
+            sinonimos: ["Content Analyst", "Estágio em Conteúdo"],
+          },
+          {
+            titulo: "Redator de Marketing",
+            sinonimos: ["Redatora de Marketing", "Copywriter"],
+          },
+          {
+            titulo: "Content Marketing",
+            sinonimos: ["Marketing de Conteúdo", "Content Marketer"],
+          },
+          {
+            titulo: "Especialista em Conteúdo Digital",
+            sinonimos: ["Digital Content Specialist"],
+          },
         ],
       },
       {
@@ -380,10 +661,22 @@ const CATALOGO = [
         nome: "CRM e retenção",
         ordem: 7,
         titulos: [
-          { titulo: "Analista de CRM" },
-          { titulo: "Especialista em CRM" },
-          { titulo: "Analista de Retenção" },
-          { titulo: "Analista de Relacionamento com Cliente" },
+          {
+            titulo: "Analista de CRM",
+            sinonimos: ["CRM Analyst", "Estágio em CRM"],
+          },
+          {
+            titulo: "Especialista em CRM",
+            sinonimos: ["CRM Specialist"],
+          },
+          {
+            titulo: "Analista de Retenção",
+            sinonimos: ["Retention Analyst"],
+          },
+          {
+            titulo: "Analista de Relacionamento com Cliente",
+            sinonimos: ["Customer Success Analyst", "Analista de Relacionamento"],
+          },
         ],
       },
       {
@@ -391,9 +684,18 @@ const CATALOGO = [
         nome: "E-commerce",
         ordem: 8,
         titulos: [
-          { titulo: "Analista de E-commerce" },
-          { titulo: "Especialista em E-commerce" },
-          { titulo: "Analista de Marketplace" },
+          {
+            titulo: "Analista de E-commerce",
+            sinonimos: ["E-commerce Analyst", "Analista de Ecommerce", "Estágio em E-commerce"],
+          },
+          {
+            titulo: "Especialista em E-commerce",
+            sinonimos: ["E-commerce Specialist"],
+          },
+          {
+            titulo: "Analista de Marketplace",
+            sinonimos: ["Marketplace Analyst"],
+          },
         ],
       },
       {
@@ -401,9 +703,18 @@ const CATALOGO = [
         nome: "SEO",
         ordem: 9,
         titulos: [
-          { titulo: "Analista de SEO" },
-          { titulo: "Especialista em SEO" },
-          { titulo: "Consultor de SEO", sinonimos: ["Consultora de SEO"] },
+          {
+            titulo: "Analista de SEO",
+            sinonimos: ["SEO Analyst", "Estágio em SEO"],
+          },
+          {
+            titulo: "Especialista em SEO",
+            sinonimos: ["SEO Specialist"],
+          },
+          {
+            titulo: "Consultor de SEO",
+            sinonimos: ["Consultora de SEO", "SEO Consultant"],
+          },
         ],
       },
       {
@@ -411,9 +722,18 @@ const CATALOGO = [
         nome: "Branding",
         ordem: 10,
         titulos: [
-          { titulo: "Analista de Branding" },
-          { titulo: "Especialista em Branding" },
-          { titulo: "Analista de Comunicação" },
+          {
+            titulo: "Analista de Branding",
+            sinonimos: ["Brand Analyst", "Analista de Marca"],
+          },
+          {
+            titulo: "Especialista em Branding",
+            sinonimos: ["Brand Specialist"],
+          },
+          {
+            titulo: "Analista de Comunicação",
+            sinonimos: ["Communication Analyst", "Estágio em Comunicação"],
+          },
         ],
       },
     ],
@@ -432,11 +752,20 @@ const CATALOGO = [
         titulos: [
           {
             titulo: "Engenheiro de Inteligência Artificial",
-            sinonimos: ["Engenheiro de IA", "Engenheira de IA"],
+            sinonimos: [
+              "Engenheiro de IA",
+              "Engenheira de IA",
+              "AI Engineer",
+              "Artificial Intelligence Engineer",
+            ],
           },
           {
             titulo: "Engenheiro de Machine Learning",
-            sinonimos: ["ML Engineer", "Engenheira de Machine Learning"],
+            sinonimos: [
+              "ML Engineer",
+              "Engenheira de Machine Learning",
+              "Machine Learning Engineer",
+            ],
           },
         ],
       },
@@ -445,8 +774,14 @@ const CATALOGO = [
         nome: "Ciência de Dados e IA",
         ordem: 2,
         titulos: [
-          { titulo: "Cientista de Dados" },
-          { titulo: "Analista de Dados e AI" },
+          {
+            titulo: "Cientista de Dados",
+            sinonimos: ["Data Scientist", "Cientista de Dados e IA"],
+          },
+          {
+            titulo: "Analista de Dados e AI",
+            sinonimos: ["Analista de Dados e IA", "AI Data Analyst"],
+          },
         ],
       },
       {
@@ -454,16 +789,30 @@ const CATALOGO = [
         nome: "Especialista",
         ordem: 3,
         titulos: [
-          { titulo: "Especialista em IA" },
-          { titulo: "Especialista em NLP" },
-          { titulo: "Especialista em LLM" },
+          {
+            titulo: "Especialista em IA",
+            sinonimos: ["AI Specialist", "Especialista em Inteligência Artificial"],
+          },
+          {
+            titulo: "Especialista em NLP",
+            sinonimos: ["NLP Specialist", "Natural Language Processing"],
+          },
+          {
+            titulo: "Especialista em LLM",
+            sinonimos: ["LLM Specialist", "Large Language Models"],
+          },
         ],
       },
       {
         slug: "mlops",
         nome: "MLOps",
         ordem: 4,
-        titulos: [{ titulo: "MLOps Engineer" }],
+        titulos: [
+          {
+            titulo: "MLOps Engineer",
+            sinonimos: ["Engenheiro de MLOps", "Engenheira de MLOps", "ML Ops"],
+          },
+        ],
       },
     ],
   },

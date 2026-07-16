@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev --prefix site",
+    "dev:clean": "powershell -NoProfile -Command \"if (Test-Path site/.next) { Remove-Item -Recurse -Force site/.next }; npm run dev\"",
+    "defender:exclude": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \"\"scripts/defender-exclusions.ps1\"\"'\"",
     "build": "npm run build --prefix site",
     "start": "npm run start --prefix site",
     "lint": "npm run lint --prefix site",

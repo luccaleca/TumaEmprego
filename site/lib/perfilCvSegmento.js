@@ -2,12 +2,11 @@
  * Perfis de currículo por segmento/vaga — o motor local monta um CV focado por área.
  */
 
-import { certificacoesFallbackSegmento } from "./certificacoesBr.js";
 import { LABELS_SEGMENTO } from "./conteudoConstants.js";
 import { slugsSegmentosAtivos } from "./segmentosAtivos.js";
 import { getFonteCandidato, termosParaSegmento, termosTecnologiaCandidato } from "./fonteCandidato.js";
-
-export { CERTIFICACOES_BR, CERTIFICACOES_POR_SEGMENTO } from "./certificacoesBr.js";
+import { provaDeAtividade } from "./atividadesConteudo.js";
+import { cargoAlvoNeutroDaVaga, normalizeTexto } from "./termosVaga.js";
 
 export const PERFIS = {
   "dados-bi-analytics": {
@@ -15,16 +14,12 @@ export const PERFIS = {
     label: "Dados, BI e Analytics",
     cargoAlvo: "Estágio / Trainee em Análise de Dados, BI e Analytics",
     stack: "SQL · Python · Power BI · PostgreSQL · Pandas · Excel · Supabase",
-    foco: "Análise de Dados · BI · Dashboards · ETL · KPIs",
     termos: [
       "sql", "python", "power bi", "dados", "analytics", "bi", "dashboard", "kpi",
       "postgresql", "supabase", "etl", "excel", "pandas", "modelagem",
     ],
-    certificacoes: certificacoesFallbackSegmento("dados-bi-analytics"),
     projetosOrdem: ["Projeto de Portfólio"],
-    projetosOmitir: [],
     expTitulo: "Experiência profissional — Análise de Dados",
-    expNota: "Foco em SQL, Python, Power BI e KPIs.",
     resumoExp:
       "Tenho experiência com **SQL**, **Python** e **Power BI** — consultas, dashboards e análises que apoiaram decisões de negócio.",
   },
@@ -34,17 +29,13 @@ export const PERFIS = {
     label: "Desenvolvimento de Software",
     cargoAlvo: "Estágio / Trainee em Desenvolvimento de Software (Web / Full Stack)",
     stack: "JavaScript · TypeScript · React · Next.js · Node.js · Express · PostgreSQL · Git",
-    foco: "Desenvolvimento Web · APIs · Full Stack · Front-end · Back-end",
     termos: [
       "javascript", "typescript", "react", "next.js", "nextjs", "node", "express", "api",
       "full stack", "front-end", "frontend", "back-end", "backend", "git", "html", "css",
       "postgresql", "prisma",
     ],
-    certificacoes: certificacoesFallbackSegmento("desenvolvimento"),
     projetosOrdem: ["Projeto de Portfólio"],
-    projetosOmitir: [],
     expTitulo: "Experiência profissional — Desenvolvimento de Software",
-    expNota: "Foco em React, Next.js, Node.js e entregas web.",
     resumoExp:
       "Tenho experiência com **React**, **Next.js**, **Node.js** e **SQL** — interfaces, APIs e automações em ambiente real.",
   },
@@ -54,16 +45,12 @@ export const PERFIS = {
     label: "Marketing Digital / Growth",
     cargoAlvo: "Estágio / Trainee em Marketing Digital, Growth e Performance",
     stack: "Google Analytics 4 · Google Ads · Meta Ads · Power BI · SQL · Python · GTM",
-    foco: "Growth Marketing · Performance · Analytics · Tráfego Pago · Segmentação",
     termos: [
       "marketing", "growth", "google ads", "meta ads", "analytics", "ga4", "gtm",
       "performance", "segmentação", "kpi", "power bi", "sql", "python", "shopify", "vtex",
     ],
-    certificacoes: certificacoesFallbackSegmento("marketing-growth"),
     projetosOrdem: ["Projeto de Portfólio"],
-    projetosOmitir: [],
     expTitulo: "Experiência profissional — Marketing / Growth",
-    expNota: "Foco em campanhas, analytics e KPIs.",
     resumoExp:
       "Tenho experiência com **Google Ads**, **Meta Ads**, **SQL** e **Power BI** — campanhas, segmentação e leitura de performance.",
   },
@@ -73,16 +60,12 @@ export const PERFIS = {
     label: "Inteligência Artificial / ML",
     cargoAlvo: "Estágio / Trainee em IA, ML ou Engenharia de IA",
     stack: "Python · LLM · RAG · FastAPI · PostgreSQL · Next.js · Prompt engineering",
-    foco: "IA aplicada · RAG · Chat SQL · Automação · Integração LLM",
     termos: [
       "ia", "inteligência artificial", "machine learning", "llm", "rag", "python",
       "fastapi", "postgresql", "prompt", "gemini", "chroma",
     ],
-    certificacoes: certificacoesFallbackSegmento("ia-ml"),
     projetosOrdem: ["Projeto de Portfólio"],
-    projetosOmitir: [],
     expTitulo: "Experiência profissional — Dados para Produto",
-    expNota: "Foco em base analítica e priorização com SQL/Python.",
     resumoExp:
       "Montei base analítica com **SQL**, **Python** e ferramentas de BI para apoiar produto e operação.",
   },
@@ -198,136 +181,242 @@ export function getPerfil(slug) {
   return PERFIS[key] ?? PERFIS["dados-bi-analytics"];
 }
 
-function tituloVagaParaResumo(titulo) {
-  return String(titulo ?? "")
-    .replace(/^candidat[oa]\s+(a|ao|à)\s+/i, "")
-    .replace(/^vaga\s+(para|de)\s+/i, "")
-    .trim();
+/** Prova: IA → projetos; demais → atividades Ótica / lançamento / banco. */
+function provaParaResumo(perfil, ctx) {
+  const termos = [
+    ...(ctx.termosVaga ?? []),
+    ...String(ctx.titulo ?? "")
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((w) => w.length > 2),
+    ...String(ctx.descricao ?? "")
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((w) => w.length > 3)
+      .slice(0, 40),
+  ];
+  const indice = Number.isFinite(ctx.provaIndice) ? ctx.provaIndice : 0;
+  const slug = perfil.slug;
+  const tVaga = (ctx.termosVaga ?? []).map((t) => normalizeTexto(t)).filter(Boolean);
+
+  const projetos = ctx.fonte?.banco?.projetos ?? [];
+  const ranqueados = projetos
+    .filter((p) => !/tuma.?emprego/i.test(`${p.id ?? ""} ${p.nome ?? ""}`))
+    .filter((p) => !p.segmentos || p.segmentos.includes(slug))
+    .map((p) => {
+      const resumo =
+        p.resumo_por_segmento?.[slug]?.trim() ||
+        p.subtitulo_por_segmento?.[slug]?.trim() ||
+        "";
+      const blob = normalizeTexto(`${p.nome} ${resumo}`);
+      const score = tVaga.reduce((n, t) => n + (blob.includes(t) ? 2 : 0), 0);
+      return { p, resumo, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Em vaga: prova preferencialmente de projeto alinhado à JD
+  if (ctx.tipo === "vaga" && ranqueados.length) {
+    const item = ranqueados[indice] ?? ranqueados[0];
+    if (item?.p?.nome && item.resumo) {
+      return `No projeto **${item.p.nome}**, ${item.resumo}`;
+    }
+    if (item?.p?.nome) {
+      return `Desenvolvi o projeto **${item.p.nome}** com foco em IA/LLM`;
+    }
+  }
+
+  if (slug === "ia-ml" && ranqueados.length) {
+    const item = ranqueados[indice] ?? ranqueados[0];
+    if (item?.p?.nome) {
+      return item.resumo
+        ? `No projeto **${item.p.nome}**, ${item.resumo}`
+        : `Desenvolvi o projeto **${item.p.nome}** com foco em IA/LLM`;
+    }
+  }
+
+  const dePool = provaDeAtividade(slug, { termos, indice });
+  if (dePool && !/prova principal|n[aã]o o est[aá]gio|banco\.yml/i.test(dePool)) {
+    return dePool;
+  }
+
+  const exp = (ctx.fonte?.banco?.experiencias ?? []).find((e) =>
+    (e.segmentos ?? []).includes(slug),
+  );
+  if (exp?.bullets?.length) {
+    const bullet = exp.bullets.find((b) => (b.segmentos ?? []).includes(slug));
+    const texto =
+      bullet?.texto_por_segmento?.[slug]?.trim() || bullet?.texto?.trim() || "";
+    if (texto && !/prova principal|n[aã]o o est[aá]gio/i.test(texto)) {
+      return texto.replace(/\*\*/g, "");
+    }
+  }
+
+  for (const item of ranqueados) {
+    if (item.p.nome && item.resumo) return `No projeto **${item.p.nome}**, ${item.resumo}`;
+    if (item.p.nome) return `Desenvolvi o projeto **${item.p.nome}**`;
+  }
+
+  return String(perfil.resumoExp ?? "").trim();
 }
 
-export function buildResumoPerfil(perfil, ctx) {
+function stackCurtaParaResumo(perfil, ctx = null) {
+  const base = String(perfil.stack ?? "")
+    .split(/\s*·\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (ctx?.tipo !== "vaga" || !ctx?.termosVaga?.length) {
+    return base.slice(0, 3).join(", ");
+  }
+
+  const tNorm = ctx.termosVaga.map((t) => normalizeTexto(t));
+  const scored = base
+    .map((tech) => {
+      const n = normalizeTexto(tech);
+      const hit = tNorm.some((t) => t && (n.includes(t) || t.includes(n)));
+      return { tech, hit };
+    })
+    .sort((a, b) => Number(b.hit) - Number(a.hit));
+
+  const picked = [];
+  for (const item of scored) {
+    if (picked.length >= 3) break;
+    picked.push(item.tech);
+  }
+  return picked.join(", ");
+}
+
+/** Fallback se não houver formação no perfil. */
+function fazBemParaSegmento(perfil, stack) {
+  if (!stack) {
+    const fallback = {
+      "marketing-growth": "Atuo com mídia, growth e leitura de performance",
+      "dados-bi-analytics": "Atuo com análise de dados, dashboards e decisão baseada em dados",
+      desenvolvimento: "Atuo com produtos web e entregas de software",
+      "ia-ml": "Atuo com produtos e fluxos com IA/LLM",
+    };
+    return fallback[perfil.slug] ?? `Atuo com entregas em ${perfil.label}`;
+  }
+  const map = {
+    "marketing-growth": `Atuo com ${stack}, em mídia, growth e leitura de performance`,
+    "dados-bi-analytics": `Atuo com ${stack}, em análises e decisão baseada em dados`,
+    desenvolvimento: `Atuo com ${stack}, em produtos web e entregas de software`,
+    "ia-ml": `Atuo com ${stack}, em produtos e fluxos com IA/LLM`,
+  };
+  return map[perfil.slug] ?? `Atuo com ${stack}, com foco em ${perfil.label}`;
+}
+
+/** Abertura natural — contexto estudo + stack (estilo CV feito à mão). */
+function aberturaResumo(perfil, stack, ctx) {
+  const formacao = ctx?.fonte?.formacao ?? {};
+  const curso = String(formacao.curso ?? "").trim();
+  const instituicao = String(formacao.instituicao ?? "").trim();
+  const semestreRaw = String(formacao.semestre ?? "").trim();
+  let semestre = "";
+  if (semestreRaw) {
+    semestre = /^\d+$/.test(semestreRaw) ? `${semestreRaw}º sem.` : semestreRaw;
+  }
+  const instCurta = instituicao
+    .replace(/Instituto Mau[aá] de Tecnologia/i, "IMT")
+    .replace(/\s*\(IMT\)\s*/i, "")
+    .trim();
+  const instLabel = /imt/i.test(instCurta) ? "IMT" : instCurta;
+
+  let contexto = "";
+  if (curso && instLabel) {
+    const sem = semestre ? `, ${semestre}` : "";
+    contexto = `Estudante de ${curso} (${instLabel}${sem})`;
+  } else if (curso) {
+    contexto = `Estudante de ${curso}`;
+  }
+
+  const foco = {
+    "marketing-growth": "mídia, growth e leitura de performance",
+    "dados-bi-analytics": "análise de dados aplicada a negócio",
+    desenvolvimento: "produtos web e entregas de software",
+    "ia-ml": "produtos e fluxos com IA",
+  }[perfil.slug] ?? perfil.label.toLowerCase();
+
+  if (contexto && stack) {
+    return `${contexto} com experiência prática em ${stack}, em ${foco}`;
+  }
+  if (contexto) {
+    return `${contexto} com foco em ${foco}`;
+  }
+  return fazBemParaSegmento(perfil, stack);
+}
+
+function encaixeParaResumo(perfil, ctx) {
   const primarios = ctx.primarios ?? [];
-  const cargos = [...new Set(primarios.map((a) => a.titulo))].slice(0, 3).join(", ");
+  const cargos = [...new Set(primarios.map((a) => a.titulo))].slice(0, 2).join(", ");
   const senior =
     [...new Set(primarios.map((a) => a.senioridade))].slice(0, 2).join(" / ") || "Estágio";
 
-  const objetivo =
-    ctx.tipo === "vaga"
-      ? `Busco **${tituloVagaParaResumo(ctx.titulo) || perfil.label}**`
-      : `Busco **${senior}** como ${cargos || perfil.label}`;
+  if (cargos) return `Busco **${senior}** como ${cargos}`;
 
-  const formacao = ctx.fonte?.formacao ?? {};
-  const formacaoTxt =
-    formacao.instituicao && formacao.curso
-      ? `Estudante de ${[formacao.grau, formacao.curso].filter(Boolean).join(" em ")} (${formacao.instituicao}${formacao.semestre ? `, ${formacao.semestre}º sem.` : ""})`
-      : "";
+  if (ctx.tipo === "vaga") {
+    const neutro = cargoAlvoNeutroDaVaga(perfil, ctx.titulo, ctx.descricao)
+      .replace(/^est[aá]gio\s*\/\s*trainee\s+em\s+/i, "estágio em ")
+      .trim();
+    if (neutro) return `Busco **${neutro}**`;
+  }
 
-  const paragrafo = `${objetivo}. ${formacaoTxt ? `${formacaoTxt} com entregas` : "Com entregas"} em ${perfil.stack}. ${perfil.resumoExp ?? ""}`
+  const cargoAlvo = String(perfil.cargoAlvo ?? "")
+    .replace(/^est[aá]gio\s*\/\s*trainee\s+em\s+/i, "estágio em ")
+    .trim();
+  if (cargoAlvo) return `Busco **${cargoAlvo}**`;
+  return `Busco **Estágio** em ${perfil.label}`;
+}
+
+/** Resumo denso: contexto + stack → prova → encaixe (estilo feito à mão). */
+export function buildResumoPerfil(perfil, ctx) {
+  const stack = stackCurtaParaResumo(perfil, ctx);
+  let abertura = aberturaResumo(perfil, stack, ctx);
+
+  if (ctx?.tipo === "vaga" && stack) {
+    const n = normalizeTexto(`${ctx.titulo ?? ""}\n${ctx.descricao ?? ""}`);
+    if (/agente|prompt/.test(n) && perfil.slug === "ia-ml") {
+      const formacaoBit = abertura.startsWith("Estudante")
+        ? abertura.split(" com experiência")[0]
+        : null;
+      const corpo = `com experiência prática em ${stack}, montando fluxos com IA (prompts, RAG e integrações)`;
+      abertura = formacaoBit ? `${formacaoBit} ${corpo}` : `Atuo ${corpo}`;
+    }
+  }
+
+  let prova = String(provaParaResumo(perfil, ctx) ?? "")
+    .replace(/\*\*/g, "")
+    .trim();
+  const resumoExp = String(perfil.resumoExp ?? "")
+    .replace(/\*\*/g, "")
+    .trim();
+  // Dados/dev/growth: prova de estágio (resumoExp) soa mais “feito à mão” que só nome de projeto
+  if (resumoExp && perfil.slug !== "ia-ml" && /^No projeto/i.test(prova)) {
+    prova = resumoExp;
+  } else if (!prova && resumoExp) {
+    prova = resumoExp;
+  }
+
+  return [abertura, prova, encaixeParaResumo(perfil, ctx)]
+    .filter(Boolean)
+    .map((s) => String(s).replace(/\.\s*$/, "").trim())
+    .filter(Boolean)
+    .join(". ")
     .replace(/\s{2,}/g, " ")
     .trim();
-
-  return paragrafo;
 }
 
 export function competenciasPerfil(perfil) {
+  // Fallback denso (1–2 linhas) — o motor real usa tecnologias.yml + evidência.
   const map = {
-    "dados-bi-analytics": `- **Linguagens / dados:** Python, SQL, Excel
-- **BI / visualização:** Power BI, DAX, dashboards, KPIs, Google Analytics 4
-- **Banco de dados:** PostgreSQL, Supabase, modelagem relacional, ETL
-- **Bibliotecas:** Pandas, tratamento de CSV, consultas analíticas
+    "dados-bi-analytics": `- **Ferramentas:** Python, SQL, Excel, Power BI, PostgreSQL, Pandas
 - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)`,
-    desenvolvimento: `- **Front-end:** React, Next.js, HTML, CSS, JavaScript, TypeScript
-- **Back-end:** Node.js, Express, FastAPI, REST APIs
-- **Banco / DevOps:** PostgreSQL, Supabase, Prisma, Git
-- **Automação:** n8n, Python para apoio a produto
+    desenvolvimento: `- **Ferramentas:** React, Next.js, JavaScript, Node.js, FastAPI, PostgreSQL, Git
 - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)`,
-    "marketing-growth": `- **Performance / mídia:** Google Ads, Meta Ads, campanhas e otimização
-- **Analytics:** Google Analytics 4, Google Tag Manager, funis e KPIs
-- **Dados para growth:** SQL, Python, Power BI, segmentação de público
-- **E-commerce:** Shopify, VTEX, relatórios comerciais
+    "marketing-growth": `- **Ferramentas:** Google Ads, Meta Ads, Google Analytics 4, SQL, Power BI
 - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)`,
-    "ia-ml": `- **IA / ML:** LLM, RAG (Chroma), prompt engineering, OpenRouter/Gemini/Ollama
-- **Back-end:** Python, FastAPI, APIs de inferência
-- **Dados:** PostgreSQL, SQL, analytics para features de IA
-- **Web:** Next.js, React — produto com IA embarcada
+    "ia-ml": `- **Ferramentas:** Python, FastAPI, RAG, PostgreSQL, Next.js, prompt engineering
 - **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)`,
   };
   return map[perfil.slug] ?? map["dados-bi-analytics"];
 }
-
-export const BULLETS_PROJETO = {
-  TumaCore: {
-    "dados-bi-analytics": {
-      stack: "Python, FastAPI, Next.js, PostgreSQL, Supabase, RAG (Chroma), LLM",
-      bullets: [
-        "Construí **centro de dados** do ecossistema TumaIA: hub operacional sobre Postgres/Supabase com KPIs, evolução de pedidos e distribuição por segmento/região.",
-        "Desenvolvi **Chat SQL**: pergunta em português → leitura do `information_schema` → geração de SQL PostgreSQL executável.",
-        "Entreguei módulos de **analytics** (saúde do produto, performance, tendências) e visão de carteira de clientes.",
-      ],
-    },
-    desenvolvimento: {
-      stack: "Python, FastAPI, Next.js, PostgreSQL, Supabase",
-      bullets: [
-        "Desenvolvi plataforma B2B com **FastAPI + Next.js** e PostgreSQL/Supabase.",
-        "Implementei API de consulta assistida a dados e módulos de dashboards operacionais.",
-        "Integrei RAG (Chroma) e LLM (Ollama/OpenRouter/Gemini) ao produto.",
-      ],
-    },
-    "marketing-growth": {
-      stack: "Next.js, PostgreSQL, KPIs, Analytics",
-      bullets: [
-        "Construí dashboards de **KPIs de growth**: evolução de pedidos, segmentos, regiões e funil operacional.",
-        "Entreguei analytics de saúde do produto, uso e performance para orientar campanhas.",
-      ],
-    },
-    "ia-ml": {
-      stack: "Python, FastAPI, RAG (Chroma), LLM, PostgreSQL, Next.js",
-      bullets: [
-        "Arquitetei **RAG + LLM** sobre PostgreSQL com leitura dinâmica de schema.",
-        "Implementei **Chat SQL** em linguagem natural com geração de consultas PostgreSQL.",
-        "Integrei Ollama, OpenRouter e Gemini em fluxo Next.js + FastAPI.",
-      ],
-    },
-  },
-  TumaIA: {
-    desenvolvimento: {
-      stack: "JavaScript, Next.js, React, Express, Supabase, Python, n8n",
-      bullets: [
-        "Desenvolvi SaaS multi-tenant: **Next.js + React**, API **Node/Express** e **Supabase**.",
-        "Implementei fluxo WhatsApp → IA gera post → aprovação → publicação no Instagram.",
-        "Integrei **n8n** para automação do pipeline operacional.",
-      ],
-    },
-    "marketing-growth": {
-      stack: "Next.js, Supabase, n8n, IA generativa, Instagram",
-      bullets: [
-        "Criei SaaS de **marketing com IA** para PMEs: WhatsApp → geração de criativo + legenda → Instagram.",
-        "Automatizei aprovação e publicação com **n8n**.",
-        "Contextualizei marca no Supabase para posts alinhados à identidade visual.",
-      ],
-    },
-    "ia-ml": {
-      stack: "Python (IA), Next.js, Supabase, n8n, LLM",
-      bullets: [
-        "Produto com **IA generativa** para posts (imagem + legenda) a partir de contexto de marca.",
-        "Orquestração via n8n e integração com APIs de publicação.",
-      ],
-    },
-  },
-  "Tuma Emprego": {
-    desenvolvimento: {
-      stack: "Next.js, React, PostgreSQL, Prisma, YAML",
-      bullets: [
-        "Desenvolvo hub local com **Next.js**, **PostgreSQL + Prisma** e configs YAML.",
-        "Implementei adaptação de CV por vaga/segmento e banco de respostas.",
-      ],
-    },
-    "dados-bi-analytics": {
-      stack: "PostgreSQL, YAML, segmentação",
-      bullets: [
-        "Ferramenta com **PostgreSQL** e perfis de busca (segmentos, senioridade) para priorizar candidaturas.",
-        "Motor de adaptação de CV por segmento com keywords e reordenação de conteúdo.",
-      ],
-    },
-  },
-};

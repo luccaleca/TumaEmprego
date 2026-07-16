@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FormField, inputClass, textareaClass } from "@/components/profile/FormField";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { DataTags } from "@/components/profile/ViewData";
-import { SegmentChips, SegmentEditTabs } from "@/components/conteudo/SegmentChips";
+import { SegmentChips } from "@/components/conteudo/SegmentChips";
 import { slugParaLabel } from "@/lib/conteudoConstants";
 import {
   escopoEhTudo,
@@ -122,7 +122,7 @@ function ExperienciasView({ items, escopo, todosSegmentos }) {
   );
 }
 
-function ExperienciasEdit({ banco, setBanco, updateExperiencia, editSegment, todosSegmentos }) {
+function ExperienciasEdit({ banco, setBanco, updateExperiencia, todosSegmentos }) {
   const slugs = todosSegmentos.map((s) => s.slug);
 
   return (
@@ -149,10 +149,7 @@ function ExperienciasEdit({ banco, setBanco, updateExperiencia, editSegment, tod
           </summary>
           <div className="space-y-3 border-t border-zinc-100 p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-              Dados reais (todas as versões)
-            </p>
-            <p className="text-[11px] text-zinc-500">
-              Cada segmento destaca competências diferentes do mesmo emprego — reframe, não inventar.
+              Dados gerais
             </p>
             <FormField label="Empresa">
               <input
@@ -180,55 +177,54 @@ function ExperienciasEdit({ banco, setBanco, updateExperiencia, editSegment, tod
 
             <SegmentChips
               label="Usar esta experiência nas áreas"
-              hint="só aparece no CV das áreas marcadas"
               value={exp.segmentos}
               onChange={(segmentos) => updateExperiencia(i, { segmentos })}
               segmentos={todosSegmentos}
             />
 
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-              Versão · {slugParaLabel(editSegment, todosSegmentos)}
-            </p>
-
-            {(exp.segmentos ?? []).includes(editSegment) ? (
-              <>
-                <FormField label="Cargo / título nesta área" full>
-                  <input
-                    className={inputClass}
-                    placeholder="Ex.: Estagiário em Análise de Dados"
-                    value={exp.titulo_por_segmento?.[editSegment] ?? ""}
-                    onChange={(e) =>
-                      updateExperiencia(i, {
-                        titulo_por_segmento: {
-                          ...exp.titulo_por_segmento,
-                          [editSegment]: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </FormField>
-                <FormField label="Nota de contexto (opcional)" full>
-                  <textarea
-                    className={textareaClass}
-                    rows={2}
-                    placeholder="Uma linha que reforça o foco desta área"
-                    value={exp.nota_por_segmento?.[editSegment] ?? ""}
-                    onChange={(e) =>
-                      updateExperiencia(i, {
-                        nota_por_segmento: {
-                          ...exp.nota_por_segmento,
-                          [editSegment]: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </FormField>
-              </>
+            {(exp.segmentos ?? []).length ? (
+              <div className="space-y-4">
+                {(exp.segmentos ?? []).map((slug) => (
+                  <div key={slug} className="space-y-2 rounded-lg border border-zinc-100 bg-zinc-50/40 p-2.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                      {slugParaLabel(slug, todosSegmentos)}
+                    </p>
+                    <FormField label="Cargo / título" full>
+                      <input
+                        className={inputClass}
+                        placeholder="Ex.: Estagiário em Análise de Dados"
+                        value={exp.titulo_por_segmento?.[slug] ?? ""}
+                        onChange={(e) =>
+                          updateExperiencia(i, {
+                            titulo_por_segmento: {
+                              ...exp.titulo_por_segmento,
+                              [slug]: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                    </FormField>
+                    <FormField label="Nota de contexto (opcional)" full>
+                      <textarea
+                        className={textareaClass}
+                        rows={2}
+                        placeholder="Uma linha que reforça o foco desta área"
+                        value={exp.nota_por_segmento?.[slug] ?? ""}
+                        onChange={(e) =>
+                          updateExperiencia(i, {
+                            nota_por_segmento: {
+                              ...exp.nota_por_segmento,
+                              [slug]: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                    </FormField>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p className="text-xs text-zinc-500">
-                Marque a área &quot;{slugParaLabel(editSegment, todosSegmentos)}&quot; acima para editar esta
-                versão.
-              </p>
+              <p className="text-xs text-zinc-400">Marque ao menos uma área acima</p>
             )}
 
             <div className="space-y-2">
@@ -270,7 +266,10 @@ function ExperienciasEdit({ banco, setBanco, updateExperiencia, editSegment, tod
                   updateExperiencia(i, {
                     bullets: [
                       ...(exp.bullets ?? []),
-                      { texto: "", segmentos: exp.segmentos?.length ? [...exp.segmentos] : [editSegment] },
+                      {
+                        texto: "",
+                        segmentos: exp.segmentos?.length ? [...exp.segmentos] : [slugs[0]].filter(Boolean),
+                      },
                     ],
                   })
                 }
@@ -290,18 +289,12 @@ export default function ExperienciasWorkspace({
   setBanco,
   escopo,
   todosSegmentos = [],
+  title = "Experiência",
 }) {
-  const slugsCatalogo = todosSegmentos.map((s) => s.slug);
-  const [editSegment, setEditSegment] = useState(slugsCatalogo[0] ?? "");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const snapshotRef = useRef(null);
-
-  useEffect(() => {
-    if (!slugsCatalogo.length) return;
-    if (!slugsCatalogo.includes(editSegment)) setEditSegment(slugsCatalogo[0]);
-  }, [slugsCatalogo.join("|"), editSegment]);
 
   function updateExperiencia(index, patch) {
     setBanco((prev) => {
@@ -357,17 +350,8 @@ export default function ExperienciasWorkspace({
         </p>
       ) : null}
 
-      {editing ? (
-        <SegmentEditTabs value={editSegment} onChange={setEditSegment} segmentos={todosSegmentos} />
-      ) : null}
-
       <ProfileSection
-        title="Minhas experiências"
-        description={
-          escopoEhTudo(escopo)
-            ? "Todas as experiências cadastradas, em todas as áreas."
-            : `Versão para ${slugParaLabel(escopo, todosSegmentos)}.`
-        }
+        title={title}
         isEditing={editing}
         saving={saving}
         onEdit={startEdit}
@@ -385,7 +369,6 @@ export default function ExperienciasWorkspace({
             banco={banco}
             setBanco={setBanco}
             updateExperiencia={updateExperiencia}
-            editSegment={editSegment}
             todosSegmentos={todosSegmentos}
           />
         }

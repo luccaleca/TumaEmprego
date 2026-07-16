@@ -93,7 +93,7 @@ function preambleToHtml(preamble) {
 }
 
 const CV_STYLES = `
-  @page { size: A4; margin: 14mm 16mm; }
+  @page { size: A4; margin: 12mm 14mm; }
   * { box-sizing: border-box; }
   body {
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -104,9 +104,9 @@ const CV_STYLES = `
     padding: 0;
   }
   h1 {
-    font-size: 20pt;
+    font-size: 18pt;
     font-weight: 700;
-    margin: 0 0 6px;
+    margin: 0 0 4px;
     letter-spacing: -0.02em;
   }
   .lead p {
@@ -115,32 +115,35 @@ const CV_STYLES = `
     font-size: 10pt;
   }
   .meta {
-    margin: 2px 0 10px;
-    font-size: 9.5pt;
+    margin: 2px 0 8px;
+    font-size: 9pt;
     color: #52525b;
   }
   h2 {
-    font-size: 11pt;
+    font-size: 10.5pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     color: #047857;
-    border-bottom: 1px solid #d4d4d8;
-    padding-bottom: 3px;
-    margin: 14px 0 8px;
+    border-bottom: 1.5px solid #a7f3d0;
+    padding-bottom: 2px;
+    margin: 12px 0 6px;
   }
   h3 {
     font-size: 10.5pt;
     font-weight: 600;
-    margin: 10px 0 2px;
-    color: #27272a;
+    margin: 8px 0 2px;
+    color: #18181b;
   }
-  p { margin: 0 0 5px; }
+  p { margin: 0 0 4px; }
   ul {
-    margin: 4px 0 8px;
-    padding-left: 1.1rem;
+    margin: 2px 0 6px;
+    padding-left: 1.05rem;
   }
-  li { margin-bottom: 3px; }
+  li {
+    margin-bottom: 2px;
+    line-height: 1.4;
+  }
   strong { font-weight: 600; }
   section { break-inside: avoid-page; }
 `;

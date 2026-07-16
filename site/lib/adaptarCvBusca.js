@@ -63,18 +63,6 @@ export function montarPedidosAdaptacao(busca, catalogo) {
   return SEGMENTOS_CV_SLOTS.map((slug) => montarPedidoAdaptacaoPorSlug(busca, catalogo, slug));
 }
 
-/** @deprecated use montarPedidosAdaptacao */
-export function montarPedidoAdaptacao(busca, catalogo) {
-  const pedidos = montarPedidosAdaptacao(busca, catalogo);
-  if (!pedidos.length) return null;
-  const p = pedidos[0];
-  return {
-    ...p,
-    segmentos: busca.segmentos_ativos ?? [],
-    alvos: [...p.alvos_primarios, ...p.alvos_complementares],
-  };
-}
-
 function formatarListaAlvos(alvos) {
   return (alvos ?? [])
     .map((a) => `- ${a.senioridade} · ${a.titulo} (${a.area} → ${a.nicho})`)
@@ -164,13 +152,4 @@ export async function sincronizarSlotsSegmento(busca, catalogo) {
 
 export async function adaptarAposSalvarBusca(buscaSalva, catalogo) {
   return executarAdaptacaoCv(buscaSalva ?? getBusca(), catalogo, { regenerar: false });
-}
-
-export function getAdaptacaoBuscaPath() {
-  return fs.existsSync(ADAPTADO_PATH) ? ADAPTADO_PATH : null;
-}
-
-export function getAdaptacaoBuscaConteudo() {
-  if (!fs.existsSync(ADAPTADO_PATH)) return null;
-  return fs.readFileSync(ADAPTADO_PATH, "utf8");
 }

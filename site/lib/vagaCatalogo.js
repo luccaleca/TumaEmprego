@@ -38,18 +38,6 @@ export async function getVagaCatalogo() {
   }));
 }
 
-export function listarTodasChavesTitulo(catalogo) {
-  const chaves = [];
-  for (const area of catalogo ?? []) {
-    for (const nicho of area.nichos ?? []) {
-      for (const titulo of nicho.titulos ?? []) {
-        chaves.push(titulo.chave);
-      }
-    }
-  }
-  return chaves;
-}
-
 export function listarTitulosAtivos(catalogo, chavesAtivas) {
   const set = new Set(chavesAtivas ?? []);
   const lista = [];

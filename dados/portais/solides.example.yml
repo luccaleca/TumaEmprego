@@ -16,3 +16,8 @@ idiomas: []
 #  - idioma: Inglês
 #    nome_solides: INGLÊS
 #    nivel: Avançado
+
+# Campos editados no site (Currículo → Sólides). Chave = id do campo na estrutura.
+campos: {}
+#  apresentacao: ...
+#  experiencia_cargo: ...

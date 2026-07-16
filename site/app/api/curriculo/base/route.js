@@ -13,7 +13,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler dados/cv-base.md", detail: err.message },
+      { error: "Não foi possível ler o currículo base", detail: err.message },
       { status: 500 },
     );
   }

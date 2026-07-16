@@ -1,4 +1,3 @@
-import fs from "fs";
 import { buildCvHtml } from "./markdownCvHtml.js";
 import { sanitizarMarkdownCvParaExport } from "./cv.js";
 
@@ -14,6 +13,10 @@ async function getBrowser() {
 
 export async function gerarPdfFromMarkdown(markdown) {
   const html = buildCvHtml(sanitizarMarkdownCvParaExport(markdown));
+  return gerarPdfFromHtml(html);
+}
+
+export async function gerarPdfFromHtml(html) {
   const browser = await getBrowser();
   const page = await browser.newPage();
 
@@ -28,14 +31,4 @@ export async function gerarPdfFromMarkdown(markdown) {
   } finally {
     await page.close();
   }
-}
-
-export function compararMdPdf(mdPath, pdfPath) {
-  if (!fs.existsSync(mdPath)) return { temPdf: false, desatualizado: false };
-  if (!fs.existsSync(pdfPath)) return { temPdf: false, desatualizado: false };
-  return {
-    temPdf: true,
-    desatualizado: fs.statSync(mdPath).mtimeMs > fs.statSync(pdfPath).mtimeMs,
-    pdfUpdatedAt: fs.statSync(pdfPath).mtime.toISOString(),
-  };
 }

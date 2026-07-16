@@ -11,7 +11,3 @@ export function filtrarItensPorEscopo(items, scope) {
   if (escopoEhTudo(scope)) return lista;
   return lista.filter((item) => (item.segmentos ?? []).includes(scope));
 }
-
-export function contarItensPorEscopo(items, scope) {
-  return filtrarItensPorEscopo(items, scope).length;
-}

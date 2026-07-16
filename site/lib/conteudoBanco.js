@@ -8,8 +8,6 @@ import { competenciasPerfil } from "./perfilCvSegmento.js";
 import { segmentoEstaAtivo } from "./segmentosAtivos.js";
 import { getFonteCandidato, termosParaSegmento } from "./fonteCandidato.js";
 
-export { LABELS_SEGMENTO, slugParaLabel } from "./conteudoConstants.js";
-
 export function loadBanco() {
   return getConteudoBanco();
 }
@@ -30,10 +28,26 @@ export function experienciaParaSegmento(banco, slug) {
 
   const titulo = exp.titulo_por_segmento?.[slug] ?? `${exp.empresa}`;
   const nota = exp.nota_por_segmento?.[slug] ?? "";
-  const bullets = (exp.bullets ?? [])
+  let bullets = (exp.bullets ?? [])
     .filter((b) => (b.segmentos ?? []).includes(slug))
     .map((b) => textoBulletParaSegmento(b, slug))
     .filter(Boolean);
+
+  // IA no emprego: reforça com provas de dados da mesma empresa (sem inventar LLM)
+  if (slug === "ia-ml" && bullets.length < 3) {
+    const extra = (exp.bullets ?? [])
+      .filter((b) => (b.segmentos ?? []).includes("dados-bi-analytics"))
+      .map((b) => textoBulletParaSegmento(b, "dados-bi-analytics"))
+      .filter(Boolean);
+    const vistos = new Set(bullets.map((t) => t.slice(0, 40).toLowerCase()));
+    for (const t of extra) {
+      const k = t.slice(0, 40).toLowerCase();
+      if (vistos.has(k)) continue;
+      bullets.push(t);
+      vistos.add(k);
+      if (bullets.length >= 4) break;
+    }
+  }
 
   return {
     titulo,
@@ -45,31 +59,87 @@ export function experienciaParaSegmento(banco, slug) {
   };
 }
 
-export function projetosParaSegmento(banco, slug, fallbackOrdem = []) {
-  const lista = (banco?.projetos ?? []).filter((p) => segmentoAtivo(p, slug));
+/** Hub de candidaturas — nunca no CV (recrutador não precisa saber). */
+function projetoForaDoCv(p) {
+  const id = String(p?.id ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  const nome = String(p?.nome ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  return /tuma.?emprego/.test(id) || /tuma.?emprego/.test(nome);
+}
+
+/** Projetos-produto de IA — prioridade em segmento ia-ml / JD de agentes. */
+function bonusProjetoIa(nome, slug, enfatizaIa) {
+  if (slug !== "ia-ml" && !enfatizaIa) return 0;
+  const n = String(nome ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (/tuma.?emprego/.test(n)) return -100;
+  if (/tumacore|tuma.?core/.test(n)) return 50;
+  if (/tumaia|tuma.?ia/.test(n)) return 45;
+  return 0;
+}
+
+export function projetosParaSegmento(
+  banco,
+  slug,
+  fallbackOrdem = [],
+  { termos = [], enfatizaProjetosIa = false } = {},
+) {
+  const lista = (banco?.projetos ?? [])
+    .filter((p) => !projetoForaDoCv(p))
+    .filter((p) => segmentoAtivo(p, slug));
 
   if (!lista.length && fallbackOrdem.length) {
-    return fallbackOrdem.map((nome, i) => ({
-      nome,
-      ordem: i + 1,
-      subtitulo: "",
-      stack: "",
-      bullets: [],
-    }));
+    return fallbackOrdem
+      .filter((nome) => !/tuma.?emprego/i.test(String(nome ?? "")))
+      .map((nome, i) => ({
+        nome,
+        ordem: i + 1,
+        subtitulo: "",
+        stack: "",
+        bullets: [],
+      }));
   }
 
+  const tNorm = termos.map((t) =>
+    String(t ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, ""),
+  );
+  const enfatizaIa = Boolean(enfatizaProjetosIa) || slug === "ia-ml";
+
   return lista
-    .map((p) => ({
-      nome: p.nome,
-      ordem: p.ordem_por_segmento?.[slug] ?? 99,
-      resumo: p.resumo_por_segmento?.[slug] ?? p.subtitulo_por_segmento?.[slug] ?? "",
-      stackUso: normalizarStackUso(
+    .map((p) => {
+      const resumo = p.resumo_por_segmento?.[slug] ?? p.subtitulo_por_segmento?.[slug] ?? "";
+      const stackUso = normalizarStackUso(
         p.stack_uso_por_segmento?.[slug],
         p.stack_por_segmento?.[slug],
-      ),
-      bullets: p.bullets_por_segmento?.[slug] ?? [],
-    }))
-    .sort((a, b) => a.ordem - b.ordem);
+      );
+      const bullets = p.bullets_por_segmento?.[slug] ?? [];
+      const blob = `${p.nome} ${resumo} ${JSON.stringify(stackUso)} ${bullets.join(" ")}`
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{M}/gu, "");
+      const scoreJd =
+        tNorm.reduce((n, t) => n + (t && blob.includes(t) ? 3 : 0), 0) +
+        bonusProjetoIa(p.nome, slug, enfatizaIa);
+      return {
+        nome: p.nome,
+        ordem: p.ordem_por_segmento?.[slug] ?? 99,
+        resumo,
+        stackUso,
+        bullets,
+        scoreJd,
+      };
+    })
+    .sort((a, b) => b.scoreJd - a.scoreJd || a.ordem - b.ordem);
 }
 
 function normalizarStackUso(stackUso, stackLegado) {
@@ -95,24 +165,36 @@ function formatarLinhaStackUso(item) {
 
   const tech = String(item?.tech ?? item?.nome ?? "").trim();
   const uso = String(item?.uso ?? "").trim();
-  if (!tech) return "";
-  return uso ? `- **${tech}** — ${uso}` : `- **${tech}**`;
+  if (!tech || !uso) return "";
+  return `- **${tech}** — ${uso}`;
 }
 
 export function formatarBlocoProjeto(proj) {
   const titulo = proj.resumo?.trim() ? `${proj.nome} — ${proj.resumo.trim()}` : proj.nome;
-  const stackLinhas = (proj.stackUso ?? []).map(formatarLinhaStackUso).filter(Boolean);
+  const stackLinhas = (proj.stackUso ?? [])
+    .map(formatarLinhaStackUso)
+    .filter(Boolean)
+    .slice(0, 6);
 
+  // Regra: tech + uso. Se houver stack_uso, nunca cair em bullets genéricos.
   if (stackLinhas.length) {
     return `### ${titulo}\n\n${stackLinhas.join("\n")}`;
   }
 
-  const bullets = (proj.bullets ?? []).map((b) => `- ${b}`).join("\n");
-  return bullets ? `### ${titulo}\n\n${bullets}` : `### ${titulo}`;
-}
+  const bullets = (proj.bullets ?? [])
+    .map((b) => {
+      const t = String(b ?? "").trim();
+      if (!t) return "";
+      // Tenta converter "Tech — uso" solto em formato padrão
+      if (!t.startsWith("- ") && (t.includes(" — ") || t.includes(" - "))) {
+        return formatarLinhaStackUso(t);
+      }
+      return t.startsWith("- ") ? t : `- ${t}`;
+    })
+    .filter(Boolean)
+    .slice(0, 6);
 
-export function cursosParaSegmento(banco, slug) {
-  return certificacoesParaSegmento(banco, slug);
+  return bullets.length ? `### ${titulo}\n\n${bullets.join("\n")}` : `### ${titulo}`;
 }
 
 const PADROES_CURSO_INGLES = [
@@ -176,7 +258,7 @@ function formatarLinhaCurso(curso) {
 }
 
 /** Certificações do segmento — cursos pt-BR do banco + catálogo BR (sem duplicar). */
-export function certificacoesParaSegmento(banco, slug, { max = 8 } = {}) {
+export function certificacoesParaSegmento(banco, slug, { max = 8, termosVaga = [] } = {}) {
   const linhas = [];
   const vistos = new Set();
 
@@ -200,11 +282,23 @@ export function certificacoesParaSegmento(banco, slug, { max = 8 } = {}) {
     linhas.push(`- ${cert}`);
   }
 
+  if (termosVaga?.length) {
+    linhas.sort(
+      (a, b) => scoreLinhaCompetencia(b, termosVaga) - scoreLinhaCompetencia(a, termosVaga),
+    );
+  }
+
   return linhas.slice(0, max);
 }
 
-export function ferramentasParaSegmento(banco, slug) {
-  return (banco?.ferramentas ?? []).filter((f) => segmentoAtivo(f, slug));
+export function ferramentasParaSegmento(_banco, slug, fonte = null) {
+  const f = fonte ?? getFonteCandidato();
+  return (f.tecnologias?.comNivel ?? [])
+    .filter((t) => {
+      const seg = t.segmentosCv ?? [];
+      return seg.length && seg.includes(slug);
+    })
+    .map((t) => ({ nome: t.nome, categoria: t.categoria }));
 }
 
 function agruparFerramentas(ferramentas) {
@@ -212,18 +306,61 @@ function agruparFerramentas(ferramentas) {
   for (const f of ferramentas) {
     const cat = f.categoria?.trim() || "Ferramentas";
     if (!map.has(cat)) map.set(cat, []);
-    map.get(cat).push(f.nome);
+    const nomes = map.get(cat);
+    const nome = String(f.nome ?? "").trim();
+    if (!nome) continue;
+    if (nomes.some((n) => n.toLowerCase() === nome.toLowerCase())) continue;
+    nomes.push(nome);
   }
   return map;
 }
 
-function enriquecerComTecnologiasPerfil(body, slug, fonte) {
+function scoreLinhaCompetencia(linha, termos) {
+  const blob = String(linha ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  return termos.reduce((n, t) => {
+    const tt = String(t ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    return n + (tt && blob.includes(tt) ? 2 : 0);
+  }, 0);
+}
+
+function reordenarCompetencias(body, termos = []) {
+  if (!termos?.length) return body;
+  const lines = String(body ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const idiomas = lines.filter((l) => /\*\*Idiomas:\*\*/i.test(l));
+  const resto = lines.filter((l) => !/\*\*Idiomas:\*\*/i.test(l));
+  resto.sort((a, b) => scoreLinhaCompetencia(b, termos) - scoreLinhaCompetencia(a, termos));
+  return [...resto, ...idiomas].join("\n");
+}
+
+function enriquecerComTecnologiasPerfil(body, slug, fonte, evidencia = "") {
   const f = fonte ?? getFonteCandidato();
   const termos = termosParaSegmento(slug, f);
   if (!termos.length) return body;
 
   const lower = body.toLowerCase();
-  const faltando = termos.filter((t) => !lower.includes(String(t).toLowerCase()));
+  const ev = String(evidencia ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  const faltando = termos.filter((t) => {
+    const nome = String(t).toLowerCase();
+    if (lower.includes(nome)) return false;
+    // Só acrescenta se há evidência no restante do CV
+    if (!ev) return false;
+    const n = nome
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    return ev.includes(n);
+  });
   if (!faltando.length) return body;
 
   const niveis = (f.tecnologias?.comNivel ?? [])
@@ -237,15 +374,107 @@ function enriquecerComTecnologiasPerfil(body, slug, fonte) {
   const extras = [...niveis, ...semNivel];
   if (!extras.length) return body;
 
-  const linha = `- **Stack (perfil):** ${extras.join(", ")}`;
+  const linha = `- **Ferramentas:** ${extras.join(", ")}`;
   if (body.includes("**Idiomas:**")) {
     return body.replace(/- \*\*Idiomas:\*\*/, `${linha}\n- **Idiomas:**`);
   }
   return `${body.trim()}\n${linha}`;
 }
 
-export function competenciasDoBanco(banco, slug, fonte = null) {
-  const ferramentas = ferramentasParaSegmento(banco, slug);
+/** Mantém só ferramentas citadas na evidência (exp/projetos/certs/stack do segmento). */
+function filtrarLinhaCompetenciaPorEvidencia(linha, evidenciaNorm) {
+  if (/\*\*Idiomas:\*\*/i.test(linha)) return linha;
+  const m = linha.match(/^- \*\*([^*]+):\*\*\s*(.+)$/);
+  if (!m) return linha;
+  const cat = m[1].trim();
+  const nomes = m[2]
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const ok = nomes.filter((nome) => {
+    const n = nome
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    if (!n) return false;
+    if (evidenciaNorm.includes(n)) return true;
+    // match parcial (ex.: "Google Ads" vs "Ads")
+    const tokens = n.split(/\s+/).filter((t) => t.length > 2);
+    return tokens.length > 0 && tokens.every((t) => evidenciaNorm.includes(t));
+  });
+  if (!ok.length) return null;
+  return `- **${cat}:** ${ok.join(", ")}`;
+}
+
+/**
+ * Une categorias esparsas (1 tech por linha) numa lista densa.
+ * Regra: no máx. 2 linhas de ferramentas + idiomas — economiza 1ª página.
+ */
+function densificarCompetencias(body, termos = []) {
+  const linhas = String(body ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const idiomas =
+    linhas.find((l) => /\*\*Idiomas:\*\*/i.test(l)) ??
+    "- **Idiomas:** Português (nativo), Inglês (avançado), Espanhol (básico)";
+  const resto = linhas.filter((l) => !/\*\*Idiomas:\*\*/i.test(l));
+
+  const nomes = [];
+  for (const linha of resto) {
+    const m = linha.match(/^- \*\*[^*]+:\*\*\s*(.+)$/);
+    const raw = m ? m[1] : linha.replace(/^[-*]\s*/, "");
+    for (const parte of raw.split(",")) {
+      const nome = parte.trim();
+      if (!nome) continue;
+      if (nomes.some((n) => n.toLowerCase() === nome.toLowerCase())) continue;
+      nomes.push(nome);
+    }
+  }
+
+  if (!nomes.length) return idiomas;
+
+  // Prioriza termos da vaga/segmento no início da lista
+  const tNorm = (termos ?? []).map((t) =>
+    String(t ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, ""),
+  );
+  nomes.sort((a, b) => {
+    const an = a
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    const bn = b
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    const as = tNorm.some((t) => t && (an.includes(t) || t.includes(an))) ? 1 : 0;
+    const bs = tNorm.some((t) => t && (bn.includes(t) || t.includes(bn))) ? 1 : 0;
+    return bs - as;
+  });
+
+  const MAX_TOOLS = 10;
+  const cortado = nomes.slice(0, MAX_TOOLS);
+
+  // 1 linha se cabe; 2 só se passar de 7 (ainda denso)
+  if (cortado.length <= 7) {
+    return [`- **Ferramentas:** ${cortado.join(", ")}`, idiomas].join("\n");
+  }
+  const mid = Math.ceil(cortado.length / 2);
+  return [
+    `- **Ferramentas:** ${cortado.slice(0, mid).join(", ")}`,
+    `- **Também:** ${cortado.slice(mid).join(", ")}`,
+    idiomas,
+  ].join("\n");
+}
+
+export function competenciasDoBanco(banco, slug, fonte = null, opts = {}) {
+  const termosVaga = opts?.termosVaga ?? [];
+  const evidencia = String(opts?.evidencia ?? "");
+  const termosSegmento = opts?.termosSegmento ?? [];
+  const ferramentas = ferramentasParaSegmento(banco, slug, fonte);
   let body;
 
   if (ferramentas.length) {
@@ -260,5 +489,32 @@ export function competenciasDoBanco(banco, slug, fonte = null) {
     body = texto?.trim() ? texto.trim() : competenciasPerfil({ slug });
   }
 
-  return enriquecerComTecnologiasPerfil(body, slug, fonte);
+  body = enriquecerComTecnologiasPerfil(body, slug, fonte, evidencia);
+
+  // Evidência = só o que está no CV desta variação (exp/projetos/certs/stack).
+  // termos do segmento servem para ordenar, não para “provar” ferramenta órfã.
+  const evidenciaNorm = String(evidencia)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+
+  if (evidenciaNorm.trim()) {
+    body = String(body)
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => filtrarLinhaCompetenciaPorEvidencia(l, evidenciaNorm))
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  const prioridade = [...termosVaga, ...termosSegmento];
+  const ordenado = reordenarCompetencias(body, prioridade);
+  const denso = densificarCompetencias(ordenado, prioridade);
+  if (!/\*\*Ferramentas:\*\*|\*\*Também:\*\*/i.test(denso) && !/\*\*Idiomas:\*\*/i.test(denso)) {
+    return densificarCompetencias(competenciasPerfil({ slug }), prioridade);
+  }
+  return denso;
 }
+
+

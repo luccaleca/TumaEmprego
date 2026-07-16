@@ -48,6 +48,12 @@ projetos:
         - Python — pipeline simples de ETL dos dados
         - SQL — consultas e modelagem para o painel
         - Power BI — dashboard de KPIs para acompanhamento
+    bullets_por_segmento:
+      desenvolvimento:
+        - Entreguei app web full stack com rotas, API e persistência em PostgreSQL.
+        - Versionamento e deploy com Git em ambiente de demonstração do portfólio.
+      dados-bi-analytics:
+        - Montei pipeline simples de ETL e painel de KPIs para acompanhar o projeto.
 
 cursos:
   - id: curso-sql

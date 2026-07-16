@@ -1,7 +1,5 @@
-import CandidaturaEditor from "@/components/candidatura/CandidaturaEditor";
-import FormacaoEditor from "@/components/formacao/FormacaoEditor";
-import ProfileEditor from "@/components/profile/ProfileEditor";
-import TecnologiasEditor from "@/components/tecnologias/TecnologiasEditor";
+import PerfilWorkspace from "@/components/profile/PerfilWorkspace";
+import { migrarFerramentasBancoSeNecessario } from "@/lib/migrarStackDoBanco";
 import {
   getFormacao,
   getProfile,
@@ -14,12 +12,23 @@ import {
   getTecnologiaCatalogo,
   resolverItensAtivos,
 } from "@/lib/tecnologiaCatalogo";
+import { listarTodosSegmentosCatalogo } from "@/lib/segmentosAtivos";
+import { getVagaCatalogo } from "@/lib/vagaCatalogo";
+
+export const metadata = {
+  title: "Tuma Emprego — Perfil",
+};
 
 export default async function PerfilPage() {
+  await migrarFerramentasBancoSeNecessario();
+
   const profile = getProfile();
   const formacao = getFormacao();
   const candidatura = getRespostasPadrao();
   const hasPhoto = Boolean(getProfilePhotoPath());
+
+  const catalogoVagas = await getVagaCatalogo();
+  const todosSegmentos = listarTodosSegmentosCatalogo(catalogoVagas);
 
   let catalogo = [];
   let tecnologias = getTecnologias();
@@ -36,17 +45,14 @@ export default async function PerfilPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-      <h1 className="mb-5 text-xl font-semibold tracking-tight text-zinc-900">
-        Perfil
-      </h1>
-
-      <div className="space-y-4">
-        <ProfileEditor initial={profile} hasPhoto={hasPhoto} />
-        <FormacaoEditor initial={formacao} />
-        <CandidaturaEditor initial={candidatura} />
-        <TecnologiasEditor initial={{ catalogo, tecnologias }} />
-      </div>
-    </main>
+    <PerfilWorkspace
+      profile={profile}
+      formacao={formacao}
+      candidatura={candidatura}
+      hasPhoto={hasPhoto}
+      catalogo={catalogo}
+      tecnologias={tecnologias}
+      todosSegmentos={todosSegmentos}
+    />
   );
 }

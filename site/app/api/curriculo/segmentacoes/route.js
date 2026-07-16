@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { parseCvBase } from "@/lib/cv";
+import { montarColunasCurriculo } from "@/lib/curriculoColunas";
 import { getBusca } from "@/lib/dados";
 import { sincronizarSlotsSegmento } from "@/lib/adaptarCvBusca";
 import { getVagaCatalogo } from "@/lib/vagaCatalogo";
 import {
   criarSegmentacao,
   getSegmentacaoConteudo,
-  listSegmentacoesVisiveis,
+  listSegmentacoes,
   migrarAdaptadoBuscaLegado,
   migrarSegmentacoesParaSlots,
 } from "@/lib/segmentacoes";
@@ -38,7 +39,7 @@ export async function GET() {
       /* cv-base ausente — lista o que já existir */
     }
 
-    const segmentacoes = listSegmentacoesVisiveis(busca.segmentos_ativos ?? []).map((seg) => {
+    const segmentacoes = listSegmentacoes().map((seg) => {
       if (!seg.hasMd) return seg;
       const conteudo = getSegmentacaoConteudo(seg.id);
       const sections =
@@ -46,8 +47,11 @@ export async function GET() {
       return { ...seg, _sections: sections };
     });
 
+    const colunas = montarColunasCurriculo(segmentacoes, busca.segmentos_ativos ?? []);
+
     return NextResponse.json({
       segmentacoes,
+      colunas,
       segmentos_ativos: busca.segmentos_ativos ?? [],
     });
   } catch (err) {

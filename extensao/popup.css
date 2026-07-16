@@ -52,9 +52,22 @@ button.primary {
   font-weight: 600;
 }
 
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #52525b;
+  font-size: 12px;
+}
+
 button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .msg {

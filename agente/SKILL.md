@@ -23,7 +23,7 @@ description: Hub local de candidaturas BR — avaliar vagas, adaptar CV, métric
 ## Regras inegociáveis
 
 - Não inventar experiência, ferramentas ou números
-- **Currículo:** 1ª pessoa, tom humano; sem metadados da plataforma — ver `agente/AGENTS.md` (“Tom e voz” e “Metadados da plataforma”)
+- **Currículo:** 1ª pessoa; Resumo anti-IBGE; inferência de estágio sem exagero (`atividades.yml`); sem metadados da plataforma — ver `agente/AGENTS.md`
 - PDFs em `dados/pdfs/`
 - App em `site/`, extensão em `extensao/`
 - UI com texto curto — sem justificativas do pedido em labels, hints ou comentários

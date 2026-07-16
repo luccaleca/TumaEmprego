@@ -1,11 +1,15 @@
+import { Suspense } from "react";
 import CurriculoWorkspace from "@/components/curriculo/CurriculoWorkspace";
 import { parseCvBase, parseCvDocument, sectionsForDisplay, cleanPreambleForExport } from "@/lib/cv";
+import { montarColunasCurriculo } from "@/lib/curriculoColunas";
 import { getBusca, getCvBase } from "@/lib/dados";
 import { sincronizarSlotsSegmento } from "@/lib/adaptarCvBusca";
+import { listarPortaisComStatus } from "@/lib/portaisCatalogo";
+import { montarValoresTodosPortaisEstrutura } from "@/lib/portaisValores";
 import { getVagaCatalogo } from "@/lib/vagaCatalogo";
 import {
   getSegmentacaoConteudo,
-  listSegmentacoesVisiveis,
+  listSegmentacoes,
   migrarAdaptadoBuscaLegado,
   migrarSegmentacoesParaSlots,
 } from "@/lib/segmentacoes";
@@ -13,6 +17,13 @@ import {
 export const metadata = {
   title: "Tuma Emprego — Currículo",
 };
+
+function enrichSegmentacao(seg) {
+  if (!seg.hasMd) return seg;
+  const conteudo = getSegmentacaoConteudo(seg.id);
+  const sections = conteudo?.formato === "markdown" ? parseCvBase(conteudo.content) : [];
+  return { ...seg, _sections: sections };
+}
 
 export default async function CurriculoPage() {
   migrarAdaptadoBuscaLegado();
@@ -24,16 +35,13 @@ export default async function CurriculoPage() {
   try {
     await sincronizarSlotsSegmento(busca, catalogo);
   } catch {
-    /* cv-base vazio ou erro de leitura — slots aparecem quando houver base */
+    /* cv-base vazio */
   }
 
-  const segmentacoes = listSegmentacoesVisiveis(busca.segmentos_ativos ?? []).map((seg) => {
-    if (!seg.hasMd) return seg;
-    const conteudo = getSegmentacaoConteudo(seg.id);
-    const sections =
-      conteudo?.formato === "markdown" ? parseCvBase(conteudo.content) : [];
-    return { ...seg, _sections: sections };
-  });
+  const segmentacoes = listSegmentacoes().map(enrichSegmentacao);
+  const colunas = montarColunasCurriculo(segmentacoes, busca.segmentos_ativos ?? []);
+  const portais = listarPortaisComStatus();
+  const valoresPortais = montarValoresTodosPortaisEstrutura();
 
   const baseDoc = parseCvDocument(getCvBase());
   const estruturaBase = {
@@ -43,9 +51,19 @@ export default async function CurriculoPage() {
   };
 
   return (
-    <CurriculoWorkspace
-      initialSegmentacoes={segmentacoes}
-      estruturaBase={estruturaBase}
-    />
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center text-sm text-zinc-500">
+          Carregando…
+        </div>
+      }
+    >
+      <CurriculoWorkspace
+        initialColunas={colunas}
+        initialPortais={portais}
+        valoresPortais={valoresPortais}
+        estruturaBase={estruturaBase}
+      />
+    </Suspense>
   );
 }

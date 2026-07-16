@@ -12,9 +12,7 @@ export function SegmentChips({ value, onChange, label, hint, segmentos = [] }) {
 
   if (!segmentos.length) {
     return (
-      <p className="text-xs italic text-zinc-400">
-        Nenhuma área ativa — escolha segmentos em Segmentos primeiro.
-      </p>
+      <p className="text-xs italic text-zinc-400">Nenhuma área ativa</p>
     );
   }
 
@@ -104,7 +102,6 @@ export function SegmentEditTabs({ value, onChange, segmentos = [] }) {
 
   return (
     <div className="flex flex-wrap gap-1">
-      <span className="self-center text-xs text-zinc-500">Editando área:</span>
       {segmentos.map((seg) => (
         <button
           key={seg.slug}
