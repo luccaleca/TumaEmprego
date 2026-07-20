@@ -1,5 +1,5 @@
 /**
- * Consultas ao banco de conteúdo (dados/conteudo/banco.yml) para montar CVs.
+ * Lê o banco de conteúdo pra montar o CV.
  */
 
 import { getConteudoBanco } from "./dados.js";
@@ -258,16 +258,19 @@ function formatarLinhaCurso(curso) {
 }
 
 /** Certificações do segmento — cursos pt-BR do banco + catálogo BR (sem duplicar). */
+export function cursosDoBancoParaSegmento(banco, slug, { max = 8 } = {}) {
+  return (banco?.cursos ?? [])
+    .filter((c) => segmentoAtivo(c, slug))
+    .filter(cursoEhMercadoBr)
+    .sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99))
+    .slice(0, max);
+}
+
 export function certificacoesParaSegmento(banco, slug, { max = 8, termosVaga = [] } = {}) {
   const linhas = [];
   const vistos = new Set();
 
-  const doBanco = (banco?.cursos ?? [])
-    .filter((c) => segmentoAtivo(c, slug))
-    .filter(cursoEhMercadoBr)
-    .sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99));
-
-  for (const curso of doBanco) {
+  for (const curso of cursosDoBancoParaSegmento(banco, slug, { max: 99 })) {
     const linha = formatarLinhaCurso(curso);
     const chave = chaveCertTexto(curso.titulo);
     if (vistos.has(chave)) continue;

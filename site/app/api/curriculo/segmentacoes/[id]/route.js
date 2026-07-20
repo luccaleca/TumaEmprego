@@ -14,7 +14,7 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ ok: true, id });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível excluir", detail: err.message },
+      { error: "Não excluiu", detail: err.message },
       { status: 500 },
     );
   }

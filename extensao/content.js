@@ -256,8 +256,29 @@ function ligarAcoesPainel(shadow, { segmento_slug, vaga, classificacao, portal }
   });
 }
 
+function labelCvPainel({ empresa, titulo, url, label_cv }) {
+  if (label_cv) return String(label_cv);
+  const emp = String(empresa ?? "")
+    .trim()
+    .replace(/\b(ltda|s\.?a\.?|de|da|do|dos|das|e|instituto|banco)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  let curta = "";
+  if (/\bsafra\b/i.test(`${emp} ${url || ""}`)) curta = "SAFRA";
+  else if (/\bcreditas\b/i.test(`${emp} ${url || ""}`)) curta = "CREDITAS";
+  else if (/\bcordial\b/i.test(`${emp} ${url || ""}`)) curta = "CORDIAL";
+  else if (emp) curta = emp.split(/\s+/).slice(0, 2).join(" ").toUpperCase();
+  const t = String(titulo ?? "").trim();
+  if (curta && t) return `${curta}-${t}`;
+  return t || curta || "Vaga";
+}
+
 function painelPrevia(classificacao, vaga) {
-  const titulo = classificacao.vaga_titulo || vaga.titulo || "Vaga detectada";
+  const titulo = labelCvPainel({
+    empresa: vaga?.empresa,
+    titulo: classificacao.vaga_titulo || vaga.titulo || "Vaga detectada",
+    url: vaga?.url,
+  });
   const slotInicial = slotSegmentoInicial(classificacao);
   const portalBadge = badgePortal(classificacao, vaga);
   const portal = classificacao.portal ?? detectarPortalPorUrl(vaga?.url) ?? "";
@@ -297,7 +318,12 @@ function painelPrevia(classificacao, vaga) {
 
 function painelSucesso(data) {
   const segmento = data.segmento_label ?? data.segmento_slug ?? "—";
-  const titulo = data.pacote?.pedido?.vaga_titulo ?? data.segmentacao?.vaga_titulo ?? "Vaga";
+  const titulo = labelCvPainel({
+    label_cv: data.segmentacao?.label_cv,
+    empresa: data.vaga_empresa || data.segmentacao?.vaga_empresa,
+    titulo: data.pacote?.pedido?.vaga_titulo ?? data.segmentacao?.vaga_titulo ?? "Vaga",
+    url: data.vaga_url || data.segmentacao?.vaga_url,
+  });
   const siteUrl = data.revisarUrl ?? "";
   const formato =
     data.formato_gerado === "solides"
@@ -418,7 +444,7 @@ async function gerarCurriculo(vaga, segmento_slug, classificacao = null) {
     return { ok: false, error: "descricao_curta" };
   }
 
-  painelCarregando("Lendo a vaga e gerando currículo…");
+  painelCarregando("Montando o currículo…");
 
   // Manual: sempre gera CV (ATS ou Sólides). Gupy + formato ats = CV para baixar.
   const formato = portal === "solides" ? "solides" : "ats";
@@ -439,7 +465,7 @@ async function gerarCurriculo(vaga, segmento_slug, classificacao = null) {
   }
 
   if (res.so_estrutura && !res.formato_gerado) {
-    painelErro("Este portal usa formulário próprio. Use Completar formulário.");
+    painelErro("Este portal preenche no formulário — use Completar.");
     return res;
   }
 
@@ -489,7 +515,7 @@ async function detectarVagaNaPagina() {
   });
 
   if (!classificacao.ok) {
-    painelErro(classificacao.error ?? "Site local está rodando?");
+    painelErro(classificacao.error ?? "O site local tá no ar?");
     return { ok: false, error: classificacao.error, etapa: "classificar" };
   }
 

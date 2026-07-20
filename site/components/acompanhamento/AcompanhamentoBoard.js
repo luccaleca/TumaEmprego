@@ -7,7 +7,6 @@ import { labelPortal } from "@/lib/portalLabels";
 import { temaSegmento } from "@/lib/cvSegmentoTema";
 
 const STATUS_FALLBACK = [
-  { id: "pronto", label: "Pronto" },
   { id: "enviado", label: "Enviado" },
   { id: "retorno", label: "Retorno" },
 ];
@@ -27,11 +26,19 @@ const COLUNA_TOM = {
   },
 };
 
-function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
+function CardCandidatura({
+  item,
+  statusLista,
+  statusAtual,
+  onStatus,
+  onRemover,
+  busyId,
+  compacto = false,
+}) {
   const tema = temaSegmento(item.segmento_slug);
   const portal = labelPortal(item.portal);
   const busy = busyId === item.id;
-  const outros = statusLista.filter((s) => s.id !== item.status);
+  const outros = statusLista.filter((s) => s.id !== statusAtual);
 
   return (
     <article
@@ -43,17 +50,23 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
       ].join(" ")}
     >
       <div className={`h-0.5 ${tema.header}`} aria-hidden />
-      <div className="flex flex-col gap-1.5 p-2">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className={compacto ? "flex flex-col gap-1 p-1.5" : "flex flex-col gap-1.5 p-2"}>
+        <div className={compacto ? "flex min-w-0 items-center gap-1.5" : "flex min-w-0 items-center gap-2"}>
           {item.logo_url ? (
             <img
               src={item.logo_url}
               alt=""
-              className="h-8 w-8 shrink-0 rounded-md object-cover ring-1 ring-zinc-200"
+              className={
+                compacto
+                  ? "h-7 w-7 shrink-0 rounded-md object-cover ring-1 ring-zinc-200"
+                  : "h-8 w-8 shrink-0 rounded-md object-cover ring-1 ring-zinc-200"
+              }
             />
           ) : (
             <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${tema.badge}`}
+              className={`flex ${
+                compacto ? "h-7 w-7 text-[9px]" : "h-8 w-8 text-[10px]"
+              } shrink-0 items-center justify-center rounded-md font-bold ${tema.badge}`}
               aria-hidden
             >
               {(item.empresa || item.vaga_titulo || "?").slice(0, 1).toUpperCase()}
@@ -61,13 +74,13 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
           )}
           <div className="min-w-0 flex-1">
             <p
-              className="truncate text-xs font-semibold text-zinc-900"
+              className={`truncate ${compacto ? "text-[11px]" : "text-xs"} font-semibold text-zinc-900`}
               title={item.empresa || undefined}
             >
               {item.empresa || "Empresa"}
             </p>
             <p
-              className="truncate text-[10px] leading-snug text-zinc-600"
+              className={`truncate ${compacto ? "text-[9px]" : "text-[10px]"} leading-snug text-zinc-600`}
               title={item.vaga_titulo}
             >
               {item.vaga_titulo || "Vaga"}
@@ -75,7 +88,7 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 text-[9px] text-zinc-500">
+        <div className={`flex flex-wrap items-center gap-1 ${compacto ? "text-[8px]" : "text-[9px]"} text-zinc-500`}>
           {portal ? (
             <span className="rounded bg-zinc-100 px-1 py-px font-medium text-zinc-600">
               {portal}
@@ -85,14 +98,16 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
         </div>
 
         {outros.length ? (
-          <div className="flex flex-wrap gap-1">
+          <div className={compacto ? "flex flex-wrap gap-0.5" : "flex flex-wrap gap-1"}>
             {outros.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 disabled={busy}
                 onClick={() => onStatus(item.id, s.id)}
-                className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9px] font-medium text-zinc-600 hover:bg-zinc-200 disabled:opacity-50"
+                className={`rounded-full bg-zinc-100 ${
+                  compacto ? "px-1 py-0.5 text-[8px]" : "px-1.5 py-0.5 text-[9px]"
+                } font-medium text-zinc-600 hover:bg-zinc-200 disabled:opacity-50`}
               >
                 → {s.label}
               </button>
@@ -100,11 +115,15 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
           </div>
         ) : null}
 
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-100/90 pt-1.5">
+        <div
+          className={`flex items-center justify-between gap-2 border-t border-zinc-100/90 ${
+            compacto ? "pt-1" : "pt-1.5"
+          }`}
+        >
           {item.segmentacao_id ? (
             <Link
               href={`/curriculo?id=${encodeURIComponent(item.segmentacao_id)}`}
-              className="text-[10px] font-medium text-emerald-700 hover:underline"
+              className={`${compacto ? "text-[9px]" : "text-[10px]"} font-medium text-emerald-700 hover:underline`}
             >
               CV
             </Link>
@@ -113,7 +132,7 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
               href={item.vaga_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="truncate text-[10px] font-medium text-zinc-500 hover:text-zinc-800"
+              className={`truncate ${compacto ? "text-[9px]" : "text-[10px]"} font-medium text-zinc-500 hover:text-zinc-800`}
             >
               Vaga
             </a>
@@ -124,7 +143,7 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
             type="button"
             disabled={busy}
             onClick={() => onRemover(item.id)}
-            className="text-[10px] font-medium text-zinc-400 hover:text-red-600 disabled:opacity-50"
+            className={`${compacto ? "text-[9px]" : "text-[10px]"} font-medium text-zinc-400 hover:text-red-600 disabled:opacity-50`}
           >
             Remover
           </button>
@@ -135,11 +154,15 @@ function CardCandidatura({ item, statusLista, onStatus, onRemover, busyId }) {
 }
 
 function ColunaStatus({ status, itens, statusLista, onStatus, onRemover, busyId }) {
-  const tom = COLUNA_TOM[status.id] ?? COLUNA_TOM.pronto;
+  const tom = COLUNA_TOM[status.id] ?? COLUNA_TOM.enviado;
+  const compacto = status.id === "enviado";
 
   return (
     <section
-      className="flex w-[min(100%,16.5rem)] shrink-0 flex-col rounded-xl border border-zinc-200/90 bg-zinc-50/80 lg:w-auto lg:min-w-0 lg:flex-1"
+      className={[
+        "flex w-[min(100%,16.5rem)] shrink-0 flex-col rounded-xl border border-zinc-200/90 bg-zinc-50/80",
+        "lg:w-auto lg:min-w-0 lg:flex-1",
+      ].join(" ")}
       aria-label={status.label}
     >
       <header
@@ -154,16 +177,22 @@ function ColunaStatus({ status, itens, statusLista, onStatus, onRemover, busyId 
         </span>
       </header>
 
-      <div className="flex max-h-[min(70vh,36rem)] flex-col gap-1.5 overflow-y-auto p-1.5">
+      <div
+        className={`flex max-h-[min(70vh,36rem)] flex-col overflow-y-auto ${
+          compacto ? "gap-1 p-1" : "gap-1.5 p-1.5"
+        }`}
+      >
         {itens.length ? (
           itens.map((item) => (
             <CardCandidatura
               key={item.id}
               item={item}
+              statusAtual={status.id}
               statusLista={statusLista}
               onStatus={onStatus}
               onRemover={onRemover}
               busyId={busyId}
+              compacto={compacto}
             />
           ))
         ) : (
@@ -188,7 +217,10 @@ export default function AcompanhamentoBoard({ initial = [] }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || data.error);
       setItens(data.candidaturas ?? []);
-      if (data.status?.length) setStatusLista(data.status);
+      if (data.status?.length) {
+        const filtrados = (data.status ?? []).filter((s) => s.id !== "pronto");
+        setStatusLista(filtrados.length ? filtrados : STATUS_FALLBACK);
+      }
     } catch (err) {
       setMessage(err.message || "Erro ao carregar");
     } finally {

@@ -171,15 +171,35 @@ export async function executarAdaptacaoCvVaga(input) {
     return {
       status: "pendente",
       motivo: "sem_cv_base",
-      instrucao: "Envie ou edite o currículo base antes de gerar para a vaga.",
+      instrucao: "Falta o currículo base pra gerar essa vaga.",
     };
   }
 
   const conteudo = adaptarCvParaVaga(cvBase, { ...pedido, fonte, segmento_slug });
+  const vaga_empresa = String(input?.vaga_empresa ?? "").trim() || null;
+  const salvar = input?.salvar !== false;
+
+  const baseResultado = {
+    status: "concluido",
+    pedido,
+    segmento_slug,
+    portal: portal || null,
+    vaga_url: vaga_url || null,
+    vaga_titulo: pedido.vaga_titulo,
+    vaga_empresa,
+    conteudo,
+    base: slot ? "slot" : "cv-base",
+    motor: "local",
+    salvo: false,
+  };
+
+  if (!salvar) {
+    return baseResultado;
+  }
 
   const segmentacao = criarOuAtualizarSegmentacaoVaga({
     vaga_titulo: pedido.vaga_titulo,
-    vaga_empresa: String(input?.vaga_empresa ?? "").trim() || null,
+    vaga_empresa,
     vaga_descricao: pedido.vaga_descricao,
     vaga_url: vaga_url || null,
     segmento_slug,
@@ -189,16 +209,9 @@ export async function executarAdaptacaoCvVaga(input) {
   });
 
   return {
-    status: "concluido",
+    ...baseResultado,
     segmentacao,
-    pedido,
-    segmento_slug,
-    portal: portal || null,
-    vaga_url: vaga_url || null,
-    vaga_titulo: pedido.vaga_titulo,
-    vaga_empresa: String(input?.vaga_empresa ?? "").trim() || null,
-    base: slot ? "slot" : "cv-base",
-    motor: "local",
+    salvo: true,
   };
 }
 
@@ -239,14 +252,18 @@ export async function executarPacoteCvVaga(input, { gerarPdf = true } = {}) {
   let pdf = null;
 
   if (gerarPdf) {
-    try {
-      pdf = await gerarPdfParaSegmentacao(adaptacao.segmentacao.id);
-    } catch (err) {
-      pdf = {
-        temPdf: false,
-        erro: err.message ?? "Falha ao gerar PDF",
-        pdfUrl: null,
-      };
+    if (!adaptacao.segmentacao?.id) {
+      pdf = { temPdf: false, pdfUrl: null };
+    } else {
+      try {
+        pdf = await gerarPdfParaSegmentacao(adaptacao.segmentacao.id);
+      } catch (err) {
+        pdf = {
+          temPdf: false,
+          erro: err.message ?? "Falha ao gerar PDF",
+          pdfUrl: null,
+        };
+      }
     }
   }
 

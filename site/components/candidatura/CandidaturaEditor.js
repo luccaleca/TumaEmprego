@@ -129,7 +129,7 @@ export default function CandidaturaEditor({ initial }) {
       setCandidatura(data.candidatura);
       snapshotRef.current = null;
       setEditing(false);
-      setMessage("Alterações salvas.");
+      setMessage("Salvo.");
     } catch (err) {
       setMessage(err.message || "Erro ao salvar");
     } finally {
@@ -141,7 +141,7 @@ export default function CandidaturaEditor({ initial }) {
     <>
       {message ? (
         <p
-          className={`mb-2 text-right text-xs font-medium ${message.includes("salvas") ? "text-emerald-700" : "text-red-600"}`}
+          className={`mb-2 text-right text-xs font-medium ${message.includes("Salvo") || message.includes("salvo") ? "text-emerald-700" : "text-red-600"}`}
           role="status"
         >
           {message}

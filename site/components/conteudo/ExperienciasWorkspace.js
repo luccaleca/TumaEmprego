@@ -208,7 +208,7 @@ function ExperienciasEdit({ banco, setBanco, updateExperiencia, todosSegmentos }
                       <textarea
                         className={textareaClass}
                         rows={2}
-                        placeholder="Uma linha que reforça o foco desta área"
+                        placeholder="Ex.: foco em SQL e dashboards"
                         value={exp.nota_por_segmento?.[slug] ?? ""}
                         onChange={(e) =>
                           updateExperiencia(i, {

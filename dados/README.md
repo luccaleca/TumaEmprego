@@ -33,6 +33,7 @@ cp dados/conteudo/banco.example.yml dados/conteudo/banco.yml
 | PDF gerado | `pdfs/` | — |
 | Foto | `fotos/` | — |
 | Métricas / fatos | `resultados/*.yml` | `resultados/exemplo.yml` |
+| Última busca de vagas | `busca/ultima.yml` | `busca/ultima.example.yml` |
 | Tracker | `candidaturas/` | — |
 
 ## No GitHub

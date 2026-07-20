@@ -1,4 +1,4 @@
-import {
+﻿import {
   atualizarCandidatura,
   criarCandidaturaManual,
   getCandidatura,
@@ -17,7 +17,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível listar candidaturas", detail: err.message },
+      { error: "Não listou as candidaturas", detail: err.message },
       { status: 500 },
     );
   }
@@ -48,7 +48,7 @@ export async function POST(request) {
     );
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível criar candidatura", detail: err.message },
+      { error: "Não criou a candidatura", detail: err.message },
       { status: 500 },
     );
   }
@@ -71,7 +71,7 @@ export async function PATCH(request) {
     return NextResponse.json({ ok: true, candidatura });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível atualizar", detail: err.message },
+      { error: "Não atualizou", detail: err.message },
       { status: 400 },
     );
   }
@@ -89,7 +89,7 @@ export async function DELETE(request) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível remover", detail: err.message },
+      { error: "Não removeu", detail: err.message },
       { status: 500 },
     );
   }

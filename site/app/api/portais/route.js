@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import {
   listarPortaisComStatus,
   metaPortalParaResposta,
@@ -20,7 +20,7 @@ export async function GET(request) {
 
     return NextResponse.json({ portais: listarPortaisComStatus() });
   } catch (err) {    return NextResponse.json(
-      { error: "Não foi possível listar portais", detail: err.message },
+      { error: "Não listou os portais", detail: err.message },
       { status: 500 },
     );
   }

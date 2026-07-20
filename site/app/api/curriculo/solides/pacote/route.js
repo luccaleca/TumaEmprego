@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { executarPacoteSolidesVaga } from "@/lib/adaptarSolides";
 import { getPortalSolides } from "@/lib/dados";
 
@@ -16,7 +16,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler o perfil Sólides", detail: err.message },
+      { error: "Não leu o Sólides", detail: err.message },
       { status: 500 },
     );
   }
@@ -68,7 +68,7 @@ export async function POST(request) {
     }
 
     return NextResponse.json(
-      { error: resultado.motivo ?? "Não foi possível gerar pacote Sólides", pacote: resultado },
+      { error: resultado.motivo ?? "Não gerou o Sólides", pacote: resultado },
       { status: 500 },
     );
   } catch (err) {

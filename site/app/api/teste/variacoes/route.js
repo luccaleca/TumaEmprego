@@ -35,7 +35,7 @@ export async function GET() {
     const cvBase = getCvBase()?.trim();
     if (!cvBase) {
       return NextResponse.json(
-        { error: "Cadastre o cv-base em dados/cv-base.md primeiro" },
+        { error: "Falta o currículo base" },
         { status: 400 },
       );
     }
@@ -45,7 +45,7 @@ export async function GET() {
 
     if (!pedidos.length) {
       return NextResponse.json(
-        { error: "Ative ao menos um segmento em dados/config/busca.yml" },
+        { error: "Ative ao menos um segmento na busca" },
         { status: 400 },
       );
     }

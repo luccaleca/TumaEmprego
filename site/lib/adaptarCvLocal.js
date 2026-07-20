@@ -1,5 +1,5 @@
 /**
- * Adaptação local de cv-base.md — monta CV focado por segmento/vaga.
+ * Monta CV local por segmento ou vaga.
  */
 
 import { slugsSegmentosAtivos } from "./segmentosAtivos.js";

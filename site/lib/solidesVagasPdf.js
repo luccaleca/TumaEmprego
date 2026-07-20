@@ -128,27 +128,50 @@ function renderExperiencias(dados, vazio) {
   const forms = vazio ? dados.formacao : dados.formacao?.length ? dados.formacao : [];
   forms.forEach((form, i) => {
     html += `<p class="block-title">Formação ${i + 1}</p>`;
+    html += campoHtml({ label: "Instituição", valor: form.instituicao, obrigatorio: true, vazio });
     html += campoHtml({
-      label: "Grau de escolaridade / Curso",
-      valor: form.grau_curso,
+      label: "Nível do curso",
+      valor: form.nivel || "Graduação",
       obrigatorio: true,
       vazio,
     });
-    html += campoHtml({ label: "Instituição", valor: form.instituicao, obrigatorio: true, vazio });
-    html += campoHtml({ label: "Data de início", valor: form.inicio, obrigatorio: true, vazio });
-    html += campoHtml({ label: "Data de término / Previsão", valor: form.fim, obrigatorio: true, vazio });
+    html += campoHtml({
+      label: "Curso",
+      valor: form.curso || form.grau_curso,
+      obrigatorio: true,
+      vazio,
+    });
+    if (!vazio && form.inicio) {
+      html += campoHtml({ label: "Data de início", valor: form.inicio, vazio: false });
+    }
+    html += campoHtml({
+      label: "Ano de conclusão (ou previsão)",
+      valor: form.fim,
+      obrigatorio: true,
+      vazio,
+    });
     if (!vazio && form.situacao) {
       html += campoHtml({ label: "Situação", valor: form.situacao, vazio: false });
     }
-    if (!vazio && form.cidade) {
-      html += campoHtml({ label: "Cidade", valor: form.cidade, vazio: false });
-    }
   });
 
-  html += campoHtml({
-    label: "Cursos e certificações",
-    valor: dados.cursos_certificacoes,
-    vazio,
+  const cursos = vazio
+    ? [{ curso: "", instituicao: "", nivel: "", ano_conclusao: "", descricao: "" }]
+    : dados.cursos_certificacoes?.length
+      ? dados.cursos_certificacoes
+      : [];
+  cursos.forEach((c, i) => {
+    html += `<p class="block-title">Curso / certificação ${i + 1}</p>`;
+    html += campoHtml({ label: "Curso", valor: c.curso, obrigatorio: true, vazio });
+    html += campoHtml({ label: "Instituição", valor: c.instituicao, obrigatorio: true, vazio });
+    html += campoHtml({ label: "Nível", valor: c.nivel, obrigatorio: true, vazio });
+    html += campoHtml({
+      label: "Ano de conclusão (ou previsão)",
+      valor: c.ano_conclusao,
+      obrigatorio: true,
+      vazio,
+    });
+    html += campoHtml({ label: "Descrição das atividades", valor: c.descricao, vazio });
   });
 
   return html;
@@ -244,14 +267,24 @@ export function markdownSolidesVagasForm(pacote) {
       });
       dados.experiencias.formacao.forEach((form, i) => {
         linhas.push(`### Formação ${i + 1}`, "");
-        linhas.push(`**Curso:** ${form.grau_curso}`, `**Instituição:** ${form.instituicao}`, "");
-        if (form.inicio) linhas.push(`**Período:** ${form.inicio} – ${form.fim || "—"}`, "");
+        linhas.push(`**Instituição:** ${form.instituicao}`, "");
+        linhas.push(`**Nível do curso:** ${form.nivel || "Graduação"}`, "");
+        linhas.push(`**Curso:** ${form.curso || form.grau_curso}`, "");
+        if (form.inicio) linhas.push(`**Início:** ${form.inicio}`, "");
+        linhas.push(`**Ano de conclusão (ou previsão):** ${form.fim || "—"}`, "");
+        if (form.situacao) linhas.push(`**Situação:** ${form.situacao}`, "");
         linhas.push("");
       });
       if (dados.experiencias.cursos_certificacoes.length) {
-        linhas.push("**Cursos e certificações**", "");
-        dados.experiencias.cursos_certificacoes.forEach((c) => linhas.push(`- ${c}`));
-        linhas.push("");
+        dados.experiencias.cursos_certificacoes.forEach((c, i) => {
+          linhas.push(`### Curso / certificação ${i + 1}`, "");
+          linhas.push(`**Curso:** ${c.curso || ""}`, "");
+          linhas.push(`**Instituição:** ${c.instituicao || ""}`, "");
+          linhas.push(`**Nível:** ${c.nivel || ""}`, "");
+          linhas.push(`**Ano de conclusão (ou previsão):** ${c.ano_conclusao || ""}`, "");
+          if (c.descricao) linhas.push(`**Descrição das atividades:** ${c.descricao}`, "");
+          linhas.push("");
+        });
       }
     } else if (aba.id === "habilidades") {
       dados.habilidades.itens.forEach((h) => {

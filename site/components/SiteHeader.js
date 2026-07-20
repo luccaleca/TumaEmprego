@@ -6,11 +6,11 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/", label: "Perfil" },
   { href: "/segmentos", label: "Segmentos" },
-  { href: "/curriculo", label: "Currículo" },
+  { href: "/busca", label: "Busca" },
   { href: "/vaga", label: "Vaga" },
+  { href: "/curriculo", label: "Currículo" },
   { href: "/acompanhamento", label: "Status" },
 ];
-
 export default function SiteHeader() {
   const pathname = usePathname();
 

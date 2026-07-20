@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getFormacao, saveFormacao } from "@/lib/dados";
 
 export async function GET() {
@@ -6,7 +6,7 @@ export async function GET() {
     return NextResponse.json({ formacao: getFormacao() });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler dados/config/formacao.yml", detail: err.message },
+      { error: "Não leu a formação", detail: err.message },
       { status: 500 },
     );
   }
@@ -22,7 +22,7 @@ export async function PUT(request) {
     return NextResponse.json({ ok: true, formacao: getFormacao() });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status: 500 },
     );
   }

@@ -22,6 +22,18 @@ const LOGOS = [
     url: "/empresas/majors-asset.png",
     match: /\bmajors(\s*asset)?\b/i,
   },
+  {
+    id: "instituto-cordial",
+    empresa: "Instituto Cordial",
+    url: "/empresas/instituto-cordial.png",
+    match: /\bcordial\b/i,
+  },
+  {
+    id: "btg-pactual",
+    empresa: "BTG Pactual",
+    url: "/empresas/btg-pactual.png",
+    match: /\bbtg(\s*pactual)?\b/i,
+  },
 ];
 
 function blobCandidatura({ empresa, vaga_titulo, vaga_url } = {}) {

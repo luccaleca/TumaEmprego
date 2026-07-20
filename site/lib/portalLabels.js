@@ -5,6 +5,8 @@ export const PORTAL_LABELS = {
   linkedin: "LinkedIn",
   infojobs: "InfoJobs",
   catho: "Catho",
+  bebee: "Bebee",
+  trampos: "Trampos",
   kenoby: "Kenoby",
   workday: "Workday",
   greenhouse: "Greenhouse",

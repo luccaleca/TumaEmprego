@@ -46,7 +46,7 @@ export async function POST(_request, { params }) {
       {
         error: playwrightMissing
           ? "Playwright não instalado — rode: npx playwright install chromium"
-          : "Não foi possível gerar PDF",
+          : "Não gerou o PDF",
         detail,
       },
       { status: 500 },

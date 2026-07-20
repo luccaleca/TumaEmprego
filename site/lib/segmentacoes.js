@@ -3,6 +3,7 @@ import path from "path";
 
 import { MOTOR_CV_VERSAO } from "./adaptarCvLocal.js";
 import { SEGMENTOS_CV_SLOTS } from "./conteudoConstants.js";
+import { labelCvVaga } from "./cvSegmentoTema.js";
 
 const DADOS_ROOT = path.join(process.cwd(), "..", "dados");
 const SEG_ROOT = path.join(DADOS_ROOT, "curriculo", "segmentacoes");
@@ -88,6 +89,7 @@ function enrichMeta(meta) {
     hasPdf,
     hasMd,
     updatedAt,
+    label_cv: labelCvVaga(meta),
   };
 }
 
@@ -410,10 +412,20 @@ export function criarSegmentacao({
 }
 
 function normalizeUrlVaga(url) {
-  return String(url ?? "")
-    .trim()
-    .replace(/\/+$/, "")
-    .toLowerCase();
+  const bruto = String(url ?? "").trim();
+  if (!bruto) return "";
+  try {
+    const u = new URL(bruto);
+    u.hash = "";
+    u.search = "";
+    const path = u.pathname.replace(/\/+$/, "") || "";
+    return `${u.protocol}//${u.host.toLowerCase()}${path}`.toLowerCase();
+  } catch {
+    return bruto
+      .split(/[?#]/)[0]
+      .replace(/\/+$/, "")
+      .toLowerCase();
+  }
 }
 
 function normalizeTituloVaga(titulo) {
@@ -425,19 +437,35 @@ function normalizeTituloVaga(titulo) {
     .replace(/\s+/g, " ");
 }
 
+function normalizeEmpresaVaga(empresa) {
+  return String(empresa ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\b(ltda|me|eireli|s\.?a\.?|ss|ltd|inc|corp)\b\.?/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /**
- * Encontra CV de vaga já gerado (evita duplicar no clique duplo / retry).
- * Prioriza URL; senão título+segmento nos últimos 10 min.
+ * Encontra CV de vaga já gerado (evita duplicar).
+ * 1) mesma URL (sem query)
+ * 2) mesma empresa + título + formato
+ * 3) só título + formato nos últimos 10 min (quando não há empresa)
  */
 export function encontrarSegmentacaoVagaExistente({
   vaga_url,
   vaga_titulo,
+  vaga_empresa = null,
   segmento_slug,
   portal = null,
   formato_cv = null,
 } = {}) {
   const urlN = normalizeUrlVaga(vaga_url);
   const tituloN = normalizeTituloVaga(vaga_titulo);
+  const empN = normalizeEmpresaVaga(vaga_empresa);
   const slug = String(segmento_slug ?? "").trim() || null;
   const portalN = portal ? String(portal).trim().toLowerCase() : null;
   const formatoN = formato_cv ? String(formato_cv).trim().toLowerCase() : null;
@@ -461,11 +489,24 @@ export function encontrarSegmentacaoVagaExistente({
     if (porUrl) return porUrl;
   }
 
+  if (tituloN && empN) {
+    const porEmpresaTitulo = candidatas.find((s) => {
+      if (normalizeTituloVaga(s.vaga_titulo) !== tituloN) return false;
+      if (normalizeEmpresaVaga(s.vaga_empresa) !== empN) return false;
+      if (slug && s.segmento_slug && s.segmento_slug !== slug) return false;
+      return true;
+    });
+    if (porEmpresaTitulo) return porEmpresaTitulo;
+  }
+
   if (!tituloN) return null;
 
   return (
     candidatas.find((s) => {
       if (normalizeTituloVaga(s.vaga_titulo) !== tituloN) return false;
+      if (empN && normalizeEmpresaVaga(s.vaga_empresa) && normalizeEmpresaVaga(s.vaga_empresa) !== empN) {
+        return false;
+      }
       if (slug && s.segmento_slug && s.segmento_slug !== slug) return false;
       const criado = Date.parse(s.atualizado_em || s.criado_em || 0);
       if (!Number.isFinite(criado)) return false;
@@ -474,29 +515,68 @@ export function encontrarSegmentacaoVagaExistente({
   );
 }
 
-/** Cria CV de vaga ou sobrescreve o existente (mesma URL / retry recente). */
+/** Remove outras cópias da mesma vaga (mantém `manterId`). */
+function limparDuplicatasVaga(manterId, opts) {
+  const urlN = normalizeUrlVaga(opts.vaga_url);
+  const tituloN = normalizeTituloVaga(opts.vaga_titulo);
+  const empN = normalizeEmpresaVaga(opts.vaga_empresa);
+  const formatoN = opts.formato_cv
+    ? String(opts.formato_cv).trim().toLowerCase()
+    : null;
+
+  for (const s of listSegmentacoes()) {
+    if (s.id === manterId || s.origem !== "vaga" || isSlotSegmento(s)) continue;
+    if (formatoN) {
+      const sFmt = String(
+        s.formato_cv ?? (s.portal === "solides" ? "solides" : "ats"),
+      ).toLowerCase();
+      if (sFmt !== formatoN) continue;
+    }
+    const mesmaUrl = urlN && normalizeUrlVaga(s.vaga_url) === urlN;
+    const mesmaEmpTitulo =
+      tituloN &&
+      empN &&
+      normalizeTituloVaga(s.vaga_titulo) === tituloN &&
+      normalizeEmpresaVaga(s.vaga_empresa) === empN;
+    if (mesmaUrl || mesmaEmpTitulo) {
+      try {
+        excluirSegmentacao(s.id);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
+/** Cria CV de vaga ou sobrescreve o existente (mesma URL / empresa+título). */
 export function criarOuAtualizarSegmentacaoVaga(opts) {
-  const existente = encontrarSegmentacaoVagaExistente({
+  const formato_cv = opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats");
+  const busca = {
     vaga_url: opts.vaga_url,
     vaga_titulo: opts.vaga_titulo,
+    vaga_empresa: opts.vaga_empresa,
     segmento_slug: opts.segmento_slug,
     portal: opts.portal,
-    formato_cv: opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats"),
-  });
+    formato_cv,
+  };
+
+  const existente = encontrarSegmentacaoVagaExistente(busca);
 
   if (!existente) {
-    return criarSegmentacao({
+    const criada = criarSegmentacao({
       ...opts,
       origem: "vaga",
-      formato_cv: opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats"),
+      formato_cv,
     });
+    limparDuplicatasVaga(criada.id, busca);
+    return getSegmentacao(criada.id) ?? criada;
   }
 
   if (opts.conteudoMd?.trim()) {
     salvarSegmentacaoConteudo(existente.id, opts.conteudoMd);
   }
 
-  return atualizarMetaSegmentacao(existente.id, {
+  const atualizada = atualizarMetaSegmentacao(existente.id, {
     vaga_titulo: String(opts.vaga_titulo ?? existente.vaga_titulo).trim(),
     vaga_descricao: String(opts.vaga_descricao ?? "").trim(),
     origem: "vaga",
@@ -507,13 +587,21 @@ export function criarOuAtualizarSegmentacaoVaga(opts) {
     ...(opts.vaga_url ? { vaga_url: String(opts.vaga_url).trim() } : {}),
     ...(opts.portal ? { portal: opts.portal } : {}),
     ...(opts.formato_cv || opts.portal === "solides"
-      ? { formato_cv: opts.formato_cv ?? (opts.portal === "solides" ? "solides" : "ats") }
+      ? { formato_cv }
       : { formato_cv: "ats" }),
     ...(opts.motor_solides_versao
       ? { motor_solides_versao: opts.motor_solides_versao }
       : {}),
     formato: "markdown",
   });
+
+  limparDuplicatasVaga(existente.id, {
+    ...busca,
+    vaga_empresa: opts.vaga_empresa || existente.vaga_empresa,
+    vaga_url: opts.vaga_url || existente.vaga_url,
+  });
+
+  return atualizada;
 }
 
 export function migrarAdaptadoBuscaLegado() {

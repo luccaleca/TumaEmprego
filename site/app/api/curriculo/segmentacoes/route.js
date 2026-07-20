@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { parseCvBase } from "@/lib/cv";
 import { montarColunasCurriculo } from "@/lib/curriculoColunas";
 import { getBusca } from "@/lib/dados";
@@ -56,7 +56,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível listar segmentações", detail: err.message },
+      { error: "Não listou os currículos", detail: err.message },
       { status: 500 },
     );
   }
@@ -113,7 +113,7 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, segmentacao, sections });
   } catch (err) {
     return NextResponse.json(
-      { error: err.message || "Não foi possível criar segmentação", detail: err.message },
+      { error: err.message || "Não criou o currículo", detail: err.message },
       { status: 500 },
     );
   }

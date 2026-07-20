@@ -57,6 +57,72 @@ export function labelSegmento(segmentacao) {
   return titulo || "Segmento";
 }
 
+/** Marcas curtas conhecidas (card do Currículo). */
+const EMPRESA_CURTA = [
+  { match: /\bsafra\b/i, curta: "SAFRA" },
+  { match: /\bcreditas\b/i, curta: "CREDITAS" },
+  { match: /\bcordial\b/i, curta: "CORDIAL" },
+  { match: /\bmajors\b/i, curta: "MAJORS" },
+];
+
+function empresaDeUrl(vagaUrl) {
+  try {
+    const host = new URL(String(vagaUrl ?? "")).hostname.replace(/^www\./i, "");
+    const primeiro = host.split(".")[0] || "";
+    if (!primeiro || /^(vagas|app|jobs|careers|portal)$/i.test(primeiro)) return "";
+    return primeiro.replace(/[-_]+/g, " ");
+  } catch {
+    return "";
+  }
+}
+
+/** Nome curto da empresa para o card (ex.: SAFRA). */
+export function empresaCurtaCv(empresa, ctx = {}) {
+  const bruto = String(empresa ?? "").trim() || empresaDeUrl(ctx.vaga_url);
+  if (!bruto) return "";
+
+  for (const item of EMPRESA_CURTA) {
+    if (item.match.test(bruto) || item.match.test(String(ctx.vaga_url ?? ""))) {
+      return item.curta;
+    }
+  }
+
+  const limpa = bruto
+    .replace(/\b(ltda|me|eireli|s\.?a\.?|ss|ltd|inc|corp)\b\.?/gi, " ")
+    .replace(/\b(instituto|banco|empresa|de|da|do|dos|das|e)\b/gi, " ")
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!limpa) {
+    return bruto.slice(0, 24).toUpperCase();
+  }
+
+  const partes = limpa.split(/\s+/).filter(Boolean);
+  const escolhidas = partes.length <= 2 ? partes : partes.slice(0, 2);
+  return escolhidas.join(" ").toUpperCase();
+}
+
+/**
+ * Título do CV na área Currículo / extensão.
+ * Vaga: `SAFRA-Estágio em Engenharia de Dados`
+ * Segmento base: label do segmento.
+ */
+export function labelCvVaga(segmentacao) {
+  if (!segmentacao) return "Vaga";
+  if (segmentacao.origem === "busca" || segmentacao.origem === "segmento" || segmentacao.slot) {
+    return labelSegmento(segmentacao);
+  }
+
+  const emp = empresaCurtaCv(segmentacao.vaga_empresa, {
+    vaga_url: segmentacao.vaga_url,
+  });
+  const titulo = String(segmentacao.vaga_titulo ?? "").trim();
+  if (emp && titulo) return `${emp}-${titulo}`;
+  if (titulo) return titulo;
+  return emp || "Vaga";
+}
+
 export function resumoAlvos(segmentacao) {
   const alvos = segmentacao?.alvos ?? [];
   if (!alvos.length) return "CV geral do segmento";

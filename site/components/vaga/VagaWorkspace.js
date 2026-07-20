@@ -1,27 +1,44 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { inputClass, textareaClass } from "@/components/profile/FormField";
+import { empresaCurtaCv, labelCvVaga } from "@/lib/cvSegmentoTema";
 
 export default function VagaWorkspace() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [vagaTitulo, setVagaTitulo] = useState("");
   const [vagaEmpresa, setVagaEmpresa] = useState("");
   const [vagaDescricao, setVagaDescricao] = useState("");
   const [vagaUrl, setVagaUrl] = useState("");
+  const [segmentoSlug, setSegmentoSlug] = useState("");
   const [portalDetectado, setPortalDetectado] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [busyDesc, setBusyDesc] = useState(false);
+  const [busySalvar, setBusySalvar] = useState(false);
   const [message, setMessage] = useState("");
-  const [gerarSolides, setGerarSolides] = useState(false);
-  const [descricaoVaga, setDescricaoVaga] = useState("");
-  const [copiado, setCopiado] = useState(false);
+  const [rascunho, setRascunho] = useState(null);
   const gerandoRef = useRef(false);
+  const prefillFeito = useRef(false);
 
   useEffect(() => {
-    const url = vagaUrl.trim();
-    if (!url) {
+    if (prefillFeito.current) return;
+    const titulo = searchParams.get("titulo");
+    const empresa = searchParams.get("empresa");
+    const url = searchParams.get("url");
+    const descricao = searchParams.get("descricao");
+    const segmento = searchParams.get("segmento");
+    if (!titulo && !empresa && !url && !descricao && !segmento) return;
+    prefillFeito.current = true;
+    if (titulo) setVagaTitulo(titulo);
+    if (empresa) setVagaEmpresa(empresa);
+    if (url) setVagaUrl(url);
+    if (descricao) setVagaDescricao(descricao);
+    if (segmento) setSegmentoSlug(segmento);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const url = vagaUrl.trim();    if (!url) {
       setPortalDetectado(null);
       return;
     }
@@ -33,7 +50,6 @@ export default function VagaWorkspace() {
         const data = await res.json();
         if (!res.ok || cancelado) return;
         setPortalDetectado(data);
-        setGerarSolides(data.portal === "solides" && data.portal_motor_ativo === true);
       } catch {
         if (!cancelado) setPortalDetectado(null);
       }
@@ -44,9 +60,18 @@ export default function VagaWorkspace() {
     };
   }, [vagaUrl]);
 
+  function tituloRascunho(data) {
+    return labelCvVaga({
+      origem: "vaga",
+      vaga_titulo: data?.vaga_titulo || vagaTitulo.trim(),
+      vaga_empresa: data?.vaga_empresa || vagaEmpresa.trim(),
+      vaga_url: data?.vaga_url || vagaUrl.trim(),
+    });
+  }
+
   async function gerarAdaptacao(event) {
     event.preventDefault();
-    if (gerandoRef.current || busy) return;
+    if (gerandoRef.current || busy || busySalvar) return;
     if (vagaDescricao.trim().length < 20) {
       setMessage("Cole a descrição completa da vaga.");
       return;
@@ -55,14 +80,17 @@ export default function VagaWorkspace() {
     gerandoRef.current = true;
     setBusy(true);
     setMessage("");
+    setRascunho(null);
 
     const payload = {
       vaga_titulo: vagaTitulo.trim(),
       vaga_empresa: vagaEmpresa.trim(),
       vaga_descricao: vagaDescricao.trim(),
       vaga_url: vagaUrl.trim(),
-      formato: gerarSolides ? "solides" : "auto",
-      gerar_pdf: !gerarSolides,
+      formato: "ats",
+      salvar: false,
+      gerar_pdf: false,
+      ...(segmentoSlug.trim() ? { segmento_slug: segmentoSlug.trim() } : {}),
     };
 
     try {
@@ -74,71 +102,67 @@ export default function VagaWorkspace() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || data.detail);
 
-      if (data.descricao_para_vaga) {
-        setDescricaoVaga(data.descricao_para_vaga);
-      }
-
-      const id = data.segmentacao_id ?? data.segmentacao?.id;
-      if (id) {
-        if (data.pacote?.pdf?.erro || data.pacote?.aviso_pdf) {
-          setMessage(data.pacote.aviso_pdf || data.pacote.pdf.erro || "CV gerado; PDF falhou.");
-        }
-        router.push(`/curriculo?id=${encodeURIComponent(id)}`);
-        return;
-      }
-
-      setMessage(data.so_estrutura ? "Descrição pronta." : "Gerado.");
+      setRascunho({
+        titulo: tituloRascunho(data),
+        preview: data.preview || "",
+        segmento_label: data.segmento_label || "",
+        payload,
+      });
+      setMessage("Revise e salve no Currículo.");
     } catch (err) {
-      setMessage(err.message || "Erro ao gerar");
+      setMessage(err.message || "Não gerou");
     } finally {
       gerandoRef.current = false;
       setBusy(false);
     }
   }
 
-  async function gerarDescricao() {
-    if (vagaDescricao.trim().length < 20 && vagaTitulo.trim().length < 3) {
-      setMessage("Cole o título ou a descrição da vaga.");
-      return;
-    }
-
-    setBusyDesc(true);
+  async function salvarNoCurriculo() {
+    if (!rascunho?.payload || busySalvar) return;
+    setBusySalvar(true);
     setMessage("");
-    setCopiado(false);
 
     try {
-      const res = await fetch("/api/curriculo/vaga/descricao", {
+      const res = await fetch("/api/curriculo/vaga/pacote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vaga_titulo: vagaTitulo.trim(),
-          vaga_descricao: vagaDescricao.trim(),
+          ...rascunho.payload,
+          salvar: true,
+          gerar_pdf: true,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || data.detail);
-      setDescricaoVaga(data.texto || "");
-      setMessage("Descrição pronta.");
-    } catch (err) {
-      setMessage(err.message || "Erro ao gerar descrição");
-    } finally {
-      setBusyDesc(false);
-    }
-  }
 
-  async function copiarDescricao() {
-    if (!descricaoVaga.trim()) return;
-    try {
-      await navigator.clipboard.writeText(descricaoVaga);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 1500);
-    } catch {
-      setMessage("Não foi possível copiar.");
+      const id = data.segmentacao_id ?? data.segmentacao?.id;
+      if (!id) throw new Error("Não salvou no Currículo");
+
+      setRascunho((prev) =>
+        prev
+          ? {
+              ...prev,
+              salvo: true,
+              segmentacaoId: id,
+              titulo: tituloRascunho(data),
+            }
+          : prev,
+      );
+      setMessage("Salvo em Currículo · origem Vaga.");
+    } catch (err) {
+      setMessage(err.message || "Não salvou");
+    } finally {
+      setBusySalvar(false);
     }
   }
 
   const msgErro =
-    message.includes("Erro") || message.includes("Cole") || message.includes("descrição");
+    message.includes("Erro") ||
+    message.includes("Cole") ||
+    message.includes("descrição") ||
+    message.includes("Não");
+
+  const empCurta = empresaCurtaCv(vagaEmpresa, { vaga_url: vagaUrl });
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] flex-col bg-gradient-to-b from-zinc-100/40 via-white to-zinc-50/30">
@@ -158,7 +182,7 @@ export default function VagaWorkspace() {
             onChange={(e) => setVagaUrl(e.target.value)}
           />
           {portalDetectado?.portal_nome ? (
-            <p className="mb-2 text-[11px] text-violet-700">{portalDetectado.portal_nome}</p>
+            <p className="mb-2 text-[11px] text-zinc-500">{portalDetectado.portal_nome}</p>
           ) : null}
           <input
             className={`${inputClass} mb-2`}
@@ -179,55 +203,66 @@ export default function VagaWorkspace() {
             onChange={(e) => setVagaDescricao(e.target.value)}
             required
           />
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <button
-              type="submit"
-              disabled={busy || busyDesc}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium text-white disabled:opacity-50 ${
-                gerarSolides
-                  ? "bg-violet-600 hover:bg-violet-700"
-                  : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
-            >
-              {busy ? "Gerando…" : gerarSolides ? "Gerar Sólides" : "Gerar ATS"}
-            </button>
-            <button
-              type="button"
-              disabled={busy || busyDesc}
-              onClick={gerarDescricao}
-              className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50"
-            >
-              {busyDesc ? "Gerando…" : "Gerar descrição"}
-            </button>
-          </div>
-          <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-zinc-600">
-            <input
-              type="checkbox"
-              checked={gerarSolides}
-              onChange={(e) => setGerarSolides(e.target.checked)}
-              className="rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
-            />
-            Sólides
-          </label>
+          <button
+            type="submit"
+            disabled={busy || busySalvar}
+            className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {busy ? "Gerando…" : "Gerar CV"}
+          </button>
         </form>
 
-        {descricaoVaga ? (
-          <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-zinc-800">Descrição</p>
-              <button
-                type="button"
-                onClick={copiarDescricao}
-                className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-200"
-              >
-                {copiado ? "Copiado" : "Copiar"}
-              </button>
+        {rascunho ? (
+          <div className="rounded-xl border border-emerald-200/90 bg-white p-4 shadow-sm">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-900">
+                Vaga
+              </span>
+              {empCurta ? (
+                <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700">
+                  {empCurta}
+                </span>
+              ) : null}
+              {rascunho.salvo ? (
+                <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800">
+                  Salvo
+                </span>
+              ) : null}
             </div>
-            <textarea
-              className={`${textareaClass} min-h-[8rem] text-sm`}
-              value={descricaoVaga}
-              onChange={(e) => setDescricaoVaga(e.target.value)}
-            />
+            <p className="truncate text-sm font-semibold text-zinc-900">{rascunho.titulo}</p>
+            {rascunho.segmento_label ? (
+              <p className="mt-0.5 text-[11px] text-zinc-500">{rascunho.segmento_label}</p>
+            ) : null}
+            {rascunho.preview ? (
+              <pre className="mt-3 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-zinc-50 p-2.5 font-sans text-[11px] leading-relaxed text-zinc-700">
+                {rascunho.preview.slice(0, 900)}
+                {rascunho.preview.length > 900 ? "…" : ""}
+              </pre>
+            ) : null}
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              {!rascunho.salvo ? (
+                <button
+                  type="button"
+                  disabled={busySalvar}
+                  onClick={salvarNoCurriculo}
+                  className="flex-1 rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                >
+                  {busySalvar ? "Salvando…" : "Salvar no Currículo"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/curriculo?id=${encodeURIComponent(rascunho.segmentacaoId)}`,
+                    )
+                  }
+                  className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                >
+                  Ver no Currículo
+                </button>
+              )}
+            </div>
           </div>
         ) : null}
 

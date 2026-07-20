@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getRespostasPadrao, saveRespostasPadrao } from "@/lib/dados";
 
 export async function GET() {
@@ -6,7 +6,7 @@ export async function GET() {
     return NextResponse.json({ candidatura: getRespostasPadrao() });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler dados/respostas/padrao.yml", detail: err.message },
+      { error: "Não leu as respostas", detail: err.message },
       { status: 500 },
     );
   }
@@ -22,7 +22,7 @@ export async function PUT(request) {
     return NextResponse.json({ ok: true, candidatura: getRespostasPadrao() });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status: 500 },
     );
   }

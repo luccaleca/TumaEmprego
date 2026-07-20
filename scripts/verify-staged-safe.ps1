@@ -20,6 +20,7 @@ $allowedDados = @(
 )
 
 $allowedPrefixes = @(
+  "dados/busca/.gitkeep",
   "dados/candidaturas/.gitkeep",
   "dados/curriculo/.gitkeep",
   "dados/curriculo/vagas/.gitkeep",

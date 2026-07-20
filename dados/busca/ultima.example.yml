@@ -1,0 +1,21 @@
+# Último relatório de busca de vagas (template)
+# Local: copie ou deixe o site gerar dados/busca/ultima.yml
+
+gerado_em: null
+nota_minima: 4
+filtros:
+  segmentos_ativos: []
+  senioridades: []
+  modalidades_trabalho: []
+  modo_busca: focado
+  nota_minima: 4
+  titulos_consulta: []
+consultas: []
+portais: []
+total_brutas: 0
+total_filtradas_fora: 0
+total_coletadas: 0
+total_elegiveis: 0
+avisos: []
+erros: []
+vagas: []

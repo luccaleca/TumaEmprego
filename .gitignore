@@ -71,6 +71,9 @@ dados/resultados/*
 !dados/resultados/.gitkeep
 !dados/resultados/exemplo.yml
 
+dados/busca/*
+!dados/busca/.gitkeep
+!dados/busca/*.example.yml
 dados/pdfs/*
 !dados/pdfs/.gitkeep
 

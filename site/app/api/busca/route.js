@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { adaptarAposSalvarBusca } from "@/lib/adaptarCvBusca";
 import { getBusca, saveBusca } from "@/lib/dados";
 import { getVagaCatalogo } from "@/lib/vagaCatalogo";
@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ busca: getBusca() });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler dados/config/busca.yml", detail: err.message },
+      { error: "Não leu a busca", detail: err.message },
       { status: 500 },
     );
   }
@@ -80,7 +80,7 @@ export async function PUT(request) {
     return NextResponse.json({ ok: true, busca: buscaSalva, adaptacao });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status: 500 },
     );
   }

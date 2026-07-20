@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import ChatTuma from "@/components/ChatTuma";
 import SiteHeader from "@/components/SiteHeader";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full bg-zinc-100 text-zinc-900">
         <SiteHeader />
         {children}
+        <ChatTuma />
       </body>
     </html>
   );

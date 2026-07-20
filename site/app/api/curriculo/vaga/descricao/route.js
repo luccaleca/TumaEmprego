@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { buildDescricaoParaVaga } from "@/lib/descricaoVaga.js";
 import { inferirPerfilPorVaga, resolverPerfilSlug } from "@/lib/perfilCvSegmento.js";
 import { getFonteCandidato } from "@/lib/fonteCandidato.js";
@@ -38,7 +38,7 @@ export async function POST(request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível gerar a descrição", detail: err.message },
+      { error: "Não gerou a descrição", detail: err.message },
       { status: 500 },
     );
   }

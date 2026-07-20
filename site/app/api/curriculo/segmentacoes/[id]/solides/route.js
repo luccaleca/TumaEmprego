@@ -25,7 +25,7 @@ export async function GET(_request, { params }) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler pacote Sólides", detail: err.message },
+      { error: "Não leu o Sólides", detail: err.message },
       { status: 500 },
     );
   }

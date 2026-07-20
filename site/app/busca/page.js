@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import BuscaVagasWorkspace from "@/components/busca/BuscaVagasWorkspace";
+
+export const metadata = {
+  title: "Busca — Tuma Emprego",
+};
 
 export default function BuscaPage() {
-  redirect("/segmentos");
+  return <BuscaVagasWorkspace />;
 }

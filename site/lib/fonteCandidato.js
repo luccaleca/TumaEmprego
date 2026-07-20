@@ -1,6 +1,5 @@
 /**
- * Fonte unificada do candidato — perfil, conteúdo, tecnologias, busca, resultados.
- * O motor de CV e os prompts devem consultar aqui antes de montar o currículo.
+ * Fonte do candidato — perfil, conteúdo, stack, busca, resultados.
  */
 
 import fs from "fs";

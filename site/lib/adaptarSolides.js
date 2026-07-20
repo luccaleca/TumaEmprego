@@ -1,10 +1,10 @@
 /**
- * Motor Sólides — monta o perfil no formato Profiler (não usa estrutura ATS do cv-base).
- * Fonte: banco.yml, formacao, tecnologias, portais/solides.yml + contexto da vaga.
+ * Pacote Sólides (formulário Profiler), sem layout ATS.
  */
 
 import {
   certificacoesParaSegmento,
+  cursosDoBancoParaSegmento,
   experienciaParaSegmento,
   loadBanco,
   projetosParaSegmento,
@@ -221,33 +221,104 @@ function montarExperienciasSolides(banco, segmentoSlug, ctx) {
 }
 
 function anoFormacao(formacao) {
-  const fim = formacao?.previsao_formatura || formacao?.periodo_fim || "";
+  const fim = formacao?.previsao_formatura || formacao?.periodo_fim || formacao?.ano_conclusao || "";
   const match = String(fim).match(/(\d{4})/);
   return match?.[1] ?? "";
+}
+
+/** Nível no dropdown Sólides (não misturar com nome do curso). */
+function nivelCursoSolides(formacao) {
+  const g = String(formacao?.grau ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (g.includes("tecnologo") || g.includes("tecnolog")) return "Tecnólogo";
+  if (g.includes("tecnico") || g.includes("técnico")) return "Técnico";
+  if (g.includes("mestrado")) return "Mestrado";
+  if (g.includes("doutorado")) return "Doutorado";
+  if (g.includes("pos") || g.includes("especializ")) return "Pós-graduação";
+  if (g.includes("medio") || g.includes("médio")) return "Ensino Médio";
+  // Bacharelado / Licenciatura / Graduação
+  return "Graduação";
 }
 
 function montarFormacaoSolides(formacao) {
   const f = formacao ?? {};
   if (!f.instituicao && !f.curso) return [];
 
-  const grauCurso = [f.grau, f.curso].filter(Boolean).join(" em ");
+  const ano = anoFormacao(f);
   return [
     {
-      curso: grauCurso || f.curso || "",
+      curso: String(f.curso ?? "").trim(),
+      nivel: nivelCursoSolides(f),
+      grau: String(f.grau ?? "").trim(),
       instituicao: f.instituicao ?? "",
-      ano_conclusao: anoFormacao(f),
+      ano_conclusao: ano,
+      // Sólides pede só o ano no campo "Ano de conclusão (ou previsão)"
+      previsao_formatura: ano,
       situacao: f.status ?? "",
       periodo_inicio: f.periodo_inicio ?? "",
-      previsao_formatura: f.previsao_formatura ?? "",
       cidade: [f.cidade_campus, f.estado_campus].filter(Boolean).join(" – "),
     },
   ];
 }
 
+/** Nível no modal “Adicionar curso ou certificação” (Sólides). */
+function nivelCursoComplementarSolides(curso) {
+  const blob = `${curso?.titulo ?? ""} ${curso?.plataforma ?? ""} ${curso?.instrutor ?? ""}`.toLowerCase();
+  if (/certifica|skillshop|blueprint|certified/.test(blob)) return "Certificação";
+  return "Curso Extracurricular";
+}
+
+function instituicaoCursoSolides(curso) {
+  const plat = String(curso?.plataforma ?? "").trim();
+  if (plat && !/^google$/i.test(plat)) return plat;
+  return String(curso?.instrutor ?? plat ?? "").trim();
+}
+
+function anoCursoSolides(curso) {
+  const raw = curso?.ano_conclusao || curso?.ano || curso?.previsao || "";
+  return String(raw).match(/(\d{4})/)?.[1] ?? "";
+}
+
+function descricaoCursoSolides(curso) {
+  if (curso?.descricao) return String(curso.descricao).trim().slice(0, 2000);
+  const partes = [];
+  if (curso?.instrutor && instituicaoCursoSolides(curso) !== curso.instrutor) {
+    partes.push(`Instrutor: ${curso.instrutor}.`);
+  }
+  if (curso?.concluido === false) partes.push("Em andamento.");
+  else if (curso?.concluido === true) partes.push("Concluído.");
+  return partes.join(" ").trim().slice(0, 2000);
+}
+
+/** Objetos no formato do modal Sólides. */
 function montarCursosSolides(banco, segmentoSlug) {
-  return certificacoesParaSegmento(banco, segmentoSlug, { max: 12 }).map((linha) =>
-    linha.replace(/^-\s*/, "").trim(),
-  );
+  const doBanco = cursosDoBancoParaSegmento(banco, segmentoSlug, { max: 12 });
+  if (doBanco.length) {
+    return doBanco.map((c) => ({
+      curso: String(c.titulo ?? "").trim(),
+      instituicao: instituicaoCursoSolides(c),
+      nivel: c.nivel_solides || nivelCursoComplementarSolides(c),
+      ano_conclusao: anoCursoSolides(c),
+      descricao: descricaoCursoSolides(c),
+    }));
+  }
+
+  return certificacoesParaSegmento(banco, segmentoSlug, { max: 12 }).map((linha) => {
+    const limpa = linha.replace(/^-\s*/, "").trim();
+    const [tituloParte, resto] = limpa.split(" — ");
+    const instituicao =
+      (resto && resto.replace(/\s*\([^)]*\)\s*$/, "").trim()) ||
+      (limpa.match(/\(([^)]+)\)\s*$/)?.[1] ?? "");
+    return {
+      curso: (tituloParte || limpa).trim(),
+      instituicao,
+      nivel: nivelCursoComplementarSolides({ titulo: limpa, plataforma: instituicao }),
+      ano_conclusao: "",
+      descricao: "",
+    };
+  });
 }
 
 function scoreHabilidade(habilidade, textoVagaNorm) {

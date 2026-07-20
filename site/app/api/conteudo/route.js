@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getConteudoBanco, saveConteudoBanco } from "@/lib/dados";
 import { migrarFerramentasBancoSeNecessario } from "@/lib/migrarStackDoBanco";
 import { listarTodosSegmentosCatalogo, resolverSegmentosAtivos } from "@/lib/segmentosAtivos";
@@ -25,7 +25,7 @@ export async function GET() {
   } catch (err) {
     return NextResponse.json(
       {
-        error: "Não foi possível ler o banco de conteúdo",
+        error: "Não leu o conteúdo",
         detail: err.message,
       },
       { status: 500 },
@@ -51,7 +51,7 @@ export async function PUT(request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status: 500 },
     );
   }

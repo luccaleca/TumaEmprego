@@ -29,7 +29,7 @@ export async function GET(_request, { params }) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler conteúdo", detail: err.message },
+      { error: "Não leu o conteúdo", detail: err.message },
       { status: 500 },
     );
   }
@@ -55,7 +55,7 @@ export async function PUT(request, { params }) {
   } catch (err) {
     const status = err.message.includes("não encontrada") ? 404 : 400;
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status },
     );
   }

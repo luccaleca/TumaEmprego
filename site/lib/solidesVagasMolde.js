@@ -70,15 +70,53 @@ export function camposPorAbaFromPacote(pacote) {
         local: e.local || "",
         atividades: (e.atividades ?? []).map(limpar).filter(Boolean),
       })),
-      formacao: (c.formacao ?? []).map((f) => ({
-        grau_curso: f.curso || "",
-        instituicao: f.instituicao || "",
-        inicio: f.periodo_inicio || "",
-        fim: f.previsao_formatura || f.ano_conclusao || "",
-        situacao: f.situacao || "",
-        cidade: f.cidade || "",
-      })),
-      cursos_certificacoes: [...(c.cursos_certificacoes ?? [])],
+      formacao: (c.formacao ?? []).map((f) => {
+        const ano =
+          String(f.ano_conclusao || f.previsao_formatura || "")
+            .match(/(\d{4})/)?.[1] ?? "";
+        const nivel =
+          f.nivel ||
+          (String(f.grau || "").toLowerCase().includes("bacharel") ? "Graduação" : "") ||
+          (String(f.curso || f.grau_curso || "").match(/^([^e]+)\s+em\s+/i)?.[1]?.trim() ?? "");
+        const cursoNome = String(f.curso || f.grau_curso || "")
+          .replace(/^(bacharelado|licenciatura|tecn[oó]logo|gradua[cç][aã]o)\s+em\s+/i, "")
+          .trim();
+        return {
+          grau_curso: nivel && cursoNome ? `${nivel} — ${cursoNome}` : cursoNome || f.grau_curso || "",
+          nivel: nivel || "Graduação",
+          curso: cursoNome,
+          instituicao: f.instituicao || "",
+          inicio: f.periodo_inicio || f.inicio || "",
+          fim: ano,
+          situacao: f.situacao || "",
+          cidade: f.cidade || "",
+        };
+      }),
+      cursos_certificacoes: (c.cursos_certificacoes ?? []).map((item) => {
+        if (item && typeof item === "object") {
+          return {
+            curso: item.curso || item.titulo || "",
+            instituicao: item.instituicao || "",
+            nivel: item.nivel || "Curso Extracurricular",
+            ano_conclusao: String(item.ano_conclusao || item.ano || "").match(/(\d{4})/)?.[1] || "",
+            descricao: item.descricao || "",
+          };
+        }
+        const limpa = String(item ?? "")
+          .replace(/^-\s*/, "")
+          .trim();
+        const [tituloParte, resto] = limpa.split(" — ");
+        return {
+          curso: (tituloParte || limpa).trim(),
+          instituicao:
+            (resto && resto.replace(/\s*\([^)]*\)\s*$/, "").trim()) ||
+            limpa.match(/\(([^)]+)\)\s*$/)?.[1] ||
+            "",
+          nivel: "Curso Extracurricular",
+          ano_conclusao: "",
+          descricao: "",
+        };
+      }),
     },
     habilidades: {
       itens: (c.habilidades ?? []).map((h) => ({
@@ -116,6 +154,8 @@ export function camposPorAbaVazios() {
       })),
       formacao: Array.from({ length: formacao }, () => ({
         grau_curso: "",
+        nivel: "",
+        curso: "",
         instituicao: "",
         inicio: "",
         fim: "",

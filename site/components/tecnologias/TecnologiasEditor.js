@@ -335,7 +335,7 @@ export default function TecnologiasEditor({ initial, todosSegmentos = [] }) {
         setSegmentos(buildSegmentosMap(data.tecnologias));
         if (data.catalogo?.[0]?.slug) setVertentesVisiveis([data.catalogo[0].slug]);
       } catch (err) {
-        if (!cancelado) setMessage(err.message || "Erro ao carregar catálogo");
+        if (!cancelado) setMessage(err.message || "Não carregou");
       } finally {
         if (!cancelado) setLoading(false);
       }
@@ -444,7 +444,7 @@ export default function TecnologiasEditor({ initial, todosSegmentos = [] }) {
       setSegmentos(buildSegmentosMap(data.tecnologias));
       snapshotRef.current = null;
       setEditing(false);
-      setMessage("Alterações salvas.");
+      setMessage("Salvo.");
     } catch (err) {
       setMessage(err.message || "Erro ao salvar");
     } finally {
@@ -462,7 +462,7 @@ export default function TecnologiasEditor({ initial, todosSegmentos = [] }) {
     <>
       {message ? (
         <p
-          className={`mb-2 text-right text-xs font-medium ${message.includes("salvas") ? "text-emerald-700" : "text-red-600"}`}
+          className={`mb-2 text-right text-xs font-medium ${message.includes("Salvo") || message.includes("salvo") ? "text-emerald-700" : "text-red-600"}`}
           role="status"
         >
           {message}

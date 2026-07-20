@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getTecnologias, saveTecnologias } from "@/lib/dados";
 import { migrarFerramentasBancoSeNecessario } from "@/lib/migrarStackDoBanco";
 import {
@@ -24,7 +24,7 @@ export async function GET() {
   } catch (err) {
     return NextResponse.json(
       {
-        error: "Não foi possível carregar tecnologias",
+        error: "Não carregou as tecnologias",
         detail: err.message,
       },
       { status: 500 },
@@ -64,7 +64,7 @@ export async function PUT(request) {
     return NextResponse.json({ ok: true, catalogo, tecnologias });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status: 500 },
     );
   }

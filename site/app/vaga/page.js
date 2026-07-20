@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import VagaWorkspace from "@/components/vaga/VagaWorkspace";
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function VagaPage() {
-  return <VagaWorkspace />;
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-zinc-500">…</p>}>
+      <VagaWorkspace />
+    </Suspense>
+  );
 }

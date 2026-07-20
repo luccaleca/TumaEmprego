@@ -36,7 +36,7 @@ export async function GET(_request, { params }) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível gerar PDF Sólides", detail: err.message },
+      { error: "Não gerou o PDF", detail: err.message },
       { status: 500 },
     );
   }

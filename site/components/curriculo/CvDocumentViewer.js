@@ -125,7 +125,6 @@ export default function CvDocumentViewer({
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
-  const [confirmExcluir, setConfirmExcluir] = useState(false);
   const [message, setMessage] = useState("");
   const [modoVisao, setModoVisao] = useState("texto");
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
@@ -134,7 +133,6 @@ export default function CvDocumentViewer({
 
   useEffect(() => {
     setEditing(false);
-    setConfirmExcluir(false);
     setMessage("");
     setModoVisao("texto");
     setPdfPreviewUrl(null);
@@ -244,7 +242,6 @@ export default function CvDocumentViewer({
       await onExcluir();
     } catch (err) {
       setMessage(err.message || "Erro ao excluir");
-      setConfirmExcluir(false);
     } finally {
       setExcluindo(false);
     }
@@ -269,7 +266,7 @@ export default function CvDocumentViewer({
           ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-          {!editing && !confirmExcluir && editavel && onGerarPdf ? (
+          {!editing && editavel && onGerarPdf ? (
             <button
               type="button"
               onClick={gerarPdf}
@@ -279,7 +276,7 @@ export default function CvDocumentViewer({
               {generating ? "Gerando…" : labelPdf}
             </button>
           ) : null}
-          {!editing && !confirmExcluir && temPdf && pdfSrc && !vendoPdf ? (
+          {!editing && temPdf && pdfSrc && !vendoPdf ? (
             <button
               type="button"
               onClick={mostrarPdf}
@@ -289,7 +286,7 @@ export default function CvDocumentViewer({
               Ver PDF
             </button>
           ) : null}
-          {!editing && !confirmExcluir && vendoPdf ? (
+          {!editing && vendoPdf ? (
             <>
               <button
                 type="button"
@@ -307,7 +304,7 @@ export default function CvDocumentViewer({
               </button>
             </>
           ) : null}
-          {editavel && !editing && !confirmExcluir && !vendoPdf ? (
+          {editavel && !editing && !vendoPdf ? (
             <button
               type="button"
               onClick={iniciarEdicao}
@@ -336,35 +333,16 @@ export default function CvDocumentViewer({
                 {saving ? "Salvando…" : "Salvar"}
               </button>
             </>
-          ) : confirmExcluir ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setConfirmExcluir(false)}
-                disabled={excluindo}
-                className="rounded-lg px-2.5 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 disabled:opacity-50"
-              >
-                Não
-              </button>
-              <button
-                type="button"
-                onClick={confirmarExclusao}
-                disabled={excluindo}
-                className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {excluindo ? "Excluindo…" : "Excluir"}
-              </button>
-            </>
           ) : (
             <>
               {onExcluir ? (
                 <button
                   type="button"
-                  onClick={() => setConfirmExcluir(true)}
-                  disabled={loading}
+                  onClick={confirmarExclusao}
+                  disabled={loading || excluindo}
                   className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
                 >
-                  Excluir
+                  {excluindo ? "Excluindo…" : "Excluir"}
                 </button>
               ) : null}
               <button

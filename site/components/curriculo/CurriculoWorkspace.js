@@ -7,7 +7,7 @@ import CvDocumentViewer from "@/components/curriculo/CvDocumentViewer";
 import CvEstruturasRow from "@/components/curriculo/CvEstruturasRow";
 import PortalEstruturaModal from "@/components/portais/PortalEstruturaModal";
 import SolidesPacoteViewer from "@/components/vaga/SolidesPacoteViewer";
-import { labelSegmento, resumoAlvos } from "@/lib/cvSegmentoTema";
+import { labelCvVaga, labelSegmento, resumoAlvos } from "@/lib/cvSegmentoTema";
 
 function encontrarSegmentacaoNasColunas(colunas, id) {
   if (!id) return null;
@@ -38,7 +38,6 @@ export default function CurriculoWorkspace({
   const [solidesLoading, setSolidesLoading] = useState(false);
   const [solidesGerando, setSolidesGerando] = useState(false);
   const [solidesDesatualizado, setSolidesDesatualizado] = useState(false);
-  const [solidesConfirmExcluir, setSolidesConfirmExcluir] = useState(false);
   const [solidesExcluindo, setSolidesExcluindo] = useState(false);
   const ignorarUrlRef = useRef(false);
 
@@ -140,13 +139,16 @@ export default function CurriculoWorkspace({
       ignorarUrlRef.current = false;
       const ehSolides = segmentacao.portal === "solides" && segmentacao.origem === "vaga";
       const titulo =
-        segmentacao.origem === "busca" || segmentacao.origem === "segmento"
+        segmentacao.label_cv ||
+        (segmentacao.origem === "busca" || segmentacao.origem === "segmento"
           ? labelSegmento(segmentacao)
-          : segmentacao.vaga_titulo;
+          : labelCvVaga(segmentacao));
       const subtitulo =
         segmentacao.origem === "busca" || segmentacao.origem === "segmento"
           ? resumoAlvos(segmentacao)
-          : null;
+          : segmentacao.vaga_empresa
+            ? String(segmentacao.vaga_empresa)
+            : null;
 
       router.replace(`/curriculo?id=${encodeURIComponent(segmentacao.id)}`, { scroll: false });
 
@@ -167,7 +169,6 @@ export default function CurriculoWorkspace({
           pdfDesatualizado: false,
           podeExcluir: !segmentacao.slot,
         });
-        setSolidesConfirmExcluir(false);
 
         try {
           const res = await fetch(`/api/curriculo/segmentacoes/${segmentacao.id}/conteudo`);
@@ -261,7 +262,6 @@ export default function CurriculoWorkspace({
     ignorarUrlRef.current = true;
     setDocumentoAberto(null);
     setSolidesPreview("");
-    setSolidesConfirmExcluir(false);
     router.replace("/curriculo", { scroll: false });
   }
 
@@ -432,43 +432,23 @@ export default function CurriculoWorkspace({
                   </div>
                   <div className="flex shrink-0 gap-2">
                     {documentoAberto.podeExcluir ? (
-                      solidesConfirmExcluir ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setSolidesConfirmExcluir(false)}
-                            disabled={solidesExcluindo}
-                            className="rounded-lg px-2.5 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 disabled:opacity-50"
-                          >
-                            Não
-                          </button>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              setSolidesExcluindo(true);
-                              try {
-                                await excluirDocumentoAberto();
-                              } catch {
-                                setSolidesConfirmExcluir(false);
-                              } finally {
-                                setSolidesExcluindo(false);
-                              }
-                            }}
-                            disabled={solidesExcluindo}
-                            className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                          >
-                            {solidesExcluindo ? "Excluindo…" : "Excluir"}
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setSolidesConfirmExcluir(true)}
-                          className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
-                        >
-                          Excluir
-                        </button>
-                      )
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSolidesExcluindo(true);
+                          try {
+                            await excluirDocumentoAberto();
+                          } catch {
+                            /* message via state if needed */
+                          } finally {
+                            setSolidesExcluindo(false);
+                          }
+                        }}
+                        disabled={solidesExcluindo}
+                        className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {solidesExcluindo ? "Excluindo…" : "Excluir"}
+                      </button>
                     ) : null}
                     <button
                       type="button"
@@ -518,26 +498,14 @@ export default function CurriculoWorkspace({
           <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 sm:px-6">
             <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-zinc-100">
               <div className="border-b border-zinc-100 bg-zinc-50/80 px-4 py-3 sm:px-5">
-                <p className="text-sm font-semibold text-zinc-900">Construção</p>
-                <p className="mt-0.5 text-xs text-zinc-500">Estrutura + segmentos · base das adaptações</p>
+                <p className="text-sm font-semibold text-zinc-900">Currículo</p>
               </div>
 
               <div className="divide-y divide-zinc-100">
                 <section className="px-4 py-4 sm:px-5" aria-labelledby="cv-estrutura-heading">
-                  <div className="mb-3 flex items-center gap-2.5">
-                    <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-bold text-white"
-                      aria-hidden
-                    >
-                      1
-                    </span>
-                    <div className="min-w-0">
-                      <h2 id="cv-estrutura-heading" className="text-xs font-semibold text-zinc-900">
-                        Estrutura
-                      </h2>
-                      <p className="text-[11px] text-zinc-500">Molde e portal</p>
-                    </div>
-                  </div>
+                  <h2 id="cv-estrutura-heading" className="mb-3 text-xs font-semibold text-zinc-900">
+                    Estrutura
+                  </h2>
                   <CvEstruturasRow
                     portais={initialPortais}
                     onAbrirBase={abrirEstruturaBase}
@@ -546,20 +514,9 @@ export default function CurriculoWorkspace({
                 </section>
 
                 <section className="px-4 py-4 sm:px-5" aria-labelledby="cv-segmentos-heading">
-                  <div className="mb-3 flex items-center gap-2.5">
-                    <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white"
-                      aria-hidden
-                    >
-                      2
-                    </span>
-                    <div className="min-w-0">
-                      <h2 id="cv-segmentos-heading" className="text-xs font-semibold text-zinc-900">
-                        Segmentos
-                      </h2>
-                      <p className="text-[11px] text-zinc-500">Conteúdo por área</p>
-                    </div>
-                  </div>
+                  <h2 id="cv-segmentos-heading" className="mb-3 text-xs font-semibold text-zinc-900">
+                    Segmentos
+                  </h2>
                   <CvColunasBoard
                     initialColunas={colunas}
                     documentoAbertoId={null}

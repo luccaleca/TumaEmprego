@@ -111,6 +111,11 @@ export function getRespostasPadrao() {
   return readYaml("respostas/padrao.yml");
 }
 
+export function getRespostasComportamental() {
+  ensureDataFile("respostas/comportamental.yml", "respostas/comportamental.example.yml");
+  return readYaml("respostas/comportamental.yml");
+}
+
 export function getCvBase() {
   ensureDataFile("cv-base.md", "cv-base.example.md");
   return readText("cv-base.md");

@@ -42,7 +42,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler o arquivo", detail: err.message },
+      { error: "Não leu o arquivo", detail: err.message },
       { status: 500 },
     );
   }

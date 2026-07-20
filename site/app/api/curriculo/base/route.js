@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getCvBase, saveCvBase } from "@/lib/dados";
 import { parseCvDocument, sectionsForDisplay, cleanPreambleForExport } from "@/lib/cv";
 
@@ -13,7 +13,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível ler o currículo base", detail: err.message },
+      { error: "Não leu o currículo base", detail: err.message },
       { status: 500 },
     );
   }
@@ -36,7 +36,7 @@ export async function PUT(request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Não foi possível salvar", detail: err.message },
+      { error: "Não salvou", detail: err.message },
       { status: 500 },
     );
   }

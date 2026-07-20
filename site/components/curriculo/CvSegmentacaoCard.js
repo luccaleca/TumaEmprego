@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatDateTime } from "@/lib/format";
 import { labelPortal } from "@/lib/portalLabels";
-import { labelSegmento, resumoAlvos, temaSegmento } from "@/lib/cvSegmentoTema";
+import { labelCvVaga, labelSegmento, resumoAlvos, temaSegmento } from "@/lib/cvSegmentoTema";
 
 const ORIGEM = {
   manual: { label: "Arquivo", dot: "bg-zinc-400" },
@@ -25,25 +25,27 @@ export default function CvSegmentacaoCard({
   deleting = false,
 }) {
   const [sections, setSections] = useState(initialSections);
-  const [confirmando, setConfirmando] = useState(false);
   const origem = metaOrigem(segmentacao.origem);
   const tema = temaSegmento(segmentacao.segmento_slug);
   const portalLabel = labelPortal(segmentacao.portal);
   const ehSlot = Boolean(segmentacao.slot);
   const segmentLabel =
-    segmentacao.origem === "busca" || segmentacao.origem === "segmento"
+    segmentacao.label_cv ||
+    (segmentacao.origem === "busca" || segmentacao.origem === "segmento"
       ? labelSegmento(segmentacao)
-      : segmentacao.vaga_titulo;
+      : labelCvVaga(segmentacao));
   const subtitle =
-    segmentacao.origem === "vaga" && portalLabel
-      ? `${portalLabel} · ${labelSegmento(segmentacao) || origem.label}`
+    segmentacao.origem === "vaga"
+      ? [
+          "Vaga",
+          portalLabel,
+          labelSegmento(segmentacao) !== segmentLabel ? labelSegmento(segmentacao) : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")
       : segmentacao.origem === "busca" || segmentacao.origem === "segmento"
         ? resumoAlvos(segmentacao)
         : origem.label;
-
-  useEffect(() => {
-    setConfirmando(false);
-  }, [segmentacao.id]);
 
   async function carregarConteudo() {
     if (sections?.length || segmentacao.hasPdf) return sections;
@@ -112,6 +114,11 @@ export default function CvSegmentacaoCard({
               Base
             </span>
           ) : null}
+          {!ehSlot && segmentacao.origem === "vaga" ? (
+            <span className="rounded bg-emerald-100 px-0.5 text-[7px] font-bold uppercase tracking-wide text-emerald-900">
+              Vaga
+            </span>
+          ) : null}
           {portalLabel && !ehSlot ? (
             <span
               className={[
@@ -149,71 +156,44 @@ export default function CvSegmentacaoCard({
           "flex items-center justify-between gap-0.5 px-1 py-0.5",
           ehSlot ? "border-t border-zinc-200/80 bg-white/60" : "border-t border-zinc-100",
         ].join(" ")}
-      >        {confirmando ? (
-          <>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmando(false);
-              }}
-              disabled={deleting}
-              className="rounded px-1 py-0.5 text-[8px] font-medium text-zinc-500 hover:bg-zinc-100 disabled:opacity-50"
-            >
-              Não
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete?.(segmentacao.id);
-              }}
-              disabled={deleting}
-              className="rounded px-1 py-0.5 text-[8px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-            >
-              {deleting ? "…" : "Excluir"}
-            </button>
-          </>
+      >
+        {pdfUrl ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(pdfUrl, "_blank", "noopener,noreferrer");
+            }}
+            className="text-[8px] font-medium text-zinc-400 hover:text-zinc-700"
+          >
+            PDF
+          </button>
         ) : (
-          <>
-            {pdfUrl ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(pdfUrl, "_blank", "noopener,noreferrer");
-                }}
-                className="text-[8px] font-medium text-zinc-400 hover:text-zinc-700"
-              >
-                PDF
-              </button>
-            ) : (
-              <span className="flex min-w-0 items-center gap-0.5 text-[8px] text-zinc-400">
-                <span className={`h-1 w-1 shrink-0 rounded-full ${origem.dot}`} title={origem.label} />
-                <span className="truncate">{dataCurta}</span>
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmando(true);
-              }}
-              disabled={deleting || ehSlot}
-              className="shrink-0 rounded p-0.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-zinc-400"
-              aria-label={`Excluir ${segmentLabel}`}
-              title={ehSlot ? "Fixo" : "Excluir"}
-            >
-              <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                <path
-                  fillRule="evenodd"
-                  d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c-.784 0-1.438.364-1.865.998H10v1.003H8.135A2.001 2.001 0 0010 6.001V4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </>
+          <span className="flex min-w-0 items-center gap-0.5 text-[8px] text-zinc-400">
+            <span className={`h-1 w-1 shrink-0 rounded-full ${origem.dot}`} title={origem.label} />
+            <span className="truncate">{dataCurta}</span>
+          </span>
         )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (deleting || ehSlot) return;
+            onDelete?.(segmentacao.id);
+          }}
+          disabled={deleting || ehSlot}
+          className="shrink-0 rounded p-0.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-zinc-400"
+          aria-label={`Excluir ${segmentLabel}`}
+          title={ehSlot ? "Fixo" : "Excluir"}
+        >
+          <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+            <path
+              fillRule="evenodd"
+              d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c-.784 0-1.438.364-1.865.998H10v1.003H8.135A2.001 2.001 0 0010 6.001V4z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
       </div>
     </article>
   );

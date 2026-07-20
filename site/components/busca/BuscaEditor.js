@@ -139,9 +139,9 @@ export default function BuscaEditor({ initial, catalogo }) {
         data.adaptacao?.segmentacoes?.length ??
         0;
       if (data.adaptacao?.status === "concluido") {
-        setMessage(vis > 0 ? `Salvo. ${vis} variação${vis > 1 ? "ões" : ""}.` : "Salvo.");
+        setMessage(vis > 0 ? `Salvo. ${vis} CV${vis > 1 ? "s" : ""}.` : "Salvo.");
       } else if (data.adaptacao?.status === "pendente") {
-        setMessage("Salvo. Pendente.");
+        setMessage("Salvo — falta CV base.");
       } else {
         setMessage("Salvo.");
       }

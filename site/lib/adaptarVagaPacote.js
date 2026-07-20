@@ -8,8 +8,7 @@ import {
 } from "./portaisCatalogo.js";
 
 /**
- * Decide se o pacote deve usar motor de portal estruturado (Sólides).
- * Gupy não gera pacote CV — só estrutura + autofill.
+ * Decide se a vaga usa pacote Sólides ou CV ATS.
  */
 export function deveGerarPacotePortal(input) {
   const formato = String(input?.formato ?? "auto").toLowerCase();
@@ -23,6 +22,7 @@ export function deveGerarPacotePortal(input) {
 
 function anexarCandidatura(resultado, input) {
   if (resultado?.status !== "concluido") return resultado;
+  if (resultado.salvo === false || !resultado.segmentacao?.id) return resultado;
   try {
     const candidatura = upsertCandidaturaDePacote(resultado, {
       origem: input?.origem_candidatura ?? (input?.via_extensao ? "extensao" : "site-vaga"),
